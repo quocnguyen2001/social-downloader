@@ -17,6 +17,7 @@ class DownloadSession extends Model
 
     protected $fillable = [
         'api_key_id',
+        'user_id',
         'original_url',
         'platform',
         'video_id',
@@ -46,6 +47,14 @@ class DownloadSession extends Model
     public function apiKey()
     {
         return $this->belongsTo(ApiKey::class);
+    }
+
+    /**
+     * Get the user that owns this download session.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

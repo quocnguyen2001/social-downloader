@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\ApiKey;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -38,6 +41,10 @@ class DownloadSessionFactory extends Factory
         return [
             'id' => Str::uuid(),
             'api_key_id' => ApiKey::factory(),
+            'user_id' => fake()->optional(0.8)->randomElement([
+                User::factory(),
+                null,
+            ]),
             'original_url' => $this->generatePlatformUrl($platform),
             'platform' => $platform,
             'video_id' => $this->generateVideoId($platform),

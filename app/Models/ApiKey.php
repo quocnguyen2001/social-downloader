@@ -57,11 +57,11 @@ class ApiKey extends Model
     }
 
     /**
-     * Get all monthly billings for this API key.
+     * Get all invoices for this API key.
      */
-    public function monthlyBillings()
+    public function invoices()
     {
-        return $this->hasMany(MonthlyBilling::class);
+        return $this->hasMany(Invoice::class);
     }
 
     /**

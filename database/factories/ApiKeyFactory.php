@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -37,10 +40,15 @@ class ApiKeyFactory extends Factory
 
         return [
             'id' => Str::uuid(),
+            'user_id' => fake()->optional(0.8)->randomElement([
+                User::factory(),
+                null,
+            ]),
             'name' => fake()->randomElement($companyNames) . ' App',
             'key_hash' => hash('sha256', 'vd_live_' . Str::random(32)),
             'key_prefix' => 'vd_live_',
             'status' => fake()->randomElement(['active', 'inactive', 'suspended']),
+            'tier' => fake()->randomElement(['basic', 'pro', 'premium']),
             'price_per_request' => fake()->randomFloat(4, 0.0100, 0.1000),
             'daily_limit' => fake()->randomElement([500, 1000, 2000, 5000]),
             'monthly_limit' => fake()->randomElement([15000, 30000, 60000, 150000]),
@@ -86,6 +94,46 @@ class ApiKeyFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'suspended',
+        ]);
+    }
+
+    /**
+     * Indicate that the API key is basic tier.
+     */
+    public function basic(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'tier' => 'basic',
+        ]);
+    }
+
+    /**
+     * Indicate that the API key is pro tier.
+     */
+    public function pro(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'tier' => 'pro',
+        ]);
+    }
+
+    /**
+     * Indicate that the API key is premium tier.
+     */
+    public function premium(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'tier' => 'premium',
+        ]);
+    }
+
+    /**
+     * Indicate that the API key belongs to a specific user.
+     */
+    public function forUser(User $user): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'user_id' => $user->id,
         ]);
     }
 }

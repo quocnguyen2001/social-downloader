@@ -4,7 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
-use App\Models\MonthlyBilling;
+use App\Models\Invoice;
 use App\Models\DownloadSession;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;

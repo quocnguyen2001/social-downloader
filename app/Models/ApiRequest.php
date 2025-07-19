@@ -17,6 +17,7 @@ class ApiRequest extends Model
 
     protected $fillable = [
         'api_key_id',
+        'user_id',
         'endpoint',
         'method',
         'ip_address',
@@ -49,6 +50,14 @@ class ApiRequest extends Model
     public function apiKey()
     {
         return $this->belongsTo(ApiKey::class);
+    }
+
+    /**
+     * Get the user that made this request.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

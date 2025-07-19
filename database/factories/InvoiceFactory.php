@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\ApiKey;
+use App\Models\MembershipPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\MonthlyBilling>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Invoice>
  */
-class MonthlyBillingFactory extends Factory
+class InvoiceFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -22,17 +25,20 @@ class MonthlyBillingFactory extends Factory
         $totalCost = fake()->randomFloat(2, 50.00, 500.00);
 
         // Distribute requests across platforms
-        $youtubeRequests = fake()->numberBetween(0, intval($totalRequests * 0.5));
-        $tiktokRequests = fake()->numberBetween(0, intval(($totalRequests - $youtubeRequests) * 0.6));
-        $instagramRequests = fake()->numberBetween(0, intval(($totalRequests - $youtubeRequests - $tiktokRequests) * 0.7));
-        $facebookRequests = $totalRequests - $youtubeRequests - $tiktokRequests - $instagramRequests;
+        $youtubeRequests = fake()->numberBetween(0, $totalRequests);
+        $remaining = $totalRequests - $youtubeRequests;
+        $tiktokRequests = fake()->numberBetween(0, $remaining);
+        $remaining -= $tiktokRequests;
+        $instagramRequests = fake()->numberBetween(0, $remaining);
+        $facebookRequests = $remaining - $instagramRequests;
 
-        $isPaid = fake()->boolean(70); // 70% chance of being paid
-        $invoiceSent = fake()->boolean(90); // 90% chance invoice was sent
+        $invoiceSent = fake()->boolean(70); // 70% chance invoice is sent
+        $isPaid = $invoiceSent ? fake()->boolean(60) : false; // 60% of sent invoices are paid
 
         return [
             'id' => Str::uuid(),
             'api_key_id' => ApiKey::factory(),
+            'membership_plan_id' => fake()->boolean(30) ? MembershipPlan::factory() : null,
             'billing_month' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-01'),
             'total_requests' => $totalRequests,
             'total_cost' => $totalCost,
@@ -49,7 +55,7 @@ class MonthlyBillingFactory extends Factory
     }
 
     /**
-     * Indicate that the billing is paid.
+     * Indicate that the invoice is paid.
      */
     public function paid(): static
     {
@@ -58,12 +64,12 @@ class MonthlyBillingFactory extends Factory
             'paid_at' => fake()->dateTimeBetween('-1 month', 'now'),
             'payment_method' => fake()->randomElement(['bank_transfer', 'credit_card', 'paypal', 'crypto']),
             'invoice_sent' => true,
-            'invoice_sent_at' => fake()->dateTimeBetween('-2 months', 'now'),
+            'invoice_sent_at' => fake()->dateTimeBetween('-2 months', '-1 month'),
         ]);
     }
 
     /**
-     * Indicate that the billing is unpaid.
+     * Indicate that the invoice is unpaid.
      */
     public function unpaid(): static
     {
@@ -75,13 +81,24 @@ class MonthlyBillingFactory extends Factory
     }
 
     /**
-     * Indicate that the invoice was sent.
+     * Indicate that the invoice has been sent.
      */
-    public function invoiceSent(): static
+    public function sent(): static
     {
         return $this->state(fn (array $attributes) => [
             'invoice_sent' => true,
             'invoice_sent_at' => fake()->dateTimeBetween('-2 months', 'now'),
+        ]);
+    }
+
+    /**
+     * Indicate that the invoice has not been sent.
+     */
+    public function notSent(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'invoice_sent' => false,
+            'invoice_sent_at' => null,
         ]);
     }
 }

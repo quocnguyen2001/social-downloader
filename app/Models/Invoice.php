@@ -1,19 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class MonthlyBilling extends Model
+class Invoice extends Model
 {
-    /** @use HasFactory<\Database\Factories\MonthlyBillingFactory> */
+    /** @use HasFactory<\Database\Factories\InvoiceFactory> */
     use HasFactory, HasUuids;
 
     protected $fillable = [
         'api_key_id',
+        'membership_plan_id',
         'billing_month',
         'total_requests',
         'total_cost',
@@ -39,11 +44,27 @@ class MonthlyBilling extends Model
     ];
 
     /**
-     * Get the API key that owns this billing record.
+     * Get the API key that owns this invoice record.
      */
-    public function apiKey()
+    public function apiKey(): BelongsTo
     {
         return $this->belongsTo(ApiKey::class);
+    }
+
+    /**
+     * Get the membership plan associated with this invoice.
+     */
+    public function membershipPlan(): BelongsTo
+    {
+        return $this->belongsTo(MembershipPlan::class);
+    }
+
+    /**
+     * Get the transactions for this invoice.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 
     /**
@@ -84,7 +105,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Mark this billing as paid.
+     * Mark this invoice as paid.
      */
     public function markAsPaid(?string $paymentMethod = null): void
     {
@@ -96,7 +117,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Mark this billing as unpaid.
+     * Mark this invoice as unpaid.
      */
     public function markAsUnpaid(): void
     {
@@ -122,7 +143,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Scope to filter paid billings.
+     * Scope to filter paid invoices.
      */
     public function scopePaid($query)
     {
@@ -130,7 +151,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Scope to filter unpaid billings.
+     * Scope to filter unpaid invoices.
      */
     public function scopeUnpaid($query)
     {
@@ -138,7 +159,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Scope to filter billings with sent invoices.
+     * Scope to filter invoices with sent invoices.
      */
     public function scopeInvoiceSent($query)
     {
@@ -146,7 +167,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Scope to filter billings without sent invoices.
+     * Scope to filter invoices without sent invoices.
      */
     public function scopeInvoiceNotSent($query)
     {
@@ -154,7 +175,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Scope to filter billings by month.
+     * Scope to filter invoices by month.
      */
     public function scopeForMonth($query, $year, $month)
     {
@@ -163,7 +184,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Scope to filter billings for a specific API key.
+     * Scope to filter invoices for a specific API key.
      */
     public function scopeForApiKey($query, $apiKeyId)
     {
@@ -203,7 +224,7 @@ class MonthlyBilling extends Model
     }
 
     /**
-     * Check if this billing is overdue (unpaid and invoice sent more than 30 days ago).
+     * Check if this invoice is overdue (unpaid and invoice sent more than 30 days ago).
      */
     public function isOverdue(): bool
     {

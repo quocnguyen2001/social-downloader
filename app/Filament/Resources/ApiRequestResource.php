@@ -22,6 +22,8 @@ class ApiRequestResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
+    protected static ?string $navigationGroup = 'API Management';
+
     protected static ?string $navigationLabel = 'API Requests';
 
     protected static ?string $modelLabel = 'API Request';

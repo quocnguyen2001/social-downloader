@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
-use App\Models\MonthlyBilling;
+use App\Models\Invoice;
 use App\Models\DownloadSession;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -17,11 +17,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed membership plans first
+        $this->call(MembershipPlanSeeder::class);
+
         // Create admin user for Filament if it doesn't exist
         if (!User::where('email', 'admin@example.com')->exists()) {
             User::factory()->create([
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
+                'membership_plan_id' => \App\Models\MembershipPlan::query()->where('slug', 'premium')->first()?->id,
             ]);
         }
 
@@ -115,12 +119,12 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Create monthly billing records for the last 3 months
+        // Create invoice records for the last 3 months
         foreach ($activeApiKeys as $apiKey) {
             for ($month = 2; $month >= 0; $month--) {
                 $billingMonth = now()->subMonths($month)->startOfMonth();
 
-                MonthlyBilling::factory()->create([
+                Invoice::factory()->create([
                     'api_key_id' => $apiKey->id,
                     'billing_month' => $billingMonth->toDateString(),
                 ]);

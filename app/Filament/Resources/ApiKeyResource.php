@@ -27,6 +27,8 @@ class ApiKeyResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-key';
 
+    protected static ?string $navigationGroup = 'API Management';
+
     protected static ?int $navigationSort = 1;
 
     public static function getNavigationLabel(): string
@@ -310,6 +312,7 @@ class ApiKeyResource extends Resource
                             ->send();
                     }),
 
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -354,6 +357,7 @@ class ApiKeyResource extends Resource
         return [
             'index' => Pages\ListApiKeys::route('/'),
             'create' => Pages\CreateApiKey::route('/create'),
+            'view' => Pages\ViewApiKey::route('/{record}'),
             'edit' => Pages\EditApiKey::route('/{record}/edit'),
         ];
     }

@@ -54,9 +54,9 @@ return [
         ],
     ],
     
-    'monthly_billing' => [
-        'singular' => 'Monthly Billing',
-        'plural' => 'Monthly Billings',
+    'invoice' => [
+        'singular' => 'Invoice',
+        'plural' => 'Invoices',
         'fields' => [
             'id' => 'ID',
             'api_key_id' => 'API Key',

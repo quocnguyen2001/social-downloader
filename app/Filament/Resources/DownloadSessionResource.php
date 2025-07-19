@@ -26,13 +26,15 @@ class DownloadSessionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-down-tray';
 
+    protected static ?string $navigationGroup = 'Download Management';
+
     protected static ?string $navigationLabel = 'Download Sessions';
 
     protected static ?string $modelLabel = 'Download Session';
 
     protected static ?string $pluralModelLabel = 'Download Sessions';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -310,7 +312,7 @@ class DownloadSessionResource extends Resource
                     })
                     ->visible(fn (DownloadSession $record) => $record->status !== 'expired'),
 
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -358,8 +360,15 @@ class DownloadSessionResource extends Resource
     {
         return [
             'index' => Pages\ListDownloadSessions::route('/'),
-            'create' => Pages\CreateDownloadSession::route('/create'),
-            'edit' => Pages\EditDownloadSession::route('/{record}/edit'),
+            'view' => Pages\ViewDownloadSession::route('/{record}'),
         ];
+    }
+
+    /**
+     * Disable edit capabilities for download sessions.
+     */
+    public static function canEdit($record): bool
+    {
+        return false;
     }
 }

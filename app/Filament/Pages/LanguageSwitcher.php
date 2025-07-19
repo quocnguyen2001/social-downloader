@@ -12,7 +12,7 @@ class LanguageSwitcher extends Page
     
     protected static string $view = 'filament.pages.language-switcher';
     
-    protected static ?int $navigationSort = 999;
+    protected static ?int $navigationSort = 9999;
     
     public static function getNavigationLabel(): string
     {

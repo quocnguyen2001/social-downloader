@@ -54,9 +54,9 @@ return [
         ],
     ],
     
-    'monthly_billing' => [
-        'singular' => 'Hóa đơn hàng tháng',
-        'plural' => 'Hóa đơn hàng tháng',
+    'invoice' => [
+        'singular' => 'Hóa đơn',
+        'plural' => 'Hóa đơn',
         'fields' => [
             'id' => 'ID',
             'api_key_id' => 'Khóa API',

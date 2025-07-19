@@ -13,7 +13,7 @@ class ListDownloadSessions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // Create action removed as per requirements
         ];
     }
 }
