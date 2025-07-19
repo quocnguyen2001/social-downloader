@@ -35,7 +35,7 @@ class MembershipPlanFactory extends Factory
         ];
 
         $name = fake()->randomElement($planNames);
-        $slug = Str::slug($name . '-' . fake()->randomNumber(3));
+        $slug = Str::slug($name.'-'.fake()->randomNumber(3));
 
         return [
             'name' => $name,
@@ -44,24 +44,21 @@ class MembershipPlanFactory extends Factory
             'price' => fake()->randomFloat(2, 0, 99.99),
             'currency' => fake()->randomElement(['USD', 'VND', 'EUR']),
             'billing_cycle' => fake()->randomElement(['monthly', 'yearly', 'lifetime']),
-            
+
             // Request limits
             'daily_request_limit' => fake()->randomElement([0, 100, 500, 1000, 5000, 10000]),
             'weekly_request_limit' => fake()->randomElement([0, 700, 3500, 7000, 35000, 70000]),
-            'monthly_request_limit' => fake()->randomElement([0, 3000, 15000, 30000, 150000, 300000]),
-            
+            'total_request_download' => fake()->randomElement([0, 5000, 25000, 50000, 250000, 500000]),
+
             // Features
             'allowed_platforms' => fake()->randomElements($platforms, fake()->numberBetween(1, 4)),
             'allowed_qualities' => fake()->randomElements($qualities, fake()->numberBetween(2, 4)),
             'allowed_formats' => fake()->randomElements($formats, fake()->numberBetween(1, 3)),
-            
+
             // Additional features
             'priority_processing' => fake()->boolean(30),
-            'bulk_downloads' => fake()->boolean(40),
-            'api_access' => fake()->boolean(50),
-            'concurrent_downloads' => fake()->randomElement([1, 2, 3, 5, 10]),
             'max_file_size_mb' => fake()->randomElement([50, 100, 250, 500, 1000]),
-            
+
             // Plan status and ordering
             'is_active' => fake()->boolean(80),
             'is_featured' => fake()->boolean(20),
@@ -80,11 +77,8 @@ class MembershipPlanFactory extends Factory
             'price' => 0.00,
             'daily_request_limit' => 100,
             'weekly_request_limit' => 700,
-            'monthly_request_limit' => 3000,
+            'total_request_download' => 3000,
             'priority_processing' => false,
-            'bulk_downloads' => false,
-            'api_access' => false,
-            'concurrent_downloads' => 1,
             'max_file_size_mb' => 50,
             'is_active' => true,
             'is_featured' => false,
@@ -102,11 +96,8 @@ class MembershipPlanFactory extends Factory
             'price' => 9.99,
             'daily_request_limit' => 500,
             'weekly_request_limit' => 3500,
-            'monthly_request_limit' => 15000,
+            'total_request_download' => 15000,
             'priority_processing' => false,
-            'bulk_downloads' => true,
-            'api_access' => false,
-            'concurrent_downloads' => 2,
             'max_file_size_mb' => 100,
             'is_active' => true,
             'is_featured' => false,
@@ -124,11 +115,8 @@ class MembershipPlanFactory extends Factory
             'price' => 19.99,
             'daily_request_limit' => 1000,
             'weekly_request_limit' => 7000,
-            'monthly_request_limit' => 30000,
+            'total_request_download' => 30000,
             'priority_processing' => true,
-            'bulk_downloads' => true,
-            'api_access' => true,
-            'concurrent_downloads' => 5,
             'max_file_size_mb' => 250,
             'is_active' => true,
             'is_featured' => true,
@@ -146,11 +134,8 @@ class MembershipPlanFactory extends Factory
             'price' => 49.99,
             'daily_request_limit' => 0, // unlimited
             'weekly_request_limit' => 0, // unlimited
-            'monthly_request_limit' => 0, // unlimited
+            'total_request_download' => 0, // unlimited
             'priority_processing' => true,
-            'bulk_downloads' => true,
-            'api_access' => true,
-            'concurrent_downloads' => 10,
             'max_file_size_mb' => 1000,
             'is_active' => true,
             'is_featured' => true,
@@ -195,7 +180,7 @@ class MembershipPlanFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'daily_request_limit' => 0,
             'weekly_request_limit' => 0,
-            'monthly_request_limit' => 0,
+            'total_request_download' => 0,
         ]);
     }
 }

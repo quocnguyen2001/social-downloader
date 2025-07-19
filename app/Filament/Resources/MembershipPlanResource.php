@@ -6,6 +6,8 @@ use App\Filament\Resources\MembershipPlanResource\Pages;
 use App\Models\MembershipPlan;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Membership Plan Resource for Filament Admin Panel.
- * 
+ *
  * Manages membership plans with pricing, limits, and features.
  */
 class MembershipPlanResource extends Resource
@@ -51,8 +53,7 @@ class MembershipPlanResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn (string $context, $state, Forms\Set $set) => 
-                                $context === 'create' ? $set('slug', \Illuminate\Support\Str::slug($state)) : null
+                            ->afterStateUpdated(fn (string $context, $state, Forms\Set $set) => $context === 'create' ? $set('slug', \Illuminate\Support\Str::slug($state)) : null
                             ),
 
                         Forms\Components\TextInput::make('slug')
@@ -109,12 +110,14 @@ class MembershipPlanResource extends Resource
                             ->minValue(0)
                             ->suffix('requests/week'),
 
-                        Forms\Components\TextInput::make('monthly_request_limit')
+                        Forms\Components\TextInput::make('total_request_download')
+                            ->label('Total Download Requests')
                             ->required()
                             ->numeric()
                             ->default(0)
                             ->minValue(0)
-                            ->suffix('requests/month'),
+                            ->suffix('total requests')
+                            ->helperText('Total number of download requests allowed (0 = unlimited)'),
                     ])
                     ->columns(3),
 
@@ -139,22 +142,6 @@ class MembershipPlanResource extends Resource
                         Forms\Components\Toggle::make('priority_processing')
                             ->label('Priority Processing')
                             ->helperText('Process requests with higher priority'),
-
-                        Forms\Components\Toggle::make('bulk_downloads')
-                            ->label('Bulk Downloads')
-                            ->helperText('Allow multiple downloads at once'),
-
-                        Forms\Components\Toggle::make('api_access')
-                            ->label('API Access')
-                            ->helperText('Allow access to API endpoints'),
-
-                        Forms\Components\TextInput::make('concurrent_downloads')
-                            ->required()
-                            ->numeric()
-                            ->default(1)
-                            ->minValue(1)
-                            ->maxValue(50)
-                            ->suffix('concurrent downloads'),
 
                         Forms\Components\TextInput::make('max_file_size_mb')
                             ->required()
@@ -182,7 +169,7 @@ class MembershipPlanResource extends Resource
                             ->default(0)
                             ->helperText('Lower numbers appear first'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
             ]);
     }
 
@@ -214,8 +201,8 @@ class MembershipPlanResource extends Resource
                     ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
                     ->alignEnd(),
 
-                Tables\Columns\TextColumn::make('monthly_request_limit')
-                    ->label('Monthly Limit')
+                Tables\Columns\TextColumn::make('total_request_download')
+                    ->label('Total Downloads')
                     ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
                     ->alignEnd(),
 
@@ -269,6 +256,156 @@ class MembershipPlanResource extends Resource
             ])
             ->defaultSort('sort_order')
             ->reorderable('sort_order');
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Basic Information')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('name')
+                            ->label('Plan Name')
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
+                            ->weight('bold'),
+
+                        Infolists\Components\TextEntry::make('slug')
+                            ->label('Slug')
+                            ->badge()
+                            ->color('gray'),
+
+                        Infolists\Components\TextEntry::make('description')
+                            ->label('Description')
+                            ->placeholder('No description provided'),
+                    ])
+                    ->columns(2),
+
+                Infolists\Components\Section::make('Pricing & Billing')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('price')
+                            ->label('Price')
+                            ->money('USD')
+                            ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
+                            ->weight('bold')
+                            ->color('success'),
+
+                        Infolists\Components\TextEntry::make('currency')
+                            ->label('Currency')
+                            ->badge(),
+
+                        Infolists\Components\TextEntry::make('billing_cycle')
+                            ->label('Billing Cycle')
+                            ->badge()
+                            ->color(fn (string $state): string => match ($state) {
+                                'monthly' => 'info',
+                                'yearly' => 'success',
+                                'lifetime' => 'warning',
+                                default => 'gray',
+                            }),
+                    ])
+                    ->columns(2),
+
+                Infolists\Components\Section::make('Request Limits')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('daily_request_limit')
+                            ->label('Daily Requests')
+                            ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                            ->badge()
+                            ->color(fn ($state) => $state === 0 ? 'success' : 'info'),
+
+                        Infolists\Components\TextEntry::make('weekly_request_limit')
+                            ->label('Weekly Requests')
+                            ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                            ->badge()
+                            ->color(fn ($state) => $state === 0 ? 'success' : 'info'),
+
+                        Infolists\Components\TextEntry::make('total_request_download')
+                            ->label('Total Download Requests')
+                            ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                            ->badge()
+                            ->color(fn ($state) => $state === 0 ? 'success' : 'warning'),
+                    ])
+                    ->columns(3),
+
+                Infolists\Components\Section::make('Platform & Quality Restrictions')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('allowed_platforms')
+                            ->label('Allowed Platforms')
+                            ->listWithLineBreaks()
+                            ->bulleted()
+                            ->placeholder('All platforms allowed'),
+
+                        Infolists\Components\TextEntry::make('allowed_qualities')
+                            ->label('Allowed Qualities')
+                            ->listWithLineBreaks()
+                            ->bulleted()
+                            ->placeholder('All qualities allowed'),
+
+                        Infolists\Components\TextEntry::make('allowed_formats')
+                            ->label('Allowed Formats')
+                            ->listWithLineBreaks()
+                            ->bulleted()
+                            ->placeholder('All formats allowed'),
+                    ])
+                    ->columns(1),
+
+                Infolists\Components\Section::make('Features & Settings')
+                    ->schema([
+                        Infolists\Components\IconEntry::make('priority_processing')
+                            ->label('Priority Processing')
+                            ->boolean()
+                            ->trueIcon('heroicon-o-check-circle')
+                            ->falseIcon('heroicon-o-x-circle')
+                            ->trueColor('success')
+                            ->falseColor('danger'),
+
+                        Infolists\Components\TextEntry::make('max_file_size_mb')
+                            ->label('Max File Size')
+                            ->suffix(' MB')
+                            ->badge()
+                            ->color('info'),
+
+                        Infolists\Components\IconEntry::make('is_active')
+                            ->label('Active')
+                            ->boolean()
+                            ->trueIcon('heroicon-o-check-circle')
+                            ->falseIcon('heroicon-o-x-circle')
+                            ->trueColor('success')
+                            ->falseColor('danger'),
+
+                        Infolists\Components\IconEntry::make('is_featured')
+                            ->label('Featured')
+                            ->boolean()
+                            ->trueIcon('heroicon-o-star')
+                            ->falseIcon('heroicon-o-star')
+                            ->trueColor('warning')
+                            ->falseColor('gray'),
+
+                        Infolists\Components\TextEntry::make('sort_order')
+                            ->label('Sort Order')
+                            ->badge()
+                            ->color('gray'),
+
+                        Infolists\Components\TextEntry::make('users_count')
+                            ->label('Active Users')
+                            ->badge()
+                            ->color('primary'),
+                    ])
+                    ->columns(3),
+
+                Infolists\Components\Section::make('Timestamps')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('created_at')
+                            ->label('Created At')
+                            ->dateTime(),
+
+                        Infolists\Components\TextEntry::make('updated_at')
+                            ->label('Updated At')
+                            ->dateTime(),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+            ]);
     }
 
     public static function getPages(): array

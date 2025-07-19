@@ -46,15 +46,11 @@ class GuestApiLimitsSettings extends Settings
      * Maximum file size in MB that guests can download.
      */
     public int $max_file_size_mb;
+
     /**
      * Rate limit per minute for guest users.
      */
     public int $rate_limit_per_minute;
-
-    /**
-     * Maximum concurrent downloads for guest users.
-     */
-    public int $max_concurrent_downloads;
 
     /**
      * Get the settings group name.

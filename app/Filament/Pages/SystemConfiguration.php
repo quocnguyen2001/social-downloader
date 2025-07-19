@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Settings\AuthenticatedApiLimitsSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\GuestApiLimitsSettings;
-use App\Settings\AuthenticatedApiLimitsSettings;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -88,7 +88,6 @@ class SystemConfiguration extends Page implements HasForms
                 'allowed_qualities' => $guestSettings->allowed_qualities,
                 'allowed_formats' => $guestSettings->allowed_formats,
                 'max_file_size_mb' => $guestSettings->max_file_size_mb,
-                'max_concurrent_downloads' => $guestSettings->max_concurrent_downloads,
             ],
 
             // Authenticated API limits
@@ -117,8 +116,6 @@ class SystemConfiguration extends Page implements HasForms
                 ->icon('heroicon-o-check'),
         ];
     }
-
-
 
     /**
      * Save the settings.
@@ -370,15 +367,6 @@ class SystemConfiguration extends Page implements HasForms
                             ->maxValue(1000)
                             ->suffix('MB')
                             ->helperText('Maximum file size that guest users can download'),
-
-                        Forms\Components\TextInput::make('guest_api_limits.max_concurrent_downloads')
-                            ->label('Max Concurrent Downloads')
-                            ->required()
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(10)
-                            ->suffix('downloads')
-                            ->helperText('Maximum number of simultaneous downloads'),
                     ])
                     ->columns(2),
             ]);
@@ -463,15 +451,6 @@ class SystemConfiguration extends Page implements HasForms
                             ->maxValue(5000)
                             ->suffix('MB')
                             ->helperText('Maximum file size that authenticated users can download'),
-
-                        Forms\Components\TextInput::make('authenticated_api_limits.max_concurrent_downloads')
-                            ->label('Max Concurrent Downloads')
-                            ->required()
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(20)
-                            ->suffix('downloads')
-                            ->helperText('Maximum number of simultaneous downloads'),
                     ])
                     ->columns(2),
             ]);

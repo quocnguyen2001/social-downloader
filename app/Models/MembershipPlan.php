@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Membership Plan Model
- * 
+ *
  * Defines different membership tiers with request limits and features.
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string $slug
@@ -20,14 +20,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $billing_cycle
  * @property int $daily_request_limit
  * @property int $weekly_request_limit
- * @property int $monthly_request_limit
+ * @property int $total_request_download
  * @property array|null $allowed_platforms
  * @property array|null $allowed_qualities
  * @property array|null $allowed_formats
  * @property bool $priority_processing
- * @property bool $bulk_downloads
- * @property bool $api_access
- * @property int $concurrent_downloads
  * @property int $max_file_size_mb
  * @property bool $is_active
  * @property bool $is_featured
@@ -53,14 +50,11 @@ class MembershipPlan extends Model
         'billing_cycle',
         'daily_request_limit',
         'weekly_request_limit',
-        'monthly_request_limit',
+        'total_request_download',
         'allowed_platforms',
         'allowed_qualities',
         'allowed_formats',
         'priority_processing',
-        'bulk_downloads',
-        'api_access',
-        'concurrent_downloads',
         'max_file_size_mb',
         'is_active',
         'is_featured',
@@ -76,14 +70,11 @@ class MembershipPlan extends Model
         'price' => 'decimal:2',
         'daily_request_limit' => 'integer',
         'weekly_request_limit' => 'integer',
-        'monthly_request_limit' => 'integer',
+        'total_request_download' => 'integer',
         'allowed_platforms' => 'array',
         'allowed_qualities' => 'array',
         'allowed_formats' => 'array',
         'priority_processing' => 'boolean',
-        'bulk_downloads' => 'boolean',
-        'api_access' => 'boolean',
-        'concurrent_downloads' => 'integer',
         'max_file_size_mb' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
@@ -130,7 +121,7 @@ class MembershipPlan extends Model
         return match ($period) {
             'daily' => $this->daily_request_limit === 0,
             'weekly' => $this->weekly_request_limit === 0,
-            'monthly' => $this->monthly_request_limit === 0,
+            'total' => $this->total_request_download === 0,
             default => false,
         };
     }
@@ -143,9 +134,25 @@ class MembershipPlan extends Model
         return match ($period) {
             'daily' => $this->daily_request_limit,
             'weekly' => $this->weekly_request_limit,
-            'monthly' => $this->monthly_request_limit,
+            'total' => $this->total_request_download,
             default => 0,
         };
+    }
+
+    /**
+     * Check if the plan has expired.
+     */
+    public function hasExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
+    /**
+     * Check if the plan is active and not expired.
+     */
+    public function isActiveAndValid(): bool
+    {
+        return $this->is_active && ! $this->hasExpired();
     }
 
     /**
@@ -193,7 +200,7 @@ class MembershipPlan extends Model
             return 'Free';
         }
 
-        return $this->currency . ' ' . number_format($this->price, 2);
+        return $this->currency.' '.number_format($this->price, 2);
     }
 
     /**

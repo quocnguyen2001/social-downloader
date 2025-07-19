@@ -53,31 +53,6 @@ class AuthenticatedApiLimitsSettings extends Settings
     public int $rate_limit_per_minute;
 
     /**
-     * Enable/disable CAPTCHA for authenticated user requests.
-     */
-    public bool $require_captcha;
-
-    /**
-     * Maximum concurrent downloads for authenticated users without packages.
-     */
-    public int $max_concurrent_downloads;
-
-    /**
-     * Enable/disable priority processing for authenticated users.
-     */
-    public bool $enable_priority_processing;
-
-    /**
-     * Enable/disable bulk downloads for authenticated users.
-     */
-    public bool $enable_bulk_downloads;
-
-    /**
-     * Maximum number of URLs in a bulk download request.
-     */
-    public int $max_bulk_urls;
-
-    /**
      * Get the settings group name.
      */
     public static function group(): string
