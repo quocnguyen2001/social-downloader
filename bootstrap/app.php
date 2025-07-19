@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
         ]);
 
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\ValidateApiRequest::class,
+            \App\Http\Middleware\SanitizeInput::class,
+        ]);
+
         // Add cleanup middleware to all requests
         $middleware->append(\App\Http\Middleware\ClearAuthenticatedApiKey::class);
 

@@ -1,18 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -26,6 +30,7 @@ class User extends Authenticatable
         'membership_plan_id',
         'membership_started_at',
         'membership_expires_at',
+        'last_login_at',
     ];
 
     /**
@@ -50,6 +55,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'membership_started_at' => 'datetime',
             'membership_expires_at' => 'datetime',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -210,5 +216,32 @@ class User extends Authenticatable
             'membership_started_at' => null,
             'membership_expires_at' => null,
         ]);
+    }
+
+    /**
+     * Update the last login timestamp.
+     */
+    public function updateLastLogin(): void
+    {
+        $this->update(['last_login_at' => now()]);
+    }
+
+    /**
+     * Get the count of active API tokens.
+     */
+    public function getActiveTokensCountAttribute(): int
+    {
+        return $this->tokens()->count();
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param string $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

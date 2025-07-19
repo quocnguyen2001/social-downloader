@@ -8,11 +8,13 @@ use App\Models\MembershipPlan;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * User Resource for Filament Admin Panel.
@@ -160,6 +162,26 @@ class UserResource extends Resource
                     ->counts('downloadSessions')
                     ->alignEnd(),
 
+                Tables\Columns\TextColumn::make('tokens_count')
+                    ->label('API Tokens')
+                    ->counts('tokens')
+                    ->alignEnd()
+                    ->badge()
+                    ->color(fn ($state) => match (true) {
+                        $state === 0 => 'gray',
+                        $state <= 2 => 'success',
+                        $state <= 5 => 'warning',
+                        default => 'danger',
+                    }),
+
+                Tables\Columns\TextColumn::make('last_login_at')
+                    ->label('Last Login')
+                    ->dateTime()
+                    ->sortable()
+                    ->since()
+                    ->placeholder('Never')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -203,6 +225,43 @@ class UserResource extends Resource
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     }),
+
+                Tables\Filters\SelectFilter::make('has_tokens')
+                    ->label('API Tokens')
+                    ->options([
+                        'with_tokens' => 'Has Tokens',
+                        'without_tokens' => 'No Tokens',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'with_tokens' => $query->has('tokens'),
+                            'without_tokens' => $query->doesntHave('tokens'),
+                            default => $query,
+                        };
+                    }),
+
+                Tables\Filters\SelectFilter::make('login_activity')
+                    ->label('Login Activity')
+                    ->options([
+                        'recent' => 'Logged in recently (7 days)',
+                        'inactive' => 'Inactive (30+ days)',
+                        'never' => 'Never logged in',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'recent' => $query->where('last_login_at', '>=', now()->subDays(7)),
+                            'inactive' => $query->where('last_login_at', '<', now()->subDays(30)),
+                            'never' => $query->whereNull('last_login_at'),
+                            default => $query,
+                        };
+                    }),
+
+                Tables\Filters\TernaryFilter::make('active_tokens')
+                    ->label('Has Active Tokens')
+                    ->queries(
+                        true: fn (Builder $query) => $query->has('tokens'),
+                        false: fn (Builder $query) => $query->doesntHave('tokens'),
+                    ),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -231,6 +290,97 @@ class UserResource extends Resource
                             $record->update(['membership_expires_at' => $data['new_expiry']]);
                         })
                         ->visible(fn (User $record) => $record->membershipPlan),
+                    Tables\Actions\Action::make('generate_token')
+                        ->label('Generate API Token')
+                        ->icon('heroicon-o-key')
+                        ->color('info')
+                        ->form([
+                            Forms\Components\TextInput::make('token_name')
+                                ->label('Token Name')
+                                ->required()
+                                ->maxLength(255)
+                                ->default(fn (User $record) => $record->name . ' - ' . now()->format('M j, Y'))
+                                ->helperText('Give this token a descriptive name'),
+                            Forms\Components\Select::make('abilities')
+                                ->label('Token Abilities')
+                                ->multiple()
+                                ->options([
+                                    '*' => 'All Abilities',
+                                    'auth:user' => 'User Profile Access',
+                                    'auth:logout' => 'Logout Access',
+                                ])
+                                ->default(['*'])
+                                ->helperText('Select what this token can do'),
+                            Forms\Components\DateTimePicker::make('expires_at')
+                                ->label('Expires At')
+                                ->nullable()
+                                ->default(now()->addDays(30))
+                                ->helperText('Leave empty for no expiration'),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            $expiresAt = $data['expires_at'] ? \Carbon\Carbon::parse($data['expires_at']) : null;
+                            $token = $record->createToken(
+                                $data['token_name'],
+                                $data['abilities'],
+                                $expiresAt
+                            );
+
+                            // Store the token temporarily in session for display
+                            session()->put('generated_token', [
+                                'token' => $token->plainTextToken,
+                                'name' => $data['token_name'],
+                                'expires_at' => $expiresAt?->format('M j, Y g:i A'),
+                            ]);
+
+                            // Redirect to token display page
+                            return redirect()->to(static::getUrl('token-generated'));
+                        })
+                        ->modalWidth('lg')
+                        ->requiresConfirmation()
+                        ->modalHeading('Generate New API Token')
+                        ->modalDescription('Create a new API token for this user. The token will be displayed once and cannot be retrieved again.')
+                        ->modalSubmitActionLabel('Generate Token'),
+                    Tables\Actions\Action::make('manage_tokens')
+                        ->label('Manage Tokens')
+                        ->icon('heroicon-o-cog-6-tooth')
+                        ->color('warning')
+                        ->modalContent(function (User $record) {
+                            $tokens = $record->tokens()->orderBy('created_at', 'desc')->get();
+
+                            if ($tokens->isEmpty()) {
+                                return view('filament.components.no-tokens');
+                            }
+
+                            return view('filament.components.token-list', ['tokens' => $tokens, 'user' => $record]);
+                        })
+                        ->modalActions([
+                            \Filament\Actions\Action::make('close')
+                                ->label('Close')
+                                ->color('gray')
+                                ->close(),
+                        ])
+                        ->modalWidth('4xl')
+                        ->modalHeading(fn (User $record) => 'Manage API Tokens for ' . $record->name)
+                        ->visible(fn (User $record) => $record->tokens()->count() > 0),
+                    Tables\Actions\Action::make('revoke_all_tokens')
+                        ->label('Revoke All Tokens')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->action(function (User $record) {
+                            $tokenCount = $record->tokens()->count();
+                            $record->tokens()->delete();
+
+                            Notification::make()
+                                ->title('All Tokens Revoked')
+                                ->body("Successfully revoked {$tokenCount} token(s) for {$record->name}")
+                                ->success()
+                                ->send();
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Revoke All API Tokens')
+                        ->modalDescription(fn (User $record) => "Are you sure you want to revoke all API tokens for {$record->name}? This action cannot be undone.")
+                        ->modalSubmitActionLabel('Revoke All Tokens')
+                        ->visible(fn (User $record) => $record->tokens()->count() > 0),
                     Tables\Actions\DeleteAction::make(),
                 ]),
             ])
@@ -264,6 +414,79 @@ class UserResource extends Resource
                             ]);
                         })
                         ->requiresConfirmation(),
+                    Tables\Actions\BulkAction::make('bulk_generate_tokens')
+                        ->label('Generate API Tokens')
+                        ->icon('heroicon-o-key')
+                        ->color('info')
+                        ->form([
+                            Forms\Components\TextInput::make('token_name_prefix')
+                                ->label('Token Name Prefix')
+                                ->required()
+                                ->default('Bulk Generated')
+                                ->helperText('Each token will be named: [Prefix] - [User Name] - [Date]'),
+                            Forms\Components\Select::make('abilities')
+                                ->label('Token Abilities')
+                                ->multiple()
+                                ->options([
+                                    '*' => 'All Abilities',
+                                    'auth:user' => 'User Profile Access',
+                                    'auth:logout' => 'Logout Access',
+                                ])
+                                ->default(['*'])
+                                ->helperText('Select what these tokens can do'),
+                            Forms\Components\DateTimePicker::make('expires_at')
+                                ->label('Expires At')
+                                ->nullable()
+                                ->default(now()->addDays(30))
+                                ->helperText('Leave empty for no expiration'),
+                        ])
+                        ->action(function ($records, array $data) {
+                            $generatedCount = 0;
+                            $expiresAt = $data['expires_at'] ? \Carbon\Carbon::parse($data['expires_at']) : null;
+
+                            foreach ($records as $user) {
+                                $tokenName = $data['token_name_prefix'] . ' - ' . $user->name . ' - ' . now()->format('M j, Y');
+                                $user->createToken($tokenName, $data['abilities'], $expiresAt);
+                                $generatedCount++;
+                            }
+
+                            Notification::make()
+                                ->title('Bulk Token Generation Complete')
+                                ->body("Successfully generated {$generatedCount} API token(s)")
+                                ->success()
+                                ->send();
+                        })
+                        ->modalWidth('lg')
+                        ->requiresConfirmation()
+                        ->modalHeading('Bulk Generate API Tokens')
+                        ->modalDescription('Generate API tokens for all selected users. Each user will receive one token with the specified settings.')
+                        ->modalSubmitActionLabel('Generate Tokens'),
+                    Tables\Actions\BulkAction::make('bulk_revoke_tokens')
+                        ->label('Revoke All Tokens')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->action(function ($records) {
+                            $totalRevoked = 0;
+
+                            foreach ($records as $user) {
+                                $tokenCount = $user->tokens()->count();
+                                $user->tokens()->delete();
+                                $totalRevoked += $tokenCount;
+                            }
+
+                            Notification::make()
+                                ->title('Bulk Token Revocation Complete')
+                                ->body("Successfully revoked {$totalRevoked} API token(s) from " . $records->count() . " user(s)")
+                                ->success()
+                                ->send();
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Revoke All API Tokens')
+                        ->modalDescription('Are you sure you want to revoke ALL API tokens for the selected users? This action cannot be undone.')
+                        ->modalSubmitActionLabel('Revoke All Tokens')
+                        ->visible(function ($records) {
+                            return $records->some(fn ($user) => $user->tokens()->count() > 0);
+                        }),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -284,6 +507,7 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'view' => Pages\ViewUser::route('/{record}'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
+            'token-generated' => Pages\TokenGenerated::route('/token-generated'),
         ];
     }
 
