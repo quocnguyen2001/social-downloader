@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Filament\Resources\DownloadSessionResource\Pages;
+
+use App\Filament\Resources\DownloadSessionResource;
+use Filament\Actions;
+use Filament\Resources\Pages\ListRecords;
+
+class ListDownloadSessions extends ListRecords
+{
+    protected static string $resource = DownloadSessionResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\CreateAction::make(),
+        ];
+    }
+}
