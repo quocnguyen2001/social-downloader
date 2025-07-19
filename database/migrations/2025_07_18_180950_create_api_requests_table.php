@@ -18,11 +18,11 @@ return new class extends Migration
             // Request details
             $table->string('endpoint');
             $table->string('method', 10);
-            $table->ipAddress('ip_address')->nullable();
+            $table->ipAddress()->nullable();
             $table->text('user_agent')->nullable();
 
             // Video details
-            $table->string('original_url', 1000)->nullable();
+            $table->text('original_url')->nullable();
             $table->string('platform', 50)->nullable();
             $table->string('video_title', 500)->nullable();
             $table->string('requested_quality', 10)->nullable();
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->integer('status_code');
             $table->integer('response_time')->nullable(); // milliseconds
             $table->bigInteger('file_size')->nullable();
-            $table->string('download_url', 1000)->nullable();
+            $table->text('download_url')->nullable();
 
             // Billing
             $table->decimal('cost', 10, 4)->default(0); // Cost for this request

@@ -16,6 +16,7 @@ class ApiKey extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
+        'id',
         'name',
         'key_hash',
         'key_prefix',

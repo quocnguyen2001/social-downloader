@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Enums\DownloadSessionStatus;
 use App\Enums\Platform;
+use App\Enums\VideoFormat;
+use App\Enums\VideoQuality;
 use App\Filament\Resources\DownloadSessionResource\Pages;
 use App\Models\DownloadSession;
 use App\Models\ApiKey;

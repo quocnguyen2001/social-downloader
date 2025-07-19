@@ -1,0 +1,1595 @@
+# Laravel Filament Coding Guidelines with Translation & PSR-12
+
+## 1. PHP Standards and PSR-12 Compliance
+
+### Basic PHP File Structure
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers;
+use App\Models\User;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+/**
+ * User Resource for managing user entities in Filament admin panel.
+ *
+ * This resource provides CRUD operations for users with proper
+ * authorization and validation.
+ */
+class UserResource extends Resource
+{
+    protected static ?string $model = User::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $navigationGroup = 'User Management';
+
+    protected static ?int $navigationSort = 1;
+
+    // Class content...
+}
+```
+
+### PSR-12 Code Style Rules
+
+#### 1. File Structure
+- Always use `<?php` opening tag
+- Use `declare(strict_types=1);` for strict typing
+- One blank line after namespace declaration
+- Import statements in alphabetical order
+- One blank line after use statements
+
+#### 2. Class Declaration
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources;
+
+use Filament\Resources\Resource;
+
+class UserResource extends Resource
+{
+    // Properties first
+    protected static ?string $model = User::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    // Constants
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
+    // Methods
+    public static function form(Form $form): Form
+    {
+        // Method implementation
+    }
+}
+```
+
+#### 3. Method Declaration and Formatting
+```php
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make(trans('users.sections.basic_info'))
+                ->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label(trans('users.fields.name'))
+                        ->required()
+                        ->maxLength(255),
+
+                    Forms\Components\TextInput::make('email')
+                        ->label(trans('users.fields.email'))
+                        ->email()
+                        ->required()
+                        ->unique(ignoreRecord: true),
+                ])
+                ->columns(2),
+        ]);
+}
+```
+
+#### 4. Array Formatting
+```php
+// Multi-line arrays
+$options = [
+    'admin' => trans('roles.admin'),
+    'user' => trans('roles.user'),
+    'moderator' => trans('roles.moderator'),
+];
+
+// Method chaining
+Forms\Components\TextInput::make('email')
+    ->label(trans('users.fields.email'))
+    ->email()
+    ->required()
+    ->unique(ignoreRecord: true);
+```
+
+#### 5. Control Structures
+```php
+// If statements
+if ($user->isActive()) {
+    $this->activateUser($user);
+} elseif ($user->isPending()) {
+    $this->sendActivationEmail($user);
+} else {
+    $this->logInactiveUser($user);
+}
+
+// Switch statements
+switch ($status) {
+    case self::STATUS_ACTIVE:
+        return trans('users.status.active');
+
+    case self::STATUS_INACTIVE:
+        return trans('users.status.inactive');
+
+    default:
+        return trans('users.status.unknown');
+}
+
+// Try-catch blocks
+try {
+    $this->processUser($user);
+} catch (ValidationException $e) {
+    $this->handleValidationError($e);
+} catch (Exception $e) {
+    $this->logError($e);
+    throw $e;
+}
+```
+
+### Type Declarations and Documentation
+
+#### 1. Method Type Hints
+```php
+public function processUser(User $user): bool
+{
+    return $this->userService->process($user);
+}
+
+public function getUsers(array $filters = []): Collection
+{
+    return User::query()
+        ->when($filters['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+        ->get();
+}
+
+public function formatUserData(?User $user): ?array
+{
+    if ($user === null) {
+        return null;
+    }
+
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+    ];
+}
+```
+
+#### 2. Property Type Declarations
+```php
+class UserResource extends Resource
+{
+    protected static ?string $model = User::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static bool $shouldRegisterNavigation = true;
+
+    protected static array $middlewares = ['auth', 'verified'];
+}
+```
+
+#### 3. DocBlocks and Comments
+```php
+/**
+ * Configure the user form schema.
+ *
+ * This method defines the form fields for creating and editing users,
+ * including validation rules and translation keys.
+ *
+ * @param Form $form The form instance to configure
+ * @return Form The configured form instance
+ *
+ * @throws ValidationException When form validation fails
+ */
+public static function form(Form $form): Form
+{
+    return $form->schema([
+        // Form schema implementation
+    ]);
+}
+
+/**
+ * Get available user status options.
+ *
+ * @return array<string, string> Array of status keys and translated labels
+ */
+private static function getStatusOptions(): array
+{
+    return [
+        self::STATUS_ACTIVE => trans('users.status.active'),
+        self::STATUS_INACTIVE => trans('users.status.inactive'),
+    ];
+}
+```
+
+## 2. Project Structure and Code Organization
+
+### Directory Structure
+```
+app/
+├── Filament/
+│   ├── Resources/
+│   │   ├── UserResource.php
+│   │   └── UserResource/
+│   │       ├── Pages/
+│   │       │   ├── CreateUser.php
+│   │       │   ├── EditUser.php
+│   │       │   └── ListUsers.php
+│   │       └── RelationManagers/
+│   │           └── PostsRelationManager.php
+│   ├── Pages/
+│   │   └── Dashboard.php
+│   └── Widgets/
+│       └── StatsWidget.php
+lang/
+├── en/
+│   ├── filament.php
+│   ├── users.php
+│   └── general.php
+├── vi/
+│   ├── filament.php
+│   ├── users.php
+│   └── general.php
+```
+
+### Naming Conventions
+- **Resources**: `[Model]Resource.php` (e.g., `UserResource.php`)
+- **Pages**: `[Action][Model].php` (e.g., `CreateUser.php`, `EditUser.php`)
+- **Widgets**: `[Name]Widget.php` (e.g., `StatsWidget.php`)
+- **Relation Managers**: `[Relation]RelationManager.php`
+
+### Translation Files Organization
+```php
+// lang/en/users.php
+return [
+    'title' => 'Users',
+    'single' => 'User',
+    'fields' => [
+        'name' => 'Name',
+        'email' => 'Email',
+        'phone' => 'Phone Number',
+        'status' => 'Status',
+        'role' => 'Role',
+        'is_active' => 'Active',
+        'created_at' => 'Created At',
+    ],
+    'actions' => [
+        'create' => 'Create User',
+        'edit' => 'Edit User',
+        'delete' => 'Delete User',
+        'activate' => 'Activate',
+        'deactivate' => 'Deactivate',
+    ],
+    'messages' => [
+        'created' => 'User created successfully',
+        'updated' => 'User updated successfully',
+        'deleted' => 'User deleted successfully',
+        'activated' => 'User activated successfully',
+    ],
+    'validation' => [
+        'phone_invalid' => 'Invalid phone number format',
+        'phone_min' => 'Phone number must be at least 10 characters',
+    ],
+];
+```
+
+## 2. Resource Development with Translation
+
+### Basic Resource Setup (PSR-12 Compliant)
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers;
+use App\Models\User;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
+/**
+ * User Resource for managing users in Filament admin panel.
+ *
+ * Provides CRUD operations with proper validation, authorization,
+ * and internationalization support.
+ */
+class UserResource extends Resource
+{
+    protected static ?string $model = User::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $navigationGroup = 'User Management';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static bool $shouldRegisterNavigation = true;
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
+    public const STATUS_PENDING = 'pending';
+
+    /**
+     * Get the model label for singular form.
+     */
+    public static function getModelLabel(): string
+    {
+        return trans('users.single');
+    }
+
+    /**
+     * Get the model label for plural form.
+     */
+    public static function getPluralModelLabel(): string
+    {
+        return trans('users.title');
+    }
+
+    /**
+     * Get the navigation label.
+     */
+    public static function getNavigationLabel(): string
+    {
+        return trans('users.title');
+    }
+
+    /**
+     * Get available status options with translations.
+     *
+     * @return array<string, string>
+     */
+    public static function getStatusOptions(): array
+    {
+        return [
+            self::STATUS_ACTIVE => trans('users.status.active'),
+            self::STATUS_INACTIVE => trans('users.status.inactive'),
+            self::STATUS_PENDING => trans('users.status.pending'),
+        ];
+    }
+}
+```
+
+### Form Schema with Translation Best Practices
+
+#### Organized fields with sections (PSR-12 Compliant)
+```php
+/**
+ * Configure the form schema for user creation and editing.
+ *
+ * @param Form $form The form instance
+ * @return Form The configured form
+ */
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make(trans('users.sections.basic_info'))
+                ->description(trans('users.sections.basic_info_description'))
+                ->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label(trans('users.fields.name'))
+                        ->required()
+                        ->maxLength(255)
+                        ->rules(['string', 'max:255'])
+                        ->placeholder(trans('users.placeholders.name')),
+
+                    Forms\Components\TextInput::make('email')
+                        ->label(trans('users.fields.email'))
+                        ->email()
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(255)
+                        ->placeholder(trans('users.placeholders.email')),
+                ])
+                ->columns(2)
+                ->collapsible(),
+
+            Forms\Components\Section::make(trans('users.sections.account_settings'))
+                ->description(trans('users.sections.account_settings_description'))
+                ->schema([
+                    Forms\Components\Select::make('role_id')
+                        ->label(trans('users.fields.role'))
+                        ->relationship('role', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->placeholder(trans('users.placeholders.role')),
+
+                    Forms\Components\Select::make('status')
+                        ->label(trans('users.fields.status'))
+                        ->options(self::getStatusOptions())
+                        ->default(self::STATUS_PENDING)
+                        ->required()
+                        ->placeholder(trans('users.placeholders.status')),
+
+                    Forms\Components\Toggle::make('is_active')
+                        ->label(trans('users.fields.is_active'))
+                        ->helperText(trans('users.help.is_active'))
+                        ->default(true),
+
+                    Forms\Components\Toggle::make('email_verified')
+                        ->label(trans('users.fields.email_verified'))
+                        ->helperText(trans('users.help.email_verified'))
+                        ->default(false),
+                ])
+                ->columns(2)
+                ->collapsible(),
+
+            Forms\Components\Section::make(trans('users.sections.profile'))
+                ->description(trans('users.sections.profile_description'))
+                ->schema([
+                    Forms\Components\FileUpload::make('avatar')
+                        ->label(trans('users.fields.avatar'))
+                        ->image()
+                        ->directory('avatars')
+                        ->visibility('public')
+                        ->maxSize(1024)
+                        ->acceptedFileTypes(['image/jpeg', 'image/png'])
+                        ->helperText(trans('users.help.avatar')),
+
+                    Forms\Components\Textarea::make('bio')
+                        ->label(trans('users.fields.bio'))
+                        ->maxLength(500)
+                        ->rows(3)
+                        ->placeholder(trans('users.placeholders.bio')),
+                ])
+                ->columns(1)
+                ->collapsible(),
+        ]);
+}
+
+/**
+ * Get form validation rules for user data.
+ *
+ * @return array<string, array<string>>
+ */
+public static function getFormValidationRules(): array
+{
+    return [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+        'role_id' => ['required', 'exists:roles,id'],
+        'status' => ['required', 'in:' . implode(',', array_keys(self::getStatusOptions()))],
+        'is_active' => ['boolean'],
+        'email_verified' => ['boolean'],
+        'avatar' => ['nullable', 'image', 'max:1024'],
+        'bio' => ['nullable', 'string', 'max:500'],
+    ];
+}
+```
+
+#### Validation with Translated Messages (PSR-12 Compliant)
+```php
+/**
+ * Configure form field with validation and translation.
+ */
+private static function configurePhoneField(): Forms\Components\TextInput
+{
+    return Forms\Components\TextInput::make('phone')
+        ->label(trans('users.fields.phone'))
+        ->tel()
+        ->rules([
+            'nullable',
+            'string',
+            'regex:/^([0-9\s\-\+\(\)]*)$/',
+            'min:10',
+            'max:20',
+        ])
+        ->validationMessages([
+            'regex' => trans('users.validation.phone_invalid'),
+            'min' => trans('users.validation.phone_min'),
+            'max' => trans('users.validation.phone_max'),
+        ])
+        ->placeholder(trans('users.placeholders.phone'))
+        ->helperText(trans('users.help.phone'))
+        ->prefixIcon('heroicon-m-phone');
+}
+
+/**
+ * Configure password field with confirmation.
+ */
+private static function configurePasswordFields(): array
+{
+    return [
+        Forms\Components\TextInput::make('password')
+            ->label(trans('users.fields.password'))
+            ->password()
+            ->required(fn(string $context): bool => $context === 'create')
+            ->dehydrated(fn(?string $state): bool => filled($state))
+            ->dehydrateStateUsing(fn(string $state): string => Hash::make($state))
+            ->rules([
+                'nullable',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
+            ])
+            ->validationMessages([
+                'min' => trans('users.validation.password_min'),
+                'regex' => trans('users.validation.password_format'),
+            ])
+            ->helperText(trans('users.help.password')),
+
+        Forms\Components\TextInput::make('password_confirmation')
+            ->label(trans('users.fields.password_confirmation'))
+            ->password()
+            ->required(fn(string $context): bool => $context === 'create')
+            ->dehydrated(false)
+            ->rules(['same:password'])
+            ->validationMessages([
+                'same' => trans('users.validation.password_confirmation'),
+            ]),
+    ];
+}
+```
+
+### Table Configuration with Translation
+
+#### Efficient column configuration
+```php
+public static function table(Table $table): Table
+{
+    return $table
+        ->columns([
+            Tables\Columns\TextColumn::make('id')
+                ->label(trans('general.fields.id'))
+                ->sortable()
+                ->searchable(),
+
+            Tables\Columns\TextColumn::make('name')
+                ->label(trans('users.fields.name'))
+                ->searchable()
+                ->sortable()
+                ->limit(50),
+
+            Tables\Columns\TextColumn::make('email')
+                ->label(trans('users.fields.email'))
+                ->searchable()
+                ->copyable()
+                ->copyMessage(trans('general.messages.copied'))
+                ->icon('heroicon-m-envelope'),
+
+            Tables\Columns\BadgeColumn::make('status')
+                ->label(trans('users.fields.status'))
+                ->colors([
+                    'danger' => 'inactive',
+                    'success' => 'active',
+                ])
+                ->formatStateUsing(fn (string $state): string => trans("users.status.{$state}")),
+
+            Tables\Columns\TextColumn::make('created_at')
+                ->label(trans('users.fields.created_at'))
+                ->dateTime()
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+        ])
+        ->filters([
+            Tables\Filters\SelectFilter::make('status')
+                ->label(trans('users.fields.status'))
+                ->options([
+                    'active' => trans('users.status.active'),
+                    'inactive' => trans('users.status.inactive'),
+                ]),
+
+            Tables\Filters\Filter::make('created_at')
+                ->label(trans('users.filters.date_range'))
+                ->form([
+                    Forms\Components\DatePicker::make('created_from')
+                        ->label(trans('general.fields.from')),
+                    Forms\Components\DatePicker::make('created_until')
+                        ->label(trans('general.fields.until')),
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when($data['created_from'], fn($q) => $q->whereDate('created_at', '>=', $data['created_from']))
+                        ->when($data['created_until'], fn($q) => $q->whereDate('created_at', '<=', $data['created_until']));
+                }),
+        ])
+        ->actions([
+            Tables\Actions\ViewAction::make()
+                ->label(trans('general.actions.view')),
+            Tables\Actions\EditAction::make()
+                ->label(trans('general.actions.edit')),
+            Tables\Actions\DeleteAction::make()
+                ->label(trans('general.actions.delete')),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                Tables\Actions\DeleteBulkAction::make()
+                    ->label(trans('general.actions.delete_selected')),
+            ]),
+        ])
+        ->emptyStateHeading(trans('users.empty_state.heading'))
+        ->emptyStateDescription(trans('users.empty_state.description'));
+}
+```
+
+## 3. Performance Optimization (PSR-12 Compliant)
+
+### Eager Loading
+```php
+/**
+ * Modify the Eloquent query for the resource.
+ *
+ * @return Builder The modified query builder
+ */
+public static function getEloquentQuery(): Builder
+{
+    return parent::getEloquentQuery()
+        ->with([
+            'role:id,name',
+            'permissions:id,name',
+            'profile:user_id,avatar,bio',
+        ])
+        ->withCount(['posts', 'comments'])
+        ->select([
+            'id',
+            'name',
+            'email',
+            'status',
+            'is_active',
+            'email_verified_at',
+            'created_at',
+            'updated_at',
+        ]);
+}
+
+/**
+ * Apply global scopes to the query.
+ *
+ * @param Builder $query
+ * @return Builder
+ */
+public static function modifyQuery(Builder $query): Builder
+{
+    return $query
+        ->when(
+            auth()->user()->hasRole('manager'),
+            fn(Builder $q): Builder => $q->where('company_id', auth()->user()->company_id)
+        )
+        ->when(
+            request()->has('active_only'),
+            fn(Builder $q): Builder => $q->where('is_active', true)
+        );
+}
+```
+
+### Pagination and Performance
+```php
+/**
+ * Configure table pagination settings.
+ *
+ * @param Table $table
+ * @return Table
+ */
+public static function table(Table $table): Table
+{
+    return $table
+        ->defaultPaginationPageOption(25)
+        ->paginationPageOptions([10, 25, 50, 100])
+        ->deferLoading()
+        ->striped()
+        ->columns([
+            // Column definitions...
+        ])
+        ->defaultSort('created_at', 'desc')
+        ->poll('30s'); // Auto-refresh every 30 seconds
+}
+```
+
+### Caching for Select Options
+```php
+/**
+ * Get cached category options for select field.
+ *
+ * @return array<int, string>
+ */
+private static function getCategoryOptions(): array
+{
+    $cacheKey = 'categories_options_' . app()->getLocale();
+
+    return Cache::remember(
+        $cacheKey,
+        now()->addHours(1),
+        function (): array {
+            return Category::query()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->pluck('name', 'id')
+                ->toArray();
+        }
+    );
+}
+
+/**
+ * Configure category select field with caching.
+ */
+private static function configureCategoryField(): Forms\Components\Select
+{
+    return Forms\Components\Select::make('category_id')
+        ->label(trans('posts.fields.category'))
+        ->options(fn(): array => self::getCategoryOptions())
+        ->searchable()
+        ->preload()
+        ->placeholder(trans('posts.placeholders.category'));
+}
+```
+
+## 4. Custom Components and Actions with Translation (PSR-12 Compliant)
+
+### Custom Table Action
+```php
+/**
+ * Create a custom activate action for users.
+ *
+ * @return Tables\Actions\Action
+ */
+private static function createActivateAction(): Tables\Actions\Action
+{
+    return Tables\Actions\Action::make('activate')
+        ->label(trans('users.actions.activate'))
+        ->icon('heroicon-o-check-circle')
+        ->color('success')
+        ->requiresConfirmation()
+        ->modalHeading(trans('users.confirmations.activate_title'))
+        ->modalDescription(trans('users.confirmations.activate_description'))
+        ->modalSubmitActionLabel(trans('general.actions.confirm'))
+        ->modalCancelActionLabel(trans('general.actions.cancel'))
+        ->action(function (Model $record): void {
+            try {
+                $record->update([
+                    'status' => self::STATUS_ACTIVE,
+                    'activated_at' => now(),
+                ]);
+
+                // Log the action
+                activity()
+                    ->performedOn($record)
+                    ->causedBy(auth()->user())
+                    ->log('user_activated');
+
+                Notification::make()
+                    ->title(trans('users.messages.activated'))
+                    ->body(trans('users.messages.activated_description', [
+                        'name' => $record->name,
+                    ]))
+                    ->success()
+                    ->send();
+
+            } catch (Exception $e) {
+                Log::error('Failed to activate user', [
+                    'user_id' => $record->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                Notification::make()
+                    ->title(trans('users.messages.activation_failed'))
+                    ->body(trans('general.messages.try_again_later'))
+                    ->danger()
+                    ->send();
+            }
+        })
+        ->visible(fn(Model $record): bool => $record->status !== self::STATUS_ACTIVE)
+        ->disabled(fn(Model $record): bool => !auth()->user()->can('activate', $record));
+}
+
+/**
+ * Create a bulk activation action.
+ *
+ * @return Tables\Actions\BulkAction
+ */
+private static function createBulkActivateAction(): Tables\Actions\BulkAction
+{
+    return Tables\Actions\BulkAction::make('bulk_activate')
+        ->label(trans('users.actions.bulk_activate'))
+        ->icon('heroicon-o-check-circle')
+        ->color('success')
+        ->requiresConfirmation()
+        ->modalHeading(trans('users.confirmations.bulk_activate_title'))
+        ->modalDescription(function (Collection $records): string {
+            return trans('users.confirmations.bulk_activate_description', [
+                'count' => $records->count(),
+            ]);
+        })
+        ->modalSubmitActionLabel(trans('general.actions.confirm'))
+        ->action(function (Collection $records): void {
+            $activatedCount = 0;
+
+            DB::transaction(function () use ($records, &$activatedCount): void {
+                foreach ($records as $record) {
+                    if ($record->status !== self::STATUS_ACTIVE) {
+                        $record->update([
+                            'status' => self::STATUS_ACTIVE,
+                            'activated_at' => now(),
+                        ]);
+                        $activatedCount++;
+                    }
+                }
+            });
+
+            Notification::make()
+                ->title(trans('users.messages.bulk_activated', [
+                    'count' => $activatedCount,
+                ]))
+                ->success()
+                ->send();
+        })
+        ->deselectRecordsAfterCompletion();
+}
+```
+
+### Custom Field Component
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Components;
+
+use Filament\Forms\Components\Field;
+
+/**
+ * Custom status badge field component.
+ *
+ * Displays user status as a colored badge with translation support.
+ */
+class StatusBadgeField extends Field
+{
+    protected string $view = 'filament.forms.components.status-badge-field';
+
+    protected array $colors = [
+        'active' => 'success',
+        'inactive' => 'danger',
+        'pending' => 'warning',
+    ];
+
+    /**
+     * Configure the field with default settings.
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $this->default('pending');
+        $this->afterStateHydrated(function (StatusBadgeField $component, $state): void {
+            $component->state($state ?? 'pending');
+        });
+    }
+
+    /**
+     * Set custom colors for status values.
+     *
+     * @param array<string, string> $colors
+     * @return static
+     */
+    public function colors(array $colors): static
+    {
+        $this->colors = array_merge($this->colors, $colors);
+
+        return $this;
+    }
+
+    /**
+     * Get the color for a specific status.
+     */
+    public function getColor(string $status): string
+    {
+        return $this->colors[$status] ?? 'gray';
+    }
+
+    /**
+     * Get the translated label for a status.
+     */
+    public function getStatusLabel(string $status): string
+    {
+        return trans("users.status.{$status}");
+    }
+}
+```
+
+## 5. Relation Managers with Translation
+
+### Creating Relation Manager
+```php
+<?php
+
+namespace App\Filament\Resources\UserResource\RelationManagers;
+
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class PostsRelationManager extends RelationManager
+{
+    protected static string $relationship = 'posts';
+
+    protected static ?string $recordTitleAttribute = 'title';
+
+    public function getTitle(): string
+    {
+        return trans('posts.title');
+    }
+
+    public static function getTitle(): string
+    {
+        return trans('posts.title');
+    }
+
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('title')
+                    ->label(trans('posts.fields.title'))
+                    ->required()
+                    ->maxLength(255),
+
+                Forms\Components\Textarea::make('content')
+                    ->label(trans('posts.fields.content'))
+                    ->required(),
+
+                Forms\Components\Select::make('status')
+                    ->label(trans('posts.fields.status'))
+                    ->options([
+                        'draft' => trans('posts.status.draft'),
+                        'published' => trans('posts.status.published'),
+                    ])
+                    ->default('draft'),
+            ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('title')
+            ->columns([
+                Tables\Columns\TextColumn::make('title')
+                    ->label(trans('posts.fields.title')),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label(trans('posts.fields.status'))
+                    ->formatStateUsing(fn (string $state): string => trans("posts.status.{$state}")),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label(trans('posts.fields.created_at'))
+                    ->dateTime(),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label(trans('posts.actions.create')),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make()
+                    ->label(trans('general.actions.edit')),
+                Tables\Actions\DeleteAction::make()
+                    ->label(trans('general.actions.delete')),
+            ])
+            ->emptyStateHeading(trans('posts.empty_state.heading'))
+            ->emptyStateDescription(trans('posts.empty_state.description'));
+    }
+}
+```
+
+## 6. Widgets and Dashboard with Translation
+
+### Stats Widget
+```php
+<?php
+
+namespace App\Filament\Widgets;
+
+use App\Models\User;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
+
+class UserStatsWidget extends BaseWidget
+{
+    protected function getStats(): array
+    {
+        return [
+            Stat::make(trans('widgets.users.total'), User::count())
+                ->description(trans('widgets.users.total_description'))
+                ->descriptionIcon('heroicon-m-users')
+                ->color('success'),
+
+            Stat::make(trans('widgets.users.active'), User::where('is_active', true)->count())
+                ->description(trans('widgets.users.active_description'))
+                ->descriptionIcon('heroicon-m-check-circle')
+                ->color('primary'),
+
+            Stat::make(trans('widgets.users.new_today'), User::whereDate('created_at', today())->count())
+                ->description(trans('widgets.users.new_today_description'))
+                ->descriptionIcon('heroicon-m-user-plus')
+                ->color('warning'),
+        ];
+    }
+}
+```
+
+### Chart Widget with Translation
+```php
+<?php
+
+namespace App\Filament\Widgets;
+
+use Filament\Widgets\ChartWidget;
+
+class UserRegistrationChart extends ChartWidget
+{
+    protected static ?string $heading = null;
+
+    public function getHeading(): string
+    {
+        return trans('widgets.charts.user_registration');
+    }
+
+    protected function getData(): array
+    {
+        return [
+            'datasets' => [
+                [
+                    'label' => trans('widgets.charts.registrations'),
+                    'data' => [0, 10, 5, 2, 21, 32, 45, 74, 65, 45, 77, 89],
+                ],
+            ],
+            'labels' => [
+                trans('months.jan'), trans('months.feb'), trans('months.mar'),
+                trans('months.apr'), trans('months.may'), trans('months.jun'),
+                trans('months.jul'), trans('months.aug'), trans('months.sep'),
+                trans('months.oct'), trans('months.nov'), trans('months.dec'),
+            ],
+        ];
+    }
+
+    protected function getType(): string
+    {
+        return 'line';
+    }
+}
+```
+
+## 7. Pages with Translation
+
+### Custom Page
+```php
+<?php
+
+namespace App\Filament\Pages;
+
+use Filament\Pages\Page;
+
+class Settings extends Page
+{
+    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+
+    protected static string $view = 'filament.pages.settings';
+
+    public static function getNavigationLabel(): string
+    {
+        return trans('pages.settings.title');
+    }
+
+    public function getTitle(): string
+    {
+        return trans('pages.settings.title');
+    }
+
+    public function getHeading(): string
+    {
+        return trans('pages.settings.heading');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return trans('pages.settings.subheading');
+    }
+}
+```
+
+## 8. Form Components with Translation
+
+### Custom Form Components
+```php
+// Custom field with translation support
+Forms\Components\TextInput::make('custom_field')
+    ->label(trans('forms.custom_field.label'))
+    ->placeholder(trans('forms.custom_field.placeholder'))
+    ->helperText(trans('forms.custom_field.help'))
+    ->hint(trans('forms.custom_field.hint'))
+    ->hintIcon('heroicon-m-question-mark-circle')
+```
+
+### Repeater with Translation
+```php
+Forms\Components\Repeater::make('items')
+    ->label(trans('forms.items.label'))
+    ->schema([
+        Forms\Components\TextInput::make('name')
+            ->label(trans('forms.items.name'))
+            ->required(),
+        Forms\Components\TextInput::make('quantity')
+            ->label(trans('forms.items.quantity'))
+            ->numeric()
+            ->required(),
+    ])
+    ->addActionLabel(trans('forms.items.add'))
+    ->deleteActionLabel(trans('forms.items.remove'))
+    ->reorderActionLabel(trans('forms.items.reorder'))
+    ->emptyStateHeading(trans('forms.items.empty_heading'))
+    ->emptyStateDescription(trans('forms.items.empty_description'))
+```
+
+## 9. Security and Authorization with Translation
+
+### Policies with Translated Messages
+```php
+// UserPolicy.php
+public function viewAny(User $user): bool
+{
+    return $user->hasRole('admin') || $user->hasPermission('view_users');
+}
+
+// In Resource with custom authorization messages
+public static function canViewAny(): bool
+{
+    $canView = auth()->user()->can('viewAny', User::class);
+
+    if (!$canView) {
+        throw new \Illuminate\Auth\Access\AuthorizationException(
+            trans('auth.unauthorized.view_users')
+        );
+    }
+
+    return $canView;
+}
+```
+
+## 10. Error Handling and Logging with Translation
+
+### Try-catch in Actions with Translated Messages
+```php
+Tables\Actions\Action::make('process')
+    ->label(trans('users.actions.process'))
+    ->action(function (Model $record): void {
+        try {
+            // Processing logic
+            $this->processRecord($record);
+
+            Notification::make()
+                ->title(trans('users.messages.processed_success'))
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            Log::error('Process failed', [
+                'record_id' => $record->id,
+                'error' => $e->getMessage()
+            ]);
+
+            Notification::make()
+                ->title(trans('users.messages.processed_failed'))
+                ->body(trans('general.messages.try_again_later'))
+                ->danger()
+                ->send();
+        }
+    })
+```
+
+## 11. Translation Helper Functions
+
+### Custom Translation Helpers
+```php
+// In a Helper class or Service Provider
+class TranslationHelper
+{
+    public static function getStatusOptions(string $model): array
+    {
+        return [
+            'active' => trans("{$model}.status.active"),
+            'inactive' => trans("{$model}.status.inactive"),
+        ];
+    }
+
+    public static function getCommonActions(): array
+    {
+        return [
+            'create' => trans('general.actions.create'),
+            'edit' => trans('general.actions.edit'),
+            'delete' => trans('general.actions.delete'),
+            'view' => trans('general.actions.view'),
+        ];
+    }
+}
+
+// Usage in Resources
+Forms\Components\Select::make('status')
+    ->options(TranslationHelper::getStatusOptions('users'))
+```
+
+## 12. Best Practices for Translation
+
+### File Organization
+```php
+// lang/en/general.php - Common translations
+return [
+    'actions' => [
+        'create' => 'Create',
+        'edit' => 'Edit',
+        'delete' => 'Delete',
+        'view' => 'View',
+        'save' => 'Save',
+        'cancel' => 'Cancel',
+    ],
+    'fields' => [
+        'id' => 'ID',
+        'created_at' => 'Created At',
+        'updated_at' => 'Updated At',
+        'from' => 'From',
+        'until' => 'Until',
+    ],
+    'messages' => [
+        'copied' => 'Copied to clipboard!',
+        'try_again_later' => 'Please try again later.',
+    ],
+];
+
+// lang/en/roles.php - Role specific translations
+return [
+    'admin' => 'Administrator',
+    'user' => 'User',
+    'moderator' => 'Moderator',
+];
+```
+
+### Translation Key Conventions
+- Use dot notation: `model.section.key`
+- Be consistent with naming
+- Group related translations
+- Use descriptive keys
+- Always use `trans()` function, never hardcode strings
+
+### Dynamic Translation Values
+```php
+Notification::make()
+    ->title(trans('users.messages.bulk_deleted', [
+        'count' => $records->count()
+    ]))
+    ->success()
+    ->send();
+
+// In translation file:
+'bulk_deleted' => ':count users deleted successfully',
+```
+
+### Fallback Handling
+```php
+// Use fallback values for missing translations
+->label(trans('users.fields.custom_field', [], 'Custom Field'))
+
+// Or check if translation exists
+->label(
+    trans()->has('users.fields.custom_field')
+        ? trans('users.fields.custom_field')
+        : 'Custom Field'
+)
+```
+
+## 13. Testing with Translation
+
+### Translation Testing
+```php
+<?php
+
+namespace Tests\Feature\Filament;
+
+use App\Filament\Resources\UserResource;
+use App\Models\User;
+use Tests\TestCase;
+
+class UserResourceTranslationTest extends TestCase
+{
+    public function test_resource_uses_correct_translations(): void
+    {
+        App::setLocale('en');
+
+        $this->assertEquals('Users', UserResource::getPluralModelLabel());
+        $this->assertEquals('User', UserResource::getModelLabel());
+
+        App::setLocale('vi');
+
+        $this->assertEquals('Người dùng', UserResource::getPluralModelLabel());
+        $this->assertEquals('Người dùng', UserResource::getModelLabel());
+    }
+
+    public function test_form_displays_translated_labels(): void
+    {
+        $user = User::factory()->create();
+
+        livewire(UserResource\Pages\CreateUser::class)
+            ->assertSee(trans('users.fields.name'))
+            ->assertSee(trans('users.fields.email'));
+    }
+}
+```
+
+## 14. Performance Optimization for Translations
+
+### Caching Translations
+```php
+// In AppServiceProvider
+public function boot()
+{
+    // Cache translations in production
+    if (app()->environment('production')) {
+        $this->cacheTranslations();
+    }
+}
+
+private function cacheTranslations()
+{
+    $translations = Cache::rememberForever('translations_' . app()->getLocale(), function () {
+        return [
+            'users' => trans('users'),
+            'general' => trans('general'),
+            // Add other translation files
+        ];
+    });
+}
+```
+
+### Lazy Loading for Large Translation Files
+```php
+// Load translations only when needed
+Forms\Components\Select::make('country')
+    ->options(function () {
+        return Cache::remember('countries_' . app()->getLocale(), 3600, function () {
+            return collect(trans('countries'))->sortBy(function ($name) {
+                return $name;
+            })->toArray();
+        });
+    })
+```
+
+## 15. Code Quality and Standards
+
+### PHP CodeSniffer Configuration
+```xml
+<!-- phpcs.xml -->
+<?xml version="1.0"?>
+<ruleset name="Laravel Filament">
+    <description>PSR-12 coding standard for Laravel Filament projects</description>
+
+    <file>app/Filament</file>
+
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+
+    <rule ref="PSR12"/>
+
+    <!-- Laravel specific rules -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+    <rule ref="Generic.Formatting.SpaceAfterCast"/>
+    <rule ref="Generic.Functions.CallTimePassByReference"/>
+    <rule ref="Generic.NamingConventions.UpperCaseConstantName"/>
+    <rule ref="Generic.PHP.LowerCaseConstant"/>
+    <rule ref="Squiz.Arrays.ArrayBracketSpacing"/>
+    <rule ref="Squiz.ControlStructures.ControlSignature"/>
+</ruleset>
+```
+
+### PHP Stan Configuration
+```neon
+# phpstan.neon
+parameters:
+    level: 8
+    paths:
+        - app/Filament
+
+    excludePaths:
+        - vendor
+        - tests
+
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+
+    ignoreErrors:
+        - '#Call to an undefined method App\\Models\\[a-zA-Z0-9\\_]+::[a-zA-Z0-9\\_]+\(\)#'
+        - '#Access to an undefined property App\\Models\\[a-zA-Z0-9\\_]+::\$[a-zA-Z0-9\\_]+#'
+```
+
+### Pre-commit Hooks
+```bash
+#!/bin/sh
+# .git/hooks/pre-commit
+
+echo "Running PHP CS Fixer..."
+./vendor/bin/php-cs-fixer fix --dry-run --diff
+
+if [ $? -ne 0 ]; then
+    echo "PHP CS Fixer found issues. Run './vendor/bin/php-cs-fixer fix' to fix them."
+    exit 1
+fi
+
+echo "Running PHPStan..."
+./vendor/bin/phpstan analyse
+
+if [ $? -ne 0 ]; then
+    echo "PHPStan found issues. Please fix them before committing."
+    exit 1
+fi
+
+echo "Running tests..."
+./vendor/bin/phpunit
+
+if [ $? -ne 0 ]; then
+    echo "Tests failed. Please fix them before committing."
+    exit 1
+fi
+
+echo "All checks passed!"
+```
+
+### Composer Scripts
+```json
+{
+    "scripts": {
+        "lint": [
+            "./vendor/bin/php-cs-fixer fix --dry-run --diff",
+            "./vendor/bin/phpstan analyse"
+        ],
+        "fix": "./vendor/bin/php-cs-fixer fix",
+        "test": "./vendor/bin/phpunit",
+        "check": [
+            "@lint",
+            "@test"
+        ]
+    }
+}
+```
+
+## 16. Documentation Standards
+
+### Class Documentation
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources;
+
+/**
+ * User Resource for managing user accounts.
+ *
+ * This resource provides comprehensive user management functionality including:
+ * - CRUD operations with proper validation
+ * - Role and permission management
+ * - Status tracking and activation
+ * - Profile management with avatar uploads
+ * - Audit logging for all actions
+ *
+ * @package App\Filament\Resources
+ * @author Your Name <your.email@example.com>
+ * @version 1.0.0
+ * @since 1.0.0
+ *
+ * @see \App\Models\User
+ * @see \App\Policies\UserPolicy
+ */
+class UserResource extends Resource
+{
+    // Class implementation...
+}
+```
+
+### Method Documentation
+```php
+/**
+ * Configure the table columns and actions.
+ *
+ * This method sets up the data table with proper sorting, filtering,
+ * and action buttons. It includes:
+ * - Searchable and sortable columns
+ * - Status badges with color coding
+ * - Bulk actions for mass operations
+ * - Individual row actions
+ *
+ * @param Table $table The table instance to configure
+ * @return Table The configured table instance
+ *
+ * @throws \Exception When table configuration fails
+ *
+ * @example
+ * ```php
+ * $table = UserResource::table($table);
+ * ```
+ */
+public static function table(Table $table): Table
+{
+    // Method implementation...
+}
+```
+
+### README Documentation
+```markdown
+# Laravel Filament User Management
+
+## Overview
+This module provides comprehensive user management functionality for Laravel Filament admin panels.
+
+## Features
+- ✅ User CRUD operations
+- ✅ Role and permission management
+- ✅ Status tracking
+- ✅ Profile management
+- ✅ Audit logging
+- ✅ Multi-language support
+
+## Requirements
+- PHP 8.1+
+- Laravel 12+
+- Filament 3+
+
+## Installation
+1. Install dependencies
+2. Publish migrations
+3. Run migrations
+4. Configure permissions
+
+## Usage
+See the examples in the documentation folder.
+
+## Testing
+Run the test suite with: `composer test`
+
+## Contributing
+Please follow PSR-12 coding standards and include tests for new features.
+```
+
+This comprehensive update now includes PHP and PSR-12 standards throughout the Laravel Filament coding guidelines, ensuring your code follows industry best practices for maintainability, readability, and consistency.

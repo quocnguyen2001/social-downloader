@@ -19,12 +19,12 @@ return new class extends Migration
             $table->enum('platform', ['youtube', 'facebook', 'instagram', 'tiktok']);
             $table->string('video_id', 255)->nullable();
             $table->string('title', 500)->nullable();
-            $table->string('thumbnail_url', 1000)->nullable();
+            $table->text('thumbnail_url', 1000)->nullable();
             $table->integer('duration')->nullable(); // seconds
             $table->string('quality', 10);
             $table->string('format', 10);
             $table->bigInteger('file_size')->nullable();
-            $table->string('download_url', 1000)->nullable();
+            $table->text('download_url')->nullable();
             $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'expired'])->default('pending');
             $table->text('error_message')->nullable();
             $table->timestamp('expires_at')->nullable();
