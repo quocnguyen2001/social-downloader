@@ -472,9 +472,11 @@ class VideoExtractionController extends Controller
                 ], 400);
             }
 
+            $apiKey = AuthenticatedApiKey::get();
+
             // Create download session for guest
             $downloadSession = DownloadSession::create([
-                'api_key_id' => null, // No API key for guests
+                'api_key_id' => $apiKey?->getKey(), // No API key for guests
                 'user_id' => null, // No user for guests
                 'original_url' => $url,
                 'platform' => $platform,
@@ -587,9 +589,11 @@ class VideoExtractionController extends Controller
                 ], 400);
             }
 
+            $apiKey = AuthenticatedApiKey::get();
+
             // Create download session for authenticated user
             $downloadSession = DownloadSession::create([
-                'api_key_id' => null, // No API key for Sanctum auth
+                'api_key_id' => $apiKey?->getKey(), // No API key for Sanctum auth
                 'user_id' => $user->id,
                 'original_url' => $url,
                 'platform' => $platform,

@@ -34,9 +34,10 @@ class GuestApiRateLimit
     {
         try {
             $ipAddress = $this->getClientIpAddress($request);
-            
+
             // Get guest API limits
             $guestLimits = guestApiLimits();
+
             $limits = [
                 'hourly_request_limit' => $guestLimits->hourly_request_limit,
                 'daily_request_limit' => $guestLimits->daily_request_limit,
@@ -239,9 +240,9 @@ class GuestApiRateLimit
      */
     private function buildRateLimitMessage(array $usageCheck): string
     {
-        $hourlyExceeded = $usageCheck['limits']['hourly'] > 0 && 
+        $hourlyExceeded = $usageCheck['limits']['hourly'] > 0 &&
                          $usageCheck['current_usage']['hourly'] >= $usageCheck['limits']['hourly'];
-        $dailyExceeded = $usageCheck['limits']['daily'] > 0 && 
+        $dailyExceeded = $usageCheck['limits']['daily'] > 0 &&
                         $usageCheck['current_usage']['daily'] >= $usageCheck['limits']['daily'];
 
         if ($hourlyExceeded && $dailyExceeded) {

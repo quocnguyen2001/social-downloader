@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
                 'User Management',
                 'Download Management',
                 'Billing & Revenue',
+                'Settings',
                 'System',
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
