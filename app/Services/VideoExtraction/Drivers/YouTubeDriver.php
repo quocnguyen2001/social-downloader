@@ -50,7 +50,27 @@ class YouTubeDriver extends AbstractDriver
      */
     protected function performExtraction(string $url, array $options = []): ExtractionResult
     {
-        $videoId = $this->extractVideoId($url);
+        // Reformat URL to ensure clean format for reliable extraction
+        $cleanUrl = $this->reformatUrl($url);
+
+        if (!$cleanUrl) {
+            throw new \App\Services\VideoExtraction\Exceptions\ExtractionFailedException(
+                url: $url,
+                platform: $this->platform,
+                reason: 'Could not reformat URL to extractable format'
+            );
+        }
+
+        // Log URL transformation if it was changed
+        if ($cleanUrl !== $url) {
+            \Illuminate\Support\Facades\Log::debug('YouTube URL reformatted for extraction', [
+                'original_url' => $url,
+                'clean_url' => $cleanUrl,
+                'platform' => $this->platform->value,
+            ]);
+        }
+
+        $videoId = $this->extractVideoId($cleanUrl);
 
         if (!$videoId) {
             throw new \App\Services\VideoExtraction\Exceptions\ExtractionFailedException(
@@ -60,8 +80,8 @@ class YouTubeDriver extends AbstractDriver
             );
         }
 
-        // Use yt-dlp to extract video information
-        $ytDlpData = $this->executeYtDlp($url, $options);
+        // Use yt-dlp to extract video information with clean URL
+        $ytDlpData = $this->executeYtDlp($cleanUrl, $options);
 
         return $this->createExtractionResultFromYtDlp($ytDlpData, $options);
     }
@@ -85,6 +105,125 @@ class YouTubeDriver extends AbstractDriver
         }
 
         return null;
+    }
+
+    /**
+     * Reformat complex YouTube URLs into clean, extractable format.
+     *
+     * This method handles YouTube URLs with additional parameters (playlist, radio mode,
+     * timestamps, etc.) and transforms them into a clean format that can be reliably
+     * processed by yt-dlp and the video ID extraction logic.
+     *
+     * @param string $url The original YouTube URL
+     * @return string|null Clean YouTube URL in format 'https://www.youtube.com/watch?v=VIDEO_ID' or null if invalid
+     */
+    protected function reformatUrl(string $url): ?string
+    {
+        // Parse the URL into components
+        $parsedUrl = parse_url($url);
+
+        if (!$parsedUrl || !isset($parsedUrl['host'])) {
+            return null;
+        }
+
+        // Normalize and validate YouTube domains
+        $host = strtolower($parsedUrl['host']);
+        $validHosts = [
+            'youtube.com',
+            'www.youtube.com',
+            'm.youtube.com',
+            'youtu.be',
+        ];
+
+        if (!in_array($host, $validHosts, true)) {
+            return null;
+        }
+
+        $videoId = null;
+
+        // Extract video ID based on URL format
+        if ($host === 'youtu.be') {
+            // Handle youtu.be/VIDEO_ID format
+            $videoId = $this->extractVideoIdFromPath($parsedUrl['path'] ?? '');
+        } elseif (in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com'], true)) {
+            $path = $parsedUrl['path'] ?? '';
+
+            if (str_starts_with($path, '/watch')) {
+                // Handle /watch?v=VIDEO_ID format
+                $videoId = $this->extractVideoIdFromQuery($parsedUrl['query'] ?? '');
+            } elseif (str_starts_with($path, '/shorts/')) {
+                // Handle /shorts/VIDEO_ID format
+                $videoId = $this->extractVideoIdFromPath($path, '/shorts/');
+            } elseif (str_starts_with($path, '/embed/')) {
+                // Handle /embed/VIDEO_ID format
+                $videoId = $this->extractVideoIdFromPath($path, '/embed/');
+            } elseif (str_starts_with($path, '/v/')) {
+                // Handle /v/VIDEO_ID format
+                $videoId = $this->extractVideoIdFromPath($path, '/v/');
+            }
+        }
+
+        // Validate video ID format
+        if (!$this->isValidVideoId($videoId)) {
+            return null;
+        }
+
+        // Return clean YouTube URL
+        return "https://www.youtube.com/watch?v={$videoId}";
+    }
+
+    /**
+     * Extract video ID from URL path.
+     *
+     * @param string $path The URL path
+     * @param string $prefix Optional prefix to remove from path
+     * @return string|null The extracted video ID or null if not found
+     */
+    private function extractVideoIdFromPath(string $path, string $prefix = ''): ?string
+    {
+        if ($prefix && str_starts_with($path, $prefix)) {
+            $path = substr($path, strlen($prefix));
+        } elseif (!$prefix && str_starts_with($path, '/')) {
+            $path = substr($path, 1);
+        }
+
+        // Extract video ID (first 11 characters or until query/fragment)
+        $videoId = strtok($path, '?&#');
+
+        return $this->isValidVideoId($videoId) ? $videoId : null;
+    }
+
+    /**
+     * Extract video ID from URL query string.
+     *
+     * @param string $query The URL query string
+     * @return string|null The extracted video ID or null if not found
+     */
+    private function extractVideoIdFromQuery(string $query): ?string
+    {
+        parse_str($query, $params);
+
+        $videoId = $params['v'] ?? null;
+
+        return $this->isValidVideoId($videoId) ? $videoId : null;
+    }
+
+    /**
+     * Validate if a string is a valid YouTube video ID.
+     *
+     * YouTube video IDs are exactly 11 characters long and contain
+     * only alphanumeric characters, hyphens, and underscores.
+     *
+     * @param string|null $videoId The video ID to validate
+     * @return bool True if valid, false otherwise
+     */
+    private function isValidVideoId(?string $videoId): bool
+    {
+        if (!$videoId) {
+            return false;
+        }
+
+        return strlen($videoId) === 11 && preg_match('/^[a-zA-Z0-9_-]{11}$/', $videoId);
     }
 
     /**
