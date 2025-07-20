@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 
 /**
  * User Resource for Filament Admin Panel.
- * 
+ *
  * Manages users with membership plans and comprehensive user information.
  */
 class UserResource extends Resource
@@ -204,7 +204,7 @@ class UserResource extends Resource
 
                 Tables\Filters\Filter::make('membership_expired')
                     ->label('Membership Expired')
-                    ->query(fn (Builder $query): Builder => 
+                    ->query(fn (Builder $query): Builder =>
                         $query->whereNotNull('membership_expires_at')
                               ->where('membership_expires_at', '<', now())
                     ),
@@ -282,7 +282,7 @@ class UserResource extends Resource
                             Forms\Components\DateTimePicker::make('new_expiry')
                                 ->label('New Expiry Date')
                                 ->required()
-                                ->default(fn (User $record) => 
+                                ->default(fn (User $record) =>
                                     $record->membership_expires_at?->addMonth() ?? now()->addMonth()
                                 ),
                         ])
@@ -294,51 +294,27 @@ class UserResource extends Resource
                         ->label('Generate API Token')
                         ->icon('heroicon-o-key')
                         ->color('info')
-                        ->form([
-                            Forms\Components\TextInput::make('token_name')
-                                ->label('Token Name')
-                                ->required()
-                                ->maxLength(255)
-                                ->default(fn (User $record) => $record->name . ' - ' . now()->format('M j, Y'))
-                                ->helperText('Give this token a descriptive name'),
-                            Forms\Components\Select::make('abilities')
-                                ->label('Token Abilities')
-                                ->multiple()
-                                ->options([
-                                    '*' => 'All Abilities',
-                                    'auth:user' => 'User Profile Access',
-                                    'auth:logout' => 'Logout Access',
-                                ])
-                                ->default(['*'])
-                                ->helperText('Select what this token can do'),
-                            Forms\Components\DateTimePicker::make('expires_at')
-                                ->label('Expires At')
-                                ->nullable()
-                                ->default(now()->addDays(30))
-                                ->helperText('Leave empty for no expiration'),
-                        ])
-                        ->action(function (User $record, array $data) {
-                            $expiresAt = $data['expires_at'] ? \Carbon\Carbon::parse($data['expires_at']) : null;
+                        ->action(function (User $record) {
+                            // Generate token with default settings
+                            $tokenName = $record->name . ' - ' . now()->format('M j, Y g:i A');
                             $token = $record->createToken(
-                                $data['token_name'],
-                                $data['abilities'],
-                                $expiresAt
+                                $tokenName,
+                                ['*'], // All abilities
+                                now()->addDays(30) // Expires in 30 days
                             );
 
-                            // Store the token temporarily in session for display
-                            session()->put('generated_token', [
-                                'token' => $token->plainTextToken,
-                                'name' => $data['token_name'],
-                                'expires_at' => $expiresAt?->format('M j, Y g:i A'),
-                            ]);
-
-                            // Redirect to token display page
-                            return redirect()->to(static::getUrl('token-generated'));
+                            // Show success notification with the token
+                            Notification::make()
+                                ->title('API Token Generated Successfully')
+                                ->body('Token: ' . $token->plainTextToken . "\n\nExpires: " . now()->addDays(30)->format('M j, Y g:i A') . "\n\n⚠️ Copy this token now - it won't be shown again!")
+                                ->success()
+                                ->duration(30000) // Show for 30 seconds
+                                ->persistent() // Keep until manually dismissed
+                                ->send();
                         })
-                        ->modalWidth('lg')
                         ->requiresConfirmation()
-                        ->modalHeading('Generate New API Token')
-                        ->modalDescription('Create a new API token for this user. The token will be displayed once and cannot be retrieved again.')
+                        ->modalHeading('Generate API Token')
+                        ->modalDescription('This will generate a new API token with full permissions that expires in 30 days. The token will be shown once in a notification.')
                         ->modalSubmitActionLabel('Generate Token'),
                     Tables\Actions\Action::make('manage_tokens')
                         ->label('Manage Tokens')
@@ -483,10 +459,7 @@ class UserResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Revoke All API Tokens')
                         ->modalDescription('Are you sure you want to revoke ALL API tokens for the selected users? This action cannot be undone.')
-                        ->modalSubmitActionLabel('Revoke All Tokens')
-                        ->visible(function ($records) {
-                            return $records->some(fn ($user) => $user->tokens()->count() > 0);
-                        }),
+                        ->modalSubmitActionLabel('Revoke All Tokens'),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -507,7 +480,6 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'view' => Pages\ViewUser::route('/{record}'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
-            'token-generated' => Pages\TokenGenerated::route('/token-generated'),
         ];
     }
 

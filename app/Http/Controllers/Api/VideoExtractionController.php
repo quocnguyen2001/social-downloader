@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
 use App\Models\DownloadSession;
+use App\Models\User;
 use App\Services\AuthenticatedApiKey;
 use App\Services\VideoExtraction\Factory\DriverFactory;
 use Illuminate\Http\JsonResponse;
@@ -428,6 +429,384 @@ class VideoExtractionController extends Controller
             'file_size' => null,
             'download_url' => null,
             'cost' => 0.0, // No cost for status checks
+            'billed' => false,
+        ]);
+    }
+
+    /**
+     * Request video extraction for guest users (unauthenticated).
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function extractGuest(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'url' => 'required|url|max:2048',
+            'quality' => 'sometimes|in:144p,360p,720p,1080p',
+            'format' => 'sometimes|in:mp4,webm,mp3',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $url = $request->input('url');
+            $quality = VideoQuality::from($request->input('quality', '360p')); // Lower default for guests
+            $format = VideoFormat::from($request->input('format', 'mp4'));
+
+            // Detect platform
+            $platform = $this->driverFactory->detectPlatform($url);
+            if (!$platform) {
+                // Log failed request for unsupported platform
+                $this->createFailedGuestApiRequestRecord($request, $url, 'Unsupported platform', 400);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unsupported platform or invalid URL',
+                ], 400);
+            }
+
+            // Create download session for guest
+            $downloadSession = DownloadSession::create([
+                'api_key_id' => null, // No API key for guests
+                'user_id' => null, // No user for guests
+                'original_url' => $url,
+                'platform' => $platform,
+                'quality' => $quality,
+                'format' => $format,
+                'status' => DownloadSessionStatus::PENDING,
+            ]);
+
+            // Create API request record for tracking
+            $apiRequest = $this->createGuestApiRequestRecord($request, $url, $platform, $quality, $format);
+
+            // Fire extraction requested event (modified for guest)
+            VideoExtractionRequested::dispatch(
+                $downloadSession,
+                $url,
+                $platform,
+                $quality,
+                $format,
+                null, // No API key for guests
+                [
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'user_type' => 'guest',
+                ]
+            );
+
+            Log::info('Guest video extraction requested', [
+                'download_session_id' => $downloadSession->id,
+                'url' => $url,
+                'platform' => $platform->value,
+                'quality' => $quality->value,
+                'format' => $format->value,
+                'ip_address' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Extraction request submitted successfully',
+                'data' => [
+                    'session_id' => $downloadSession->id,
+                    'status' => $downloadSession->status->value,
+                    'platform' => $platform->value,
+                    'quality' => $quality->value,
+                    'format' => $format->value,
+                    'estimated_processing_time' => $this->getEstimatedProcessingTime($platform),
+                    'user_type' => 'guest',
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Guest video extraction failed', [
+                'error' => $e->getMessage(),
+                'url' => $request->input('url'),
+                'ip_address' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process extraction request',
+            ], 500);
+        }
+    }
+
+    /**
+     * Request video extraction for authenticated users.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function extractAuthenticated(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'url' => 'required|url|max:2048',
+            'quality' => 'sometimes|in:144p,360p,720p,1080p',
+            'format' => 'sometimes|in:mp4,webm,mp3',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            /** @var User $user */
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required',
+                ], 401);
+            }
+
+            $url = $request->input('url');
+            $quality = VideoQuality::from($request->input('quality', '720p')); // Higher default for authenticated users
+            $format = VideoFormat::from($request->input('format', 'mp4'));
+
+            // Detect platform
+            $platform = $this->driverFactory->detectPlatform($url);
+            if (!$platform) {
+                // Log failed request for unsupported platform
+                $this->createFailedUserApiRequestRecord($request, $user, $url, 'Unsupported platform', 400);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unsupported platform or invalid URL',
+                ], 400);
+            }
+
+            // Create download session for authenticated user
+            $downloadSession = DownloadSession::create([
+                'api_key_id' => null, // No API key for Sanctum auth
+                'user_id' => $user->id,
+                'original_url' => $url,
+                'platform' => $platform,
+                'quality' => $quality,
+                'format' => $format,
+                'status' => DownloadSessionStatus::PENDING,
+            ]);
+
+            // Create API request record for tracking
+            $apiRequest = $this->createUserApiRequestRecord($request, $user, $url, $platform, $quality, $format);
+
+            // Fire extraction requested event
+            VideoExtractionRequested::dispatch(
+                $downloadSession,
+                $url,
+                $platform,
+                $quality,
+                $format,
+                null, // No API key for Sanctum auth
+                [
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'user_type' => 'authenticated',
+                    'user_id' => $user->id,
+                    'membership_plan' => $user->membershipPlan?->name,
+                ]
+            );
+
+            Log::info('Authenticated video extraction requested', [
+                'download_session_id' => $downloadSession->id,
+                'url' => $url,
+                'platform' => $platform->value,
+                'quality' => $quality->value,
+                'format' => $format->value,
+                'user_id' => $user->id,
+                'membership_plan' => $user->membershipPlan?->name,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Extraction request submitted successfully',
+                'data' => [
+                    'session_id' => $downloadSession->id,
+                    'status' => $downloadSession->status->value,
+                    'platform' => $platform->value,
+                    'quality' => $quality->value,
+                    'format' => $format->value,
+                    'estimated_processing_time' => $this->getEstimatedProcessingTime($platform),
+                    'user_type' => 'authenticated',
+                    'membership_plan' => $user->membershipPlan?->name,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            $user = $request->user();
+
+            Log::error('Authenticated video extraction failed', [
+                'error' => $e->getMessage(),
+                'url' => $request->input('url'),
+                'user_id' => $user?->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process extraction request',
+            ], 500);
+        }
+    }
+
+    /**
+     * Create API request record for guest users.
+     *
+     * @param Request $request
+     * @param string $url
+     * @param Platform $platform
+     * @param VideoQuality $quality
+     * @param VideoFormat $format
+     * @return ApiRequest
+     */
+    private function createGuestApiRequestRecord(
+        Request $request,
+        string $url,
+        Platform $platform,
+        VideoQuality $quality,
+        VideoFormat $format
+    ): ApiRequest {
+        return ApiRequest::create([
+            'api_key_id' => null,
+            'user_id' => null,
+            'endpoint' => '/api/v1/guest/extract-video',
+            'method' => HttpMethod::POST,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'original_url' => $url,
+            'platform' => $platform,
+            'video_title' => null,
+            'requested_quality' => $quality,
+            'requested_format' => $format,
+            'status_code' => 200,
+            'response_time' => null,
+            'file_size' => null,
+            'download_url' => null,
+            'cost' => 0.0, // No cost for guest users
+            'billed' => false,
+        ]);
+    }
+
+    /**
+     * Create API request record for authenticated users.
+     *
+     * @param Request $request
+     * @param User $user
+     * @param string $url
+     * @param Platform $platform
+     * @param VideoQuality $quality
+     * @param VideoFormat $format
+     * @return ApiRequest
+     */
+    private function createUserApiRequestRecord(
+        Request $request,
+        User $user,
+        string $url,
+        Platform $platform,
+        VideoQuality $quality,
+        VideoFormat $format
+    ): ApiRequest {
+        return ApiRequest::create([
+            'api_key_id' => null,
+            'user_id' => $user->id,
+            'endpoint' => '/api/v1/auth/extract-video',
+            'method' => HttpMethod::POST,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'original_url' => $url,
+            'platform' => $platform,
+            'video_title' => null,
+            'requested_quality' => $quality,
+            'requested_format' => $format,
+            'status_code' => 200,
+            'response_time' => null,
+            'file_size' => null,
+            'download_url' => null,
+            'cost' => 0.0, // Cost calculation can be added later
+            'billed' => false,
+        ]);
+    }
+
+    /**
+     * Create failed API request record for guest users.
+     *
+     * @param Request $request
+     * @param string $url
+     * @param string $errorMessage
+     * @param int $statusCode
+     * @return ApiRequest
+     */
+    private function createFailedGuestApiRequestRecord(
+        Request $request,
+        string $url,
+        string $errorMessage,
+        int $statusCode
+    ): ApiRequest {
+        return ApiRequest::create([
+            'api_key_id' => null,
+            'user_id' => null,
+            'endpoint' => '/api/v1/guest/extract-video',
+            'method' => HttpMethod::POST,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'original_url' => $url,
+            'platform' => null,
+            'video_title' => null,
+            'requested_quality' => null,
+            'requested_format' => null,
+            'status_code' => $statusCode,
+            'response_time' => null,
+            'file_size' => null,
+            'download_url' => null,
+            'cost' => 0.0,
+            'billed' => false,
+        ]);
+    }
+
+    /**
+     * Create failed API request record for authenticated users.
+     *
+     * @param Request $request
+     * @param User $user
+     * @param string $url
+     * @param string $errorMessage
+     * @param int $statusCode
+     * @return ApiRequest
+     */
+    private function createFailedUserApiRequestRecord(
+        Request $request,
+        User $user,
+        string $url,
+        string $errorMessage,
+        int $statusCode
+    ): ApiRequest {
+        return ApiRequest::create([
+            'api_key_id' => null,
+            'user_id' => $user->id,
+            'endpoint' => '/api/v1/auth/extract-video',
+            'method' => HttpMethod::POST,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'original_url' => $url,
+            'platform' => null,
+            'video_title' => null,
+            'requested_quality' => null,
+            'requested_format' => null,
+            'status_code' => $statusCode,
+            'response_time' => null,
+            'file_size' => null,
+            'download_url' => null,
+            'cost' => 0.0,
             'billed' => false,
         ]);
     }

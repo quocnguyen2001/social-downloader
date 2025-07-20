@@ -41,11 +41,20 @@ Route::prefix('v1')->group(function () {
     });
 
     // Protected endpoints (require API key authentication)
-    Route::middleware('api.auth')->prefix('extract')->group(function () {
-        Route::post('/', [VideoExtractionController::class, 'extract'])
-            ->name('api.extract.video');
+    Route::middleware('api.auth')->group(function () {
+        // Guest endpoints (no authentication, with rate limiting)
+        Route::middleware('guest.rate.limit')->prefix('guest')->group(function () {
+            Route::post('/extract-video', [VideoExtractionController::class, 'extractGuest'])
+                ->name('api.guest.extract-video');
+        });
 
-        Route::get('/status/{sessionId}', [VideoExtractionController::class, 'status'])
+        // Authenticated endpoints (Sanctum authentication with rate limiting)
+        Route::middleware(['auth:sanctum', 'auth.rate.limit'])->prefix('auth')->group(function () {
+            Route::post('/extract-video', [VideoExtractionController::class, 'extractAuthenticated'])
+                ->name('api.auth.extract-video');
+        });
+
+        Route::get('extract/status/{sessionId}', [VideoExtractionController::class, 'status'])
             ->name('api.extract.status');
     });
 });

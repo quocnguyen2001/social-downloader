@@ -44,7 +44,7 @@ class RecentTokensWidget extends BaseWidget
 
                 Tables\Columns\TextColumn::make('abilities')
                     ->label('Abilities')
-                    ->formatStateUsing(fn ($state) => implode(', ', $state))
+                    ->formatStateUsing(fn (array|string $state) => is_string($state) ? $state : implode(', ', $state))
                     ->limit(20),
 
                 Tables\Columns\TextColumn::make('last_used_at')

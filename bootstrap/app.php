@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'api.auth' => \App\Http\Middleware\ApiKeyAuthentication::class,
+            'guest.rate.limit' => \App\Http\Middleware\GuestApiRateLimit::class,
+            'auth.rate.limit' => \App\Http\Middleware\AuthenticatedApiRateLimit::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
