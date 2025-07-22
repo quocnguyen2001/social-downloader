@@ -241,4 +241,52 @@ trait ApiResponseTrait
         $headers['Retry-After'] = $retryAfter;
         return $this->errorResponse($message, null, Response::HTTP_TOO_MANY_REQUESTS, $headers);
     }
+
+    /**
+     * Return a success response with the required API format.
+     *
+     * @param mixed $data
+     * @param string $message
+     * @param int $statusCode
+     * @param array $headers
+     * @return JsonResponse
+     */
+    protected function apiSuccessResponse(
+        mixed $data = null,
+        string $message = 'Success',
+        int $statusCode = Response::HTTP_OK,
+        array $headers = []
+    ): JsonResponse {
+        $response = [
+            'error' => false,
+            'data' => $data,
+            'message' => $message,
+        ];
+
+        return response()->json($response, $statusCode, $headers);
+    }
+
+    /**
+     * Return an error response with the required API format.
+     *
+     * @param string $message
+     * @param mixed $data
+     * @param int $statusCode
+     * @param array $headers
+     * @return JsonResponse
+     */
+    protected function apiErrorResponse(
+        string $message = 'Error',
+        mixed $data = null,
+        int $statusCode = Response::HTTP_BAD_REQUEST,
+        array $headers = []
+    ): JsonResponse {
+        $response = [
+            'error' => true,
+            'data' => $data,
+            'message' => $message,
+        ];
+
+        return response()->json($response, $statusCode, $headers);
+    }
 }

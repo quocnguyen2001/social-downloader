@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoExtractionController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->name('api.auth.register');
         Route::post('/login', [AuthController::class, 'login'])->name('api.auth.login');
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('api.auth.forgot-password');
+        Route::post('/new-password', [AuthController::class, 'newPassword'])->name('api.auth.new-password');
         Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('api.auth.reset-password');
     });
 
@@ -32,6 +34,12 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
         Route::get('/user', [AuthController::class, 'user'])->name('api.auth.user');
+    });
+
+    // User profile routes (require Sanctum authentication)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [UserController::class, 'me'])->name('api.user.me');
+        Route::post('/me', [UserController::class, 'updateProfile'])->name('api.user.update-profile');
     });
 
     // Public endpoints (no authentication required)

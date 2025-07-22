@@ -7,12 +7,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\NewPasswordRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Traits\ApiResponseTrait;
 use App\Mail\PasswordChangedEmail;
 use App\Mail\WelcomeEmail;
 use App\Models\User;
+use App\Services\OTPService;
 use App\Services\RateLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,7 +37,8 @@ class AuthController extends Controller
     use ApiResponseTrait;
 
     public function __construct(
-        private RateLimitService $rateLimitService
+        private RateLimitService $rateLimitService,
+        private OTPService $otpService
     ) {
     }
     /**
@@ -219,7 +222,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Send password reset link.
+     * Send OTP for password reset.
      *
      * @param ForgotPasswordRequest $request
      * @return JsonResponse
@@ -234,53 +237,58 @@ class AuthController extends Controller
 
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
                 $seconds = RateLimiter::availableIn($key);
-                return $this->errorResponse(
-                    trans('auth.messages.rate_limit_exceeded'),
-                    [],
+                return $this->apiErrorResponse(
+                    __('Too many password reset attempts. Please try again later.'),
+                    null,
                     429
                 );
             }
 
             // Validation is handled by ForgotPasswordRequest
+            $email = $request->email;
 
-            // Send password reset link
-            $status = Password::sendResetLink(
-                $request->only('email')
-            );
-
-            if ($status === Password::RESET_LINK_SENT) {
-                // Log the password reset request
-                Log::info('Password reset link sent', [
-                    'email' => $request->email,
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                ]);
-
-                return $this->successResponse(
-                    [],
-                    trans('auth.messages.password_reset_sent')
+            // Check if user exists
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                // Don't reveal if user exists or not for security
+                return $this->apiSuccessResponse(
+                    null,
+                    __('If an account with that email exists, we have sent a password reset OTP.')
                 );
             }
 
-            // Hit rate limiter on failure
-            RateLimiter::hit($key, $decayMinutes * 60);
+            // Generate OTP
+            $otp = $this->otpService->generate($email, 'password_reset');
 
-            return $this->errorResponse(
-                trans('auth.messages.password_reset_failed'),
-                [],
-                400
+            // TODO: Send OTP via email (implement email sending)
+            // For now, we'll just log it (remove this in production)
+            Log::info('Password reset OTP generated', [
+                'email' => $email,
+                'otp' => $otp, // Remove this in production
+                'expires_in_minutes' => $this->otpService->getExpirationMinutes(),
+                'ip_address' => $request->ip(),
+            ]);
+
+            return $this->apiSuccessResponse(
+                [
+                    'expires_in_minutes' => $this->otpService->getExpirationMinutes(),
+                ],
+                __('If an account with that email exists, we have sent a password reset OTP.')
             );
 
         } catch (\Exception $e) {
-            Log::error('Password reset request failed', [
+            // Hit rate limiter on failure
+            RateLimiter::hit($key, $decayMinutes * 60);
+
+            Log::error('Password reset OTP generation failed', [
                 'error' => $e->getMessage(),
                 'email' => $request->email ?? 'unknown',
                 'ip_address' => $request->ip(),
             ]);
 
-            return $this->errorResponse(
-                trans('auth.messages.password_reset_failed'),
-                [],
+            return $this->apiErrorResponse(
+                __('Failed to process password reset request. Please try again later.'),
+                null,
                 500
             );
         }
@@ -358,6 +366,86 @@ class AuthController extends Controller
             return $this->errorResponse(
                 trans('auth.messages.password_reset_error'),
                 [],
+                500
+            );
+        }
+    }
+
+    /**
+     * Reset password using OTP.
+     *
+     * @param NewPasswordRequest $request
+     * @return JsonResponse
+     */
+    public function newPassword(NewPasswordRequest $request): JsonResponse
+    {
+        try {
+            $email = $request->email;
+            $otp = $request->otp;
+            $password = $request->password;
+
+            // Validate OTP
+            if (!$this->otpService->validate($email, $otp, 'password_reset')) {
+                return $this->apiErrorResponse(
+                    __('Invalid or expired OTP. Please request a new password reset.'),
+                    null,
+                    400
+                );
+            }
+
+            // Find user
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                return $this->apiErrorResponse(
+                    __('User not found.'),
+                    null,
+                    404
+                );
+            }
+
+            // Update password
+            $user->forceFill([
+                'password' => Hash::make($password),
+            ])->save();
+
+            // Revoke all existing tokens for security
+            $user->tokens()->delete();
+
+            // Log the password reset
+            Log::info('Password reset successfully using OTP', [
+                'user_id' => $user->id,
+                'email' => $email,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            // Send password changed confirmation email
+            try {
+                Mail::to($user)->send(new PasswordChangedEmail($user));
+                Log::info('Password changed email sent', ['user_id' => $user->id]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send password changed email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail password reset if email fails
+            }
+
+            return $this->apiSuccessResponse(
+                null,
+                __('Password has been reset successfully.')
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Password reset with OTP failed', [
+                'error' => $e->getMessage(),
+                'email' => $request->email ?? 'unknown',
+                'ip_address' => $request->ip(),
+            ]);
+
+            return $this->apiErrorResponse(
+                __('Failed to reset password. Please try again.'),
+                null,
                 500
             );
         }

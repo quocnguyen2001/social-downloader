@@ -17,7 +17,7 @@ class TokenController extends Controller
     public function revoke(string $tokenId): JsonResponse
     {
         try {
-            $token = PersonalAccessToken::findOrFail($tokenId);
+            $token = PersonalAccessToken::query()->findOrFail($tokenId);
             $tokenName = $token->name;
 
             $token->delete();
