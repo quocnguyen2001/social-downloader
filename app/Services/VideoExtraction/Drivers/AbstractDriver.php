@@ -13,6 +13,7 @@ use App\Services\VideoExtraction\Exceptions\InvalidUrlException;
 use App\Services\VideoExtraction\Exceptions\RateLimitExceededException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -81,11 +82,15 @@ abstract class AbstractDriver implements DriverInterface, ExtractorInterface
     {
         return [
             'timeout' => config('video-extraction.yt_dlp.timeout', 300),
+            'download_timeout' => config('video-extraction.yt_dlp.download_timeout', 600),
             'max_retries' => config('video-extraction.yt_dlp.max_retries', 3),
             'retry_delay' => 1000, // milliseconds
             'user_agent' => config('video-extraction.yt_dlp.user_agent', 'Mozilla/5.0 (compatible; VideoDownloader/1.0)'),
             'yt_dlp_binary' => config('video-extraction.yt_dlp.binary_path', '/usr/local/bin/yt-dlp'),
             'temp_dir' => config('video-extraction.temp.directory', storage_path('app/temp/video-extraction')),
+            'temp_download_path' => config('video-extraction.local_download.temp_path', 'temp-downloads'),
+            'cleanup_on_success' => config('video-extraction.local_download.cleanup_on_success', true),
+            'cleanup_on_error' => config('video-extraction.local_download.cleanup_on_error', true),
         ];
     }
 
@@ -128,6 +133,88 @@ abstract class AbstractDriver implements DriverInterface, ExtractorInterface
      * @return ExtractionResult The extraction result
      */
     abstract protected function performExtraction(string $url, array $options = []): ExtractionResult;
+
+    /**
+     * Perform extraction with local download, R2 upload, and cleanup workflow.
+     * This method implements the new CORS workaround solution.
+     *
+     * @param string $url The URL to extract from
+     * @param array $options Extraction options
+     * @return ExtractionResult The extraction result with R2 URL
+     * @throws ExtractionFailedException
+     */
+    protected function performExtractionWithDownload(string $url, array $options = []): ExtractionResult
+    {
+        $localPath = null;
+
+        try {
+            // Phase 1: Extract metadata using existing yt-dlp functionality
+            Log::info('Starting video extraction with download workflow', [
+                'url' => $url,
+                'platform' => $this->platform->value,
+                'options' => $options,
+            ]);
+
+            $ytDlpData = $this->executeYtDlp($url, $options);
+
+            // Phase 2: Download video locally
+            $localPath = $this->downloadVideoLocally($url, $options);
+
+            // Phase 3: Upload to R2 storage
+            $videoId = $ytDlpData['id'] ?? $this->extractVideoId($url);
+            if (!$videoId) {
+                throw new ExtractionFailedException(
+                    url: $url,
+                    platform: $this->platform,
+                    reason: 'Could not determine video ID for R2 upload'
+                );
+            }
+
+            $r2Url = $this->uploadToR2Storage($localPath, $videoId);
+
+            // Phase 4: Create extraction result with R2 URL
+            $extractionResult = $this->createExtractionResultFromYtDlp($ytDlpData, $options);
+            $extractionResult->setDownloadUrl($r2Url);
+
+            // Phase 5: Cleanup local file
+            $this->cleanupLocalFile($localPath);
+
+            Log::info('Video extraction with download completed successfully', [
+                'url' => $url,
+                'platform' => $this->platform->value,
+                'r2_url' => $r2Url,
+                'video_id' => $videoId,
+            ]);
+
+            return $extractionResult;
+
+        } catch (\Exception $e) {
+            // Cleanup on any error
+            if ($localPath && file_exists($localPath)) {
+                $this->cleanupLocalFile($localPath);
+            }
+
+            Log::error('Video extraction with download failed', [
+                'url' => $url,
+                'platform' => $this->platform->value,
+                'error' => $e->getMessage(),
+                'local_path' => $localPath,
+            ]);
+
+            // Re-throw the exception to maintain error handling behavior
+            throw $e;
+        }
+    }
+
+    /**
+     * Create extraction result from yt-dlp data.
+     * This method should be implemented by each driver.
+     *
+     * @param array $ytDlpData
+     * @param array $options
+     * @return ExtractionResult
+     */
+    abstract protected function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult;
 
     /**
      * Get the download URL for the video with specified quality and format.
@@ -484,5 +571,248 @@ abstract class AbstractDriver implements DriverInterface, ExtractorInterface
     {
         $platformConfig = config("video-extraction.drivers.{$this->platform->value}", []);
         return $platformConfig['yt_dlp_options'] ?? [];
+    }
+
+    /**
+     * Generate standardized local download path for video files.
+     *
+     * @param string $videoId
+     * @param VideoFormat $format
+     * @return string
+     */
+    protected function generateLocalDownloadPath(string $videoId, VideoFormat $format): string
+    {
+        $timestamp = time();
+        $platform = strtolower($this->platform->value);
+        $extension = $format->value;
+
+        // Sanitize video ID for file system
+        $sanitizedVideoId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $videoId);
+
+        $directory = storage_path("app/temp-downloads/{$platform}/{$sanitizedVideoId}");
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        return "{$directory}/{$timestamp}.{$extension}";
+    }
+
+    /**
+     * Download video locally using yt-dlp.
+     *
+     * @param string $url
+     * @param array $options
+     * @return string Local file path
+     * @throws ExtractionFailedException
+     */
+    protected function downloadVideoLocally(string $url, array $options): string
+    {
+        $videoId = $this->extractVideoId($url);
+        if (!$videoId) {
+            throw new ExtractionFailedException(
+                url: $url,
+                platform: $this->platform,
+                reason: 'Could not extract video ID for local download'
+            );
+        }
+
+        $format = $options['format'] ?? VideoFormat::MP4;
+        $localPath = $this->generateLocalDownloadPath($videoId, $format);
+
+        $command = $this->buildYtDlpDownloadCommand($url, $localPath, $options);
+
+        Log::info('Downloading video locally', [
+            'url' => $url,
+            'platform' => $this->platform->value,
+            'local_path' => $localPath,
+            'command' => $command,
+        ]);
+
+        $downloadTimeout = $this->config['download_timeout'] ?? 300;
+        $result = Process::timeout($downloadTimeout)->run($command);
+
+        if (!$result->successful()) {
+            // Cleanup partial download if exists
+            if (file_exists($localPath)) {
+                unlink($localPath);
+            }
+
+            throw new ExtractionFailedException(
+                url: $url,
+                platform: $this->platform,
+                reason: 'Failed to download video locally: ' . $result->errorOutput()
+            );
+        }
+
+        // Verify file was actually downloaded
+        if (!file_exists($localPath) || filesize($localPath) === 0) {
+            throw new ExtractionFailedException(
+                url: $url,
+                platform: $this->platform,
+                reason: 'Downloaded file is missing or empty'
+            );
+        }
+
+        Log::info('Video downloaded successfully', [
+            'url' => $url,
+            'platform' => $this->platform->value,
+            'local_path' => $localPath,
+            'file_size' => filesize($localPath),
+        ]);
+
+        return $localPath;
+    }
+
+    /**
+     * Build yt-dlp command for downloading video files.
+     *
+     * @param string $url
+     * @param string $outputPath
+     * @param array $options
+     * @return string
+     */
+    protected function buildYtDlpDownloadCommand(string $url, string $outputPath, array $options): string
+    {
+        $binary = $this->config['yt_dlp_binary'];
+        $command = [$binary];
+
+        // Use best quality format
+        $command[] = '-f';
+        $command[] = 'best';
+
+        // Set output path
+        $command[] = '-o';
+        $command[] = escapeshellarg($outputPath);
+
+        // Add user agent
+        $command[] = '--user-agent';
+        $command[] = escapeshellarg($this->config['user_agent']);
+
+        // Add platform-specific options for download
+        $platformOptions = $this->getPlatformYtDlpOptions();
+        foreach ($platformOptions as $option => $value) {
+            // Skip metadata-only options for download
+            if (in_array($option, ['--dump-json', '--write-info-json'])) {
+                continue;
+            }
+
+            if (is_bool($value)) {
+                if ($value) {
+                    $command[] = $option;
+                }
+            } else {
+                $command[] = $option;
+                if ($value !== null) {
+                    $command[] = escapeshellarg($value);
+                }
+            }
+        }
+
+        // Add the URL
+        $command[] = escapeshellarg($url);
+
+        return implode(' ', $command);
+    }
+
+    /**
+     * Upload downloaded video file to R2 storage.
+     *
+     * @param string $localPath
+     * @param string $videoId
+     * @return string R2 URL
+     * @throws ExtractionFailedException
+     */
+    protected function uploadToR2Storage(string $localPath, string $videoId): string
+    {
+        if (!file_exists($localPath)) {
+            throw new ExtractionFailedException(
+                url: '',
+                platform: $this->platform,
+                reason: 'Local file not found for R2 upload: ' . $localPath
+            );
+        }
+
+        $platform = strtolower($this->platform->value);
+        $filename = basename($localPath);
+        $sanitizedVideoId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $videoId);
+        $r2Path = "videos/{$platform}/{$sanitizedVideoId}/{$filename}";
+
+        Log::info('Uploading video to R2 storage', [
+            'local_path' => $localPath,
+            'r2_path' => $r2Path,
+            'platform' => $this->platform->value,
+            'file_size' => filesize($localPath),
+        ]);
+
+        try {
+            $uploaded = Storage::disk('r2')->put($r2Path, file_get_contents($localPath));
+
+            if (!$uploaded) {
+                throw new ExtractionFailedException(
+                    url: '',
+                    platform: $this->platform,
+                    reason: 'Failed to upload file to R2 storage'
+                );
+            }
+
+            $r2Url = Storage::disk('r2')->url($r2Path);
+
+            Log::info('Video uploaded to R2 successfully', [
+                'r2_path' => $r2Path,
+                'r2_url' => $r2Url,
+                'platform' => $this->platform->value,
+            ]);
+
+            return $r2Url;
+
+        } catch (\Exception $e) {
+            throw new ExtractionFailedException(
+                url: '',
+                platform: $this->platform,
+                reason: 'R2 upload failed: ' . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Clean up local downloaded file and empty directories.
+     *
+     * @param string $localPath
+     * @return void
+     */
+    protected function cleanupLocalFile(string $localPath): void
+    {
+        if (file_exists($localPath)) {
+            unlink($localPath);
+
+            Log::debug('Local file cleaned up', [
+                'path' => $localPath,
+                'platform' => $this->platform->value,
+            ]);
+
+            // Cleanup empty directories
+            $directory = dirname($localPath);
+            if (is_dir($directory) && $this->isDirectoryEmpty($directory)) {
+                rmdir($directory);
+
+                // Cleanup parent directory if empty too
+                $parentDir = dirname($directory);
+                if (is_dir($parentDir) && $this->isDirectoryEmpty($parentDir)) {
+                    rmdir($parentDir);
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if directory is empty (contains only . and ..).
+     *
+     * @param string $directory
+     * @return bool
+     */
+    private function isDirectoryEmpty(string $directory): bool
+    {
+        $files = scandir($directory);
+        return count($files) <= 2; // Only . and ..
     }
 }

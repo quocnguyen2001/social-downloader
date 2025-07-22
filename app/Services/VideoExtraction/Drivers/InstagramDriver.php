@@ -58,7 +58,7 @@ class InstagramDriver extends AbstractDriver
             );
         }
 
-        // Use yt-dlp to extract video information
+        // Use original metadata extraction approach (CDN URLs)
         $ytDlpData = $this->executeYtDlp($url, $options);
 
         return $this->createExtractionResultFromYtDlp($ytDlpData, $options);
@@ -89,7 +89,7 @@ class InstagramDriver extends AbstractDriver
     /**
      * Create extraction result from yt-dlp data.
      */
-    private function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult
+    protected function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult
     {
         $quality = $options['quality'] ?? VideoQuality::Q720P;
         $format = $options['format'] ?? VideoFormat::MP4;

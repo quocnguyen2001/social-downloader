@@ -56,10 +56,8 @@ class TikTokDriver extends AbstractDriver
             );
         }
 
-        // Use yt-dlp to extract video information
-        $ytDlpData = $this->executeYtDlp($url, $options);
-
-        return $this->createExtractionResultFromYtDlp($ytDlpData, $options);
+        // Use new download-upload-cleanup workflow
+        return $this->performExtractionWithDownload($url, $options);
     }
 
     /**
@@ -93,7 +91,7 @@ class TikTokDriver extends AbstractDriver
     /**
      * Create extraction result from yt-dlp data.
      */
-    private function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult
+    protected function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult
     {
         $quality = $options['quality'] ?? VideoQuality::Q720P;
         $format = $options['format'] ?? VideoFormat::MP4;

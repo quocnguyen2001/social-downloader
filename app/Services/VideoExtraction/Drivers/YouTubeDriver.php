@@ -80,7 +80,7 @@ class YouTubeDriver extends AbstractDriver
             );
         }
 
-        // Use yt-dlp to extract video information with clean URL
+        // Use original metadata extraction approach (CDN URLs)
         $ytDlpData = $this->executeYtDlp($cleanUrl, $options);
 
         return $this->createExtractionResultFromYtDlp($ytDlpData, $options);
@@ -229,7 +229,7 @@ class YouTubeDriver extends AbstractDriver
     /**
      * Create extraction result from yt-dlp data.
      */
-    private function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult
+    protected function createExtractionResultFromYtDlp(array $ytDlpData, array $options = []): ExtractionResult
     {
         $quality = $options['quality'] ?? VideoQuality::Q720P;
         $format = $options['format'] ?? VideoFormat::MP4;

@@ -37,13 +37,30 @@ return [
 
     'yt_dlp' => [
         'binary_path' => env('YT_DLP_BINARY_PATH', '/usr/local/bin/yt-dlp'),
-        'timeout' => env('YT_DLP_TIMEOUT', 300), // 5 minutes
+        'timeout' => env('YT_DLP_TIMEOUT', 300), // 5 minutes for metadata extraction
+        'download_timeout' => env('YT_DLP_DOWNLOAD_TIMEOUT', 600), // 10 minutes for video download
         'max_retries' => env('YT_DLP_MAX_RETRIES', 3),
         'user_agent' => env('YT_DLP_USER_AGENT', 'Mozilla/5.0 (compatible; VideoDownloader/1.0)'),
         'output_template' => env('YT_DLP_OUTPUT_TEMPLATE', '%(title)s.%(ext)s'),
         'extract_flat' => env('YT_DLP_EXTRACT_FLAT', false),
         'no_warnings' => env('YT_DLP_NO_WARNINGS', true),
         'ignore_errors' => env('YT_DLP_IGNORE_ERRORS', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Local Download Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for local video downloads before uploading to R2 storage.
+    | This is part of the CORS workaround solution.
+    |
+    */
+
+    'local_download' => [
+        'temp_path' => env('VIDEO_TEMP_DOWNLOAD_PATH', 'temp-downloads'),
+        'cleanup_on_success' => env('VIDEO_CLEANUP_ON_SUCCESS', true),
+        'cleanup_on_error' => env('VIDEO_CLEANUP_ON_ERROR', true),
     ],
 
     /*

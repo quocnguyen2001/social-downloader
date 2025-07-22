@@ -55,6 +55,7 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => true, // Rất quan trọng
+            'url' => env('R2_URL'),
         ],
 
         's3' => [
