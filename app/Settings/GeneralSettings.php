@@ -39,15 +39,6 @@ class GeneralSettings extends Settings
      */
     public string $site_url;
 
-    /**
-     * Enable/disable user registration.
-     */
-    public bool $allow_user_registration;
-
-    /**
-     * Enable/disable email verification for new users.
-     */
-    public bool $require_email_verification;
 
     /**
      * Default timezone for the application.

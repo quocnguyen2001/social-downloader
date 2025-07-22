@@ -31,7 +31,6 @@ class MembershipPlanResource extends JsonResource
             'currency' => $this->currency,
             'billing_cycle' => $this->billing_cycle,
             'daily_request_limit' => $this->daily_request_limit,
-            'weekly_request_limit' => $this->weekly_request_limit,
             'total_request_download' => $this->total_request_download,
             'allowed_platforms' => $this->allowed_platforms,
             'allowed_qualities' => $this->allowed_qualities,

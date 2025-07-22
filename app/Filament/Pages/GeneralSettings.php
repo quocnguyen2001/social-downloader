@@ -87,37 +87,6 @@ class GeneralSettings extends SettingsPage
                             ->required()
                             ->url()
                             ->placeholder('https://example.com'),
-                    ])
-                    ->columns(1),
-
-                Forms\Components\Section::make('Contact Information')
-                    ->description('Administrative and support contact details')
-                    ->schema([
-                        Forms\Components\TextInput::make('admin_email')
-                            ->label('Admin Email')
-                            ->required()
-                            ->email()
-                            ->placeholder('admin@example.com'),
-
-                        Forms\Components\TextInput::make('support_email')
-                            ->label('Support Email')
-                            ->required()
-                            ->email()
-                            ->placeholder('support@example.com'),
-                    ])
-                    ->columns(2),
-
-                Forms\Components\Section::make('User Management')
-                    ->description('User registration and verification settings')
-                    ->schema([
-                        Forms\Components\Toggle::make('allow_user_registration')
-                            ->label('Allow User Registration')
-                            ->helperText('Enable or disable new user registrations'),
-
-                        Forms\Components\Toggle::make('require_email_verification')
-                            ->label('Require Email Verification')
-                            ->helperText('Require users to verify their email address'),
-
                         Forms\Components\Select::make('default_timezone')
                             ->label('Default Timezone')
                             ->options([
@@ -135,35 +104,22 @@ class GeneralSettings extends SettingsPage
                             ->required()
                             ->searchable(),
                     ])
-                    ->columns(2),
-
-                Forms\Components\Section::make('Maintenance Mode')
-                    ->description('System maintenance settings')
-                    ->schema([
-                        Forms\Components\Toggle::make('maintenance_mode')
-                            ->label('Enable Maintenance Mode')
-                            ->helperText('Put the site in maintenance mode'),
-
-                        Forms\Components\Textarea::make('maintenance_message')
-                            ->label('Maintenance Message')
-                            ->maxLength(500)
-                            ->rows(3)
-                            ->placeholder('We are currently performing maintenance. Please check back later.'),
-                    ])
                     ->columns(1),
 
-                Forms\Components\Section::make('Legal Pages')
-                    ->description('Links to legal documents')
+                Forms\Components\Section::make('Contact Information')
+                    ->description('Administrative and support contact details')
                     ->schema([
-                        Forms\Components\TextInput::make('terms_of_service_url')
-                            ->label('Terms of Service URL')
-                            ->url()
-                            ->placeholder('https://example.com/terms'),
+                        Forms\Components\TextInput::make('admin_email')
+                            ->label('Admin Email')
+                            ->required()
+                            ->email()
+                            ->placeholder('admin@example.com'),
 
-                        Forms\Components\TextInput::make('privacy_policy_url')
-                            ->label('Privacy Policy URL')
-                            ->url()
-                            ->placeholder('https://example.com/privacy'),
+                        Forms\Components\TextInput::make('support_email')
+                            ->label('Support Email')
+                            ->required()
+                            ->email()
+                            ->placeholder('support@example.com'),
                     ])
                     ->columns(2),
 

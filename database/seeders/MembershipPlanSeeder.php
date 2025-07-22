@@ -21,7 +21,6 @@ class MembershipPlanSeeder extends Seeder
                 'currency' => 'USD',
                 'billing_cycle' => 'monthly',
                 'daily_request_limit' => 10,
-                'weekly_request_limit' => 50,
                 'total_request_download' => 200,
                 'allowed_platforms' => ['youtube', 'tiktok'],
                 'allowed_qualities' => ['360p', '720p'],
@@ -40,7 +39,6 @@ class MembershipPlanSeeder extends Seeder
                 'currency' => 'USD',
                 'billing_cycle' => 'monthly',
                 'daily_request_limit' => 50,
-                'weekly_request_limit' => 300,
                 'total_request_download' => 1000,
                 'allowed_platforms' => ['youtube', 'tiktok', 'instagram'],
                 'allowed_qualities' => ['360p', '720p', '1080p'],
@@ -59,7 +57,6 @@ class MembershipPlanSeeder extends Seeder
                 'currency' => 'USD',
                 'billing_cycle' => 'monthly',
                 'daily_request_limit' => 200,
-                'weekly_request_limit' => 1200,
                 'total_request_download' => 5000,
                 'allowed_platforms' => ['youtube', 'tiktok', 'instagram', 'facebook'],
                 'allowed_qualities' => ['144p', '360p', '720p', '1080p'],
@@ -78,7 +75,6 @@ class MembershipPlanSeeder extends Seeder
                 'currency' => 'USD',
                 'billing_cycle' => 'monthly',
                 'daily_request_limit' => 0, // Unlimited
-                'weekly_request_limit' => 0, // Unlimited
                 'total_request_download' => 0, // Unlimited
                 'allowed_platforms' => ['youtube', 'tiktok', 'instagram', 'facebook'],
                 'allowed_qualities' => ['144p', '360p', '720p', '1080p'],
@@ -97,7 +93,6 @@ class MembershipPlanSeeder extends Seeder
                 'currency' => 'USD',
                 'billing_cycle' => 'monthly',
                 'daily_request_limit' => 0, // Unlimited
-                'weekly_request_limit' => 0, // Unlimited
                 'total_request_download' => 0, // Unlimited
                 'allowed_platforms' => ['youtube', 'tiktok', 'instagram', 'facebook'],
                 'allowed_qualities' => ['144p', '360p', '720p', '1080p'],

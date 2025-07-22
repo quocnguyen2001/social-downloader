@@ -129,7 +129,6 @@ class User extends Authenticatable
 
         $startDate = match ($period) {
             'daily' => now()->startOfDay(),
-            'weekly' => now()->startOfWeek(),
             'monthly' => now()->startOfMonth(),
             default => now()->startOfDay(),
         };

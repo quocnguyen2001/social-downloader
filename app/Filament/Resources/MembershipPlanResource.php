@@ -103,12 +103,7 @@ class MembershipPlanResource extends Resource
                             ->minValue(0)
                             ->suffix('requests/day'),
 
-                        Forms\Components\TextInput::make('weekly_request_limit')
-                            ->required()
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->suffix('requests/week'),
+
 
                         Forms\Components\TextInput::make('total_request_download')
                             ->label('Total Download Requests')
@@ -119,7 +114,7 @@ class MembershipPlanResource extends Resource
                             ->suffix('total requests')
                             ->helperText('Total number of download requests allowed (0 = unlimited)'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
 
                 Forms\Components\Section::make('Platform & Quality Restrictions')
                     ->description('Leave empty to allow all options')
@@ -313,11 +308,7 @@ class MembershipPlanResource extends Resource
                             ->badge()
                             ->color(fn ($state) => $state === 0 ? 'success' : 'info'),
 
-                        Infolists\Components\TextEntry::make('weekly_request_limit')
-                            ->label('Weekly Requests')
-                            ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
-                            ->badge()
-                            ->color(fn ($state) => $state === 0 ? 'success' : 'info'),
+
 
                         Infolists\Components\TextEntry::make('total_request_download')
                             ->label('Total Download Requests')
@@ -325,7 +316,7 @@ class MembershipPlanResource extends Resource
                             ->badge()
                             ->color(fn ($state) => $state === 0 ? 'success' : 'warning'),
                     ])
-                    ->columns(3),
+                    ->columns(2),
 
                 Infolists\Components\Section::make('Platform & Quality Restrictions')
                     ->schema([

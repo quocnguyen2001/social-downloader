@@ -47,7 +47,6 @@ class MembershipPlanFactory extends Factory
 
             // Request limits
             'daily_request_limit' => fake()->randomElement([0, 100, 500, 1000, 5000, 10000]),
-            'weekly_request_limit' => fake()->randomElement([0, 700, 3500, 7000, 35000, 70000]),
             'total_request_download' => fake()->randomElement([0, 5000, 25000, 50000, 250000, 500000]),
 
             // Features
@@ -76,7 +75,6 @@ class MembershipPlanFactory extends Factory
             'slug' => 'free',
             'price' => 0.00,
             'daily_request_limit' => 100,
-            'weekly_request_limit' => 700,
             'total_request_download' => 3000,
             'priority_processing' => false,
             'max_file_size_mb' => 50,

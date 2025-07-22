@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $currency
  * @property string $billing_cycle
  * @property int $daily_request_limit
- * @property int $weekly_request_limit
+
  * @property int $total_request_download
  * @property array|null $allowed_platforms
  * @property array|null $allowed_qualities
@@ -49,7 +49,6 @@ class MembershipPlan extends Model
         'currency',
         'billing_cycle',
         'daily_request_limit',
-        'weekly_request_limit',
         'total_request_download',
         'allowed_platforms',
         'allowed_qualities',
@@ -69,7 +68,6 @@ class MembershipPlan extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'daily_request_limit' => 'integer',
-        'weekly_request_limit' => 'integer',
         'total_request_download' => 'integer',
         'allowed_platforms' => 'array',
         'allowed_qualities' => 'array',
@@ -120,7 +118,6 @@ class MembershipPlan extends Model
     {
         return match ($period) {
             'daily' => $this->daily_request_limit === 0,
-            'weekly' => $this->weekly_request_limit === 0,
             'total' => $this->total_request_download === 0,
             default => false,
         };
@@ -133,7 +130,6 @@ class MembershipPlan extends Model
     {
         return match ($period) {
             'daily' => $this->daily_request_limit,
-            'weekly' => $this->weekly_request_limit,
             'total' => $this->total_request_download,
             default => 0,
         };
