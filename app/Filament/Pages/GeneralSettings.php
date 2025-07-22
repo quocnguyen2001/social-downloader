@@ -138,6 +138,68 @@ class GeneralSettings extends SettingsPage
                     ])
                     ->columns(1),
 
+                Forms\Components\Section::make('SEO Settings')
+                    ->description('Search engine optimization settings')
+                    ->schema([
+                        Forms\Components\TextInput::make('meta_title')
+                            ->label('Meta Title')
+                            ->maxLength(60)
+                            ->placeholder('Social Downloader - Download Videos from Social Platforms')
+                            ->helperText('Recommended length: 50-60 characters'),
+
+                        Forms\Components\Textarea::make('meta_description')
+                            ->label('Meta Description')
+                            ->maxLength(160)
+                            ->rows(3)
+                            ->placeholder('Download videos and media from popular social platforms...')
+                            ->helperText('Recommended length: 150-160 characters'),
+
+                        Forms\Components\Textarea::make('meta_keywords')
+                            ->label('Meta Keywords')
+                            ->maxLength(255)
+                            ->rows(2)
+                            ->placeholder('video downloader, social media downloader, youtube downloader')
+                            ->helperText('Comma-separated keywords'),
+                    ])
+                    ->columns(1),
+
+                Forms\Components\Section::make('Copyright Information')
+                    ->description('Website copyright details')
+                    ->schema([
+                        Forms\Components\TextInput::make('copyright_text')
+                            ->label('Copyright Text')
+                            ->maxLength(255)
+                            ->placeholder('All rights reserved.'),
+
+                        Forms\Components\TextInput::make('copyright_year')
+                            ->label('Copyright Year')
+                            ->maxLength(4)
+                            ->placeholder((string) date('Y'))
+                            ->helperText('Current year will be used if empty'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Brand Assets')
+                    ->description('Logo and favicon management')
+                    ->schema([
+                        Forms\Components\FileUpload::make('logo_path')
+                            ->label('Site Logo')
+                            ->image()
+                            ->directory('logos')
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/svg+xml'])
+                            ->maxSize(2048)
+                            ->helperText('Upload your site logo (JPEG, PNG, SVG - Max 2MB)'),
+
+                        Forms\Components\FileUpload::make('favicon_path')
+                            ->label('Favicon')
+                            ->image()
+                            ->directory('favicons')
+                            ->acceptedFileTypes(['image/x-icon', 'image/png'])
+                            ->maxSize(512)
+                            ->helperText('Upload favicon (ICO, PNG - Max 512KB)'),
+                    ])
+                    ->columns(2),
+
                 Forms\Components\Section::make('Legal Pages')
                     ->description('Links to legal documents')
                     ->schema([

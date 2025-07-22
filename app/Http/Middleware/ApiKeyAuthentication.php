@@ -271,7 +271,7 @@ class ApiKeyAuthentication
             'premium' => 1000, // 1000 requests per minute
             'pro' => 300,      // 300 requests per minute
             'basic' => 60,     // 60 requests per minute
-            default => 10,     // 10 requests per minute for unknown tiers
+            default => 60,     // 10 requests per minute for unknown tiers
         };
     }
 

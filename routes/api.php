@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\MembershipPlanController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoExtractionController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +45,12 @@ Route::prefix('v1')->group(function () {
     });
 
     // Public endpoints (no authentication required)
+    Route::get('/settings', [SettingsController::class, 'index'])
+        ->name('api.settings.index');
+
+    Route::get('/membership-plans', [MembershipPlanController::class, 'index'])
+        ->name('api.membership-plans.index');
+
     Route::prefix('extract')->group(function () {
         Route::get('/platforms', [VideoExtractionController::class, 'platforms'])
             ->name('api.extract.platforms');

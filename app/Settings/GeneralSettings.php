@@ -66,6 +66,41 @@ class GeneralSettings extends Settings
     public ?string $privacy_policy_url;
 
     /**
+     * SEO meta title.
+     */
+    public ?string $meta_title;
+
+    /**
+     * SEO meta description.
+     */
+    public ?string $meta_description;
+
+    /**
+     * SEO meta keywords.
+     */
+    public ?string $meta_keywords;
+
+    /**
+     * Copyright text.
+     */
+    public ?string $copyright_text;
+
+    /**
+     * Copyright year.
+     */
+    public ?string $copyright_year;
+
+    /**
+     * Logo file path.
+     */
+    public ?string $logo_path;
+
+    /**
+     * Favicon file path.
+     */
+    public ?string $favicon_path;
+
+    /**
      * Get the settings group name.
      */
     public static function group(): string
@@ -91,6 +126,13 @@ class GeneralSettings extends Settings
             'maintenance_message' => 'We are currently performing maintenance. Please check back later.',
             'terms_of_service_url' => null,
             'privacy_policy_url' => null,
+            'meta_title' => 'Social Downloader - Download Videos from Social Platforms',
+            'meta_description' => 'Download videos and media from popular social platforms like YouTube, TikTok, Instagram, and Facebook with our easy-to-use social downloader tool.',
+            'meta_keywords' => 'video downloader, social media downloader, youtube downloader, tiktok downloader, instagram downloader',
+            'copyright_text' => 'All rights reserved.',
+            'copyright_year' => (string) date('Y'),
+            'logo_path' => null,
+            'favicon_path' => null,
         ];
     }
 }

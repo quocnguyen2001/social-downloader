@@ -29,6 +29,13 @@ return new class extends SettingsMigration
         $this->migrator->add('general.maintenance_message', 'We are currently performing maintenance. Please check back later.');
         $this->migrator->add('general.terms_of_service_url', null);
         $this->migrator->add('general.privacy_policy_url', null);
+        $this->migrator->add('general.meta_title', 'Social Downloader - Download Videos from Social Platforms');
+        $this->migrator->add('general.meta_description', 'Download videos and media from popular social platforms like YouTube, TikTok, Instagram, and Facebook with our easy-to-use social downloader tool.');
+        $this->migrator->add('general.meta_keywords', 'video downloader, social media downloader, youtube downloader, tiktok downloader, instagram downloader');
+        $this->migrator->add('general.copyright_text', 'All rights reserved.');
+        $this->migrator->add('general.copyright_year', (string) date('Y'));
+        $this->migrator->add('general.logo_path', null);
+        $this->migrator->add('general.favicon_path', null);
     }
 
     /**
@@ -48,5 +55,12 @@ return new class extends SettingsMigration
         $this->migrator->delete('general.maintenance_message');
         $this->migrator->delete('general.terms_of_service_url');
         $this->migrator->delete('general.privacy_policy_url');
+        $this->migrator->delete('general.meta_title');
+        $this->migrator->delete('general.meta_description');
+        $this->migrator->delete('general.meta_keywords');
+        $this->migrator->delete('general.copyright_text');
+        $this->migrator->delete('general.copyright_year');
+        $this->migrator->delete('general.logo_path');
+        $this->migrator->delete('general.favicon_path');
     }
 };
