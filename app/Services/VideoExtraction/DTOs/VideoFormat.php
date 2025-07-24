@@ -50,7 +50,7 @@ class VideoFormat
             'quality' => $quality,
             'type' => $type->value, // Store as string value for database
             'mime_type' => $mimeType,
-            'file_size' => $this->filesize,
+            'file_size' => $this->filesize, // This might be null if not available from yt-dlp
             'status' => DownloadOptionStatus::CDN->value, // Store as string value for database
         ];
     }

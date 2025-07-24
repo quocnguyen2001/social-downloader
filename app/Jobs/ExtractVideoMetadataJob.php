@@ -152,6 +152,15 @@ class ExtractVideoMetadataJob implements ShouldQueue
                 // Set estimated download time based on file size
                 $downloadOptionData['estimated_download_time'] = $this->estimateDownloadTime($format->filesize);
 
+                Log::debug('Creating download option', [
+                    'download_session_id' => $downloadSession->id,
+                    'format_id' => $format->formatId,
+                    'filesize_from_format' => $format->filesize,
+                    'file_size_in_data' => $downloadOptionData['file_size'] ?? 'not set',
+                    'estimated_download_time' => $downloadOptionData['estimated_download_time'],
+                    'all_data' => $downloadOptionData,
+                ]);
+
                 DownloadOption::query()->create($downloadOptionData);
             }
         });
