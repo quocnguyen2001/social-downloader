@@ -161,6 +161,26 @@ class DownloadOption extends Model
     }
 
     /**
+     * Mark this option as processing.
+     */
+    public function markAsProcessing(): void
+    {
+        $this->update([
+            'status' => DownloadOptionStatus::PROCESSING,
+        ]);
+    }
+
+    /**
+     * Mark this option as failed.
+     */
+    public function markAsFailed(): void
+    {
+        $this->update([
+            'status' => DownloadOptionStatus::FAILED,
+        ]);
+    }
+
+    /**
      * Get format type description.
      */
     public function getFormatTypeDescription(): string

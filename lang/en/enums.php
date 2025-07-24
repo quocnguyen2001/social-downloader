@@ -37,6 +37,8 @@ return [
     'download_option_status' => [
         'downloaded' => 'Downloaded',
         'cdn' => 'CDN',
+        'processing' => 'Processing',
+        'failed' => 'Failed',
     ],
 
     'download_option_type' => [

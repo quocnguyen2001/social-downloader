@@ -10,6 +10,8 @@ enum DownloadOptionStatus: string implements HasColor, HasIcon, HasLabel
 {
     case DOWNLOADED = 'downloaded';
     case CDN = 'cdn';
+    case PROCESSING = 'processing';
+    case FAILED = 'failed';
 
     public function getLabel(): ?string
     {
@@ -21,6 +23,8 @@ enum DownloadOptionStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::DOWNLOADED => 'success',
             self::CDN => 'info',
+            self::PROCESSING => 'warning',
+            self::FAILED => 'danger',
         };
     }
 
@@ -29,6 +33,8 @@ enum DownloadOptionStatus: string implements HasColor, HasIcon, HasLabel
         return match ($this) {
             self::DOWNLOADED => 'heroicon-o-arrow-down-tray',
             self::CDN => 'heroicon-o-cloud',
+            self::PROCESSING => 'heroicon-o-arrow-path',
+            self::FAILED => 'heroicon-o-x-circle',
         };
     }
 
@@ -52,5 +58,25 @@ enum DownloadOptionStatus: string implements HasColor, HasIcon, HasLabel
     public function isCdn(): bool
     {
         return $this === self::CDN;
+    }
+
+    public function isProcessing(): bool
+    {
+        return $this === self::PROCESSING;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this === self::FAILED;
+    }
+
+    public function canBeDownloaded(): bool
+    {
+        return in_array($this, [self::DOWNLOADED, self::CDN]);
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this === self::PROCESSING;
     }
 }

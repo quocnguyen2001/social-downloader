@@ -65,6 +65,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | File Upload Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for uploading downloaded videos to cloud storage.
+    |
+    */
+
+    'upload' => [
+        'large_file_threshold' => env('VIDEO_UPLOAD_LARGE_FILE_THRESHOLD', 100 * 1024 * 1024), // 100MB
+        'default_storage_disk' => env('VIDEO_UPLOAD_DEFAULT_DISK', 'r2'),
+        'cleanup_local_after_upload' => env('VIDEO_CLEANUP_LOCAL_AFTER_UPLOAD', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Driver Configuration
     |--------------------------------------------------------------------------
     |

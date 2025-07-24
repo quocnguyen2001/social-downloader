@@ -20,6 +20,8 @@ return [
         'download_marked_expired' => 'Phiên tải xuống đã được đánh dấu hết hạn',
         'expired_sessions_cleaned' => 'Đã dọn dẹp :count phiên hết hạn',
         'failed_sessions_retried' => 'Đã xếp hàng :count phiên thất bại để thử lại',
+        'download_triggered' => 'Tải xuống video đã được kích hoạt và sẽ được xử lý trong nền',
+        'download_ready' => 'Tải xuống video đã sẵn sàng để truy cập',
     ],
     
     'warnings' => [
@@ -33,6 +35,8 @@ return [
         'success_rate' => 'Tỷ lệ thành công :rate%',
         'revenue_change' => ':change% so với tháng trước',
         'pending_processing' => ':pending đang chờ, :processing đang xử lý',
+        'download_processing' => 'Tải xuống video đang được xử lý',
+        'download_not_started' => 'Tải xuống video chưa được bắt đầu',
     ],
     
     'navigation' => [
@@ -327,5 +331,16 @@ return [
 
     'labels' => [
         'unknown' => 'Không rõ',
+    ],
+
+    'error' => [
+        'not_found' => 'Không tìm thấy :resource',
+        'already_processing' => 'Tải xuống đang được xử lý',
+        'already_downloaded' => 'Tải xuống đã hoàn thành',
+        'missing_cdn_id' => 'Thiếu CDN ID cho tùy chọn tải xuống này',
+        'missing_download_session' => 'Thiếu phiên tải xuống',
+        'missing_origin_url' => 'Thiếu URL gốc từ phiên tải xuống',
+        'download_failed' => 'Tải xuống video đã thất bại',
+        'internal_server_error' => 'Đã xảy ra lỗi máy chủ nội bộ',
     ],
 ];

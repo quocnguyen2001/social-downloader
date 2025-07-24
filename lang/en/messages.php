@@ -20,6 +20,8 @@ return [
         'download_marked_expired' => 'Download session marked as expired',
         'expired_sessions_cleaned' => 'Cleaned up :count expired sessions',
         'failed_sessions_retried' => 'Queued :count failed sessions for retry',
+        'download_triggered' => 'Video download has been triggered and will be processed in the background',
+        'download_ready' => 'Video download is ready for access',
     ],
     
     'warnings' => [
@@ -33,6 +35,8 @@ return [
         'success_rate' => ':rate% success rate',
         'revenue_change' => ':change% from last month',
         'pending_processing' => ':pending pending, :processing processing',
+        'download_processing' => 'Video download is currently being processed',
+        'download_not_started' => 'Video download has not been started yet',
     ],
     
     'navigation' => [
@@ -327,5 +331,16 @@ return [
 
     'labels' => [
         'unknown' => 'Unknown',
+    ],
+
+    'error' => [
+        'not_found' => ':resource not found',
+        'already_processing' => 'Download is already being processed',
+        'already_downloaded' => 'Download has already been completed',
+        'missing_cdn_id' => 'CDN ID is missing for this download option',
+        'missing_download_session' => 'Download session is missing',
+        'missing_origin_url' => 'Origin URL is missing from download session',
+        'download_failed' => 'Video download has failed',
+        'internal_server_error' => 'An internal server error occurred',
     ],
 ];

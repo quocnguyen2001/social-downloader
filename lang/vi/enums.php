@@ -37,6 +37,8 @@ return [
     'download_option_status' => [
         'downloaded' => 'Đã tải xuống',
         'cdn' => 'CDN',
+        'processing' => 'Đang xử lý',
+        'failed' => 'Thất bại',
     ],
 
     'download_option_type' => [

@@ -4,6 +4,7 @@ namespace App\Services\VideoExtraction;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Storage;
 use App\Services\VideoExtraction\DTOs\VideoFormat;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
 
@@ -376,6 +377,107 @@ class YtDlpService
                 'error' => $e->getMessage()
             ]);
             return [];
+        }
+    }
+
+    /**
+     * Download video using yt-dlp command.
+     *
+     * @param string $originUrl The original video URL
+     * @param string $cdnId The CDN format ID to download
+     * @param string|null $outputDirectory Optional output directory (defaults to temp directory)
+     * @return array Download result with file path, size, and metadata
+     * @throws YtDlpException
+     */
+    public function downloadVideo(string $originUrl, string $cdnId, ?string $outputDirectory = null): array
+    {
+        try {
+            // Use configured temp directory if none provided
+            $outputDirectory = $outputDirectory ?? config('video-extraction.temp.directory');
+
+            // Ensure output directory exists
+            if (!is_dir($outputDirectory)) {
+                mkdir($outputDirectory, 0755, true);
+            }
+
+            Log::info('Starting video download with yt-dlp', [
+                'url' => $originUrl,
+                'cdn_id' => $cdnId,
+                'output_directory' => $outputDirectory,
+            ]);
+
+            // Execute yt-dlp download command
+            $result = Process::timeout(config('video-extraction.yt_dlp.download_timeout', 600))->run([
+                'yt-dlp',
+                '-f', $cdnId,
+                '-P', $outputDirectory,
+                '-o', '%(title)s.%(ext)s',
+                '--no-warnings',
+                '--no-playlist',
+                '--print', 'after_move:filepath',
+                '--print', 'filesize',
+                '--print', 'title',
+                $originUrl
+            ]);
+
+            if (!$result->successful()) {
+                throw new YtDlpException(
+                    'yt-dlp download failed: ' . $result->errorOutput(),
+                    $result->exitCode()
+                );
+            }
+
+            $output = trim($result->output());
+            $lines = explode("\n", $output);
+
+            // Parse output - last 3 lines should be filepath, filesize, title
+            $outputLines = array_filter($lines, fn($line) => !empty(trim($line)));
+            $outputLines = array_values($outputLines);
+
+            if (count($outputLines) < 3) {
+                throw new YtDlpException('Unexpected yt-dlp output format');
+            }
+
+            $filePath = end($outputLines);
+            $fileSize = prev($outputLines);
+            $title = prev($outputLines);
+
+            // Verify file exists
+            if (!file_exists($filePath)) {
+                throw new YtDlpException('Downloaded file not found: ' . $filePath);
+            }
+
+            $actualFileSize = filesize($filePath);
+
+            Log::info('Video download completed successfully', [
+                'url' => $originUrl,
+                'cdn_id' => $cdnId,
+                'file_path' => $filePath,
+                'file_size' => $actualFileSize,
+                'title' => $title,
+            ]);
+
+            return [
+                'file_path' => $filePath,
+                'file_size' => $actualFileSize,
+                'title' => $title,
+                'cdn_id' => $cdnId,
+                'original_url' => $originUrl,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Video download failed', [
+                'url' => $originUrl,
+                'cdn_id' => $cdnId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw new YtDlpException(
+                'Failed to download video: ' . $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
         }
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\MembershipPlanController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoExtractionController;
+use App\Http\Controllers\Api\VideoDownloadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -72,5 +73,13 @@ Route::prefix('v1')->group(function () {
 
         Route::get('extract/status/{sessionId}', [VideoExtractionController::class, 'status'])
             ->name('api.extract.status');
+
+        // Video download endpoints
+        Route::prefix('download')->group(function () {
+            Route::post('/trigger', [VideoDownloadController::class, 'triggerDownload'])
+                ->name('api.download.trigger');
+            Route::post('/status', [VideoDownloadController::class, 'checkStatus'])
+                ->name('api.download.status');
+        });
     });
 });
