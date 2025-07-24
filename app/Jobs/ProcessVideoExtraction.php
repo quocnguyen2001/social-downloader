@@ -19,7 +19,7 @@ use Carbon\Carbon;
 
 /**
  * Job for processing video extraction requests.
- * 
+ *
  * This job handles the main video extraction workflow, including
  * driver selection, metadata extraction, and result storage.
  */
@@ -59,7 +59,7 @@ class ProcessVideoExtraction implements ShouldQueue
     public function handle(DriverFactory $driverFactory): void
     {
         $startTime = microtime(true);
-        
+
         Log::info('Starting video extraction job', [
             'download_session_id' => $this->downloadSessionId,
             'attempt' => $this->attempts(),
@@ -68,13 +68,13 @@ class ProcessVideoExtraction implements ShouldQueue
 
         try {
             $downloadSession = $this->getDownloadSession();
-            
+
             // Update status to processing
-            $this->updateSessionStatus($downloadSession, DownloadSessionStatus::PROCESSING);
+            $this->updateSessionStatus($downloadSession, DownloadSessionStatus::FETCHING_METADATA);
 
             // Create driver and extract metadata
             $driver = $driverFactory->create($downloadSession->original_url);
-            
+
             Log::info('Driver created for extraction', [
                 'download_session_id' => $this->downloadSessionId,
                 'platform' => $driver->getPlatform()->value,
@@ -135,7 +135,7 @@ class ProcessVideoExtraction implements ShouldQueue
 
         try {
             $downloadSession = $this->getDownloadSession();
-            
+
             // Update session status to failed
             $downloadSession->update([
                 'status' => DownloadSessionStatus::FAILED,
@@ -166,7 +166,7 @@ class ProcessVideoExtraction implements ShouldQueue
     private function getDownloadSession(): DownloadSession
     {
         $session = DownloadSession::find($this->downloadSessionId);
-        
+
         if (!$session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }
@@ -180,7 +180,7 @@ class ProcessVideoExtraction implements ShouldQueue
     private function updateSessionStatus(DownloadSession $session, DownloadSessionStatus $status): void
     {
         $session->update(['status' => $status]);
-        
+
         Log::debug('Download session status updated', [
             'download_session_id' => $session->id,
             'status' => $status->value,
@@ -255,7 +255,7 @@ class ProcessVideoExtraction implements ShouldQueue
     {
         // Basic cost calculation - can be made more sophisticated
         $baseCost = 0.01; // $0.01 per extraction
-        
+
         // Quality multiplier
         $qualityMultiplier = match ($session->quality->value) {
             '1080p' => 2.0,

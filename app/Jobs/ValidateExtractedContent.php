@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Job for validating extracted content.
- * 
+ *
  * This job validates that extracted download URLs are still accessible
  * and that the content matches the expected metadata.
  */
@@ -97,7 +97,7 @@ class ValidateExtractedContent implements ShouldQueue
 
         try {
             $downloadSession = $this->getDownloadSession();
-            
+
             // Mark validation as failed in error message
             $currentError = $downloadSession->error_message ?? '';
             $newError = $currentError ? $currentError . ' | ' : '';
@@ -119,7 +119,7 @@ class ValidateExtractedContent implements ShouldQueue
     private function getDownloadSession(): DownloadSession
     {
         $session = DownloadSession::find($this->downloadSessionId);
-        
+
         if (!$session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }
@@ -133,7 +133,7 @@ class ValidateExtractedContent implements ShouldQueue
     private function shouldValidate(DownloadSession $session): bool
     {
         // Only validate completed sessions
-        if ($session->status !== DownloadSessionStatus::COMPLETED) {
+        if ($session->status !== DownloadSessionStatus::METADATA_FETCHED) {
             return false;
         }
 
@@ -164,7 +164,7 @@ class ValidateExtractedContent implements ShouldQueue
         try {
             // Make HEAD request to check URL accessibility
             $startTime = microtime(true);
-            
+
             $response = Http::timeout(30)
                 ->withUserAgent('VideoDownloader/1.0 (Content Validator)')
                 ->head($session->download_url);
@@ -256,7 +256,7 @@ class ValidateExtractedContent implements ShouldQueue
 
         // Mark as expired if URL is not accessible
         if (!$results['url_accessible']) {
-            $updateData['status'] = DownloadSessionStatus::EXPIRED;
+            $updateData['status'] = DownloadSessionStatus::FAILED;
             $errorMessage = 'Download URL is no longer accessible';
             if (!empty($results['errors'])) {
                 $errorMessage .= ': ' . implode(', ', $results['errors']);

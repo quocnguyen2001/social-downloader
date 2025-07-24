@@ -314,4 +314,18 @@ return [
         'yesterday' => 'hôm qua',
         'tomorrow' => 'ngày mai',
     ],
+
+    'actions' => [
+        'create_download_option' => 'Tạo tùy chọn tải xuống',
+        'download' => 'Tải xuống',
+        'mark_downloaded' => 'Đánh dấu đã tải xuống',
+    ],
+
+    'filters' => [
+        'available_only' => 'Chỉ có sẵn',
+    ],
+
+    'labels' => [
+        'unknown' => 'Không rõ',
+    ],
 ];

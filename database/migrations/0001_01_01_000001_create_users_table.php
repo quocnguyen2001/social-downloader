@@ -16,9 +16,17 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('last_login_at')->nullable();
+            $table->foreignId('membership_plan_id')->nullable()->constrained()->onDelete('set null');
+            $table->timestamp('membership_started_at')->nullable();
+            $table->timestamp('membership_expires_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+
+            // Add indexes for better performance
+            $table->index('membership_plan_id');
+            $table->index(['membership_expires_at', 'membership_plan_id']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

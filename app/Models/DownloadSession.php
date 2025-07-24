@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Enums\Platform;
-use App\Enums\VideoQuality;
-use App\Enums\VideoFormat;
 use App\Enums\DownloadSessionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DownloadSession extends Model
 {
@@ -24,10 +24,6 @@ class DownloadSession extends Model
         'title',
         'thumbnail_url',
         'duration',
-        'quality',
-        'format',
-        'file_size',
-        'download_url',
         'status',
         'error_message',
         'expires_at',
@@ -35,8 +31,6 @@ class DownloadSession extends Model
 
     protected $casts = [
         'platform' => Platform::class,
-        'quality' => VideoQuality::class,
-        'format' => VideoFormat::class,
         'status' => DownloadSessionStatus::class,
         'expires_at' => 'datetime',
     ];
@@ -44,7 +38,7 @@ class DownloadSession extends Model
     /**
      * Get the API key that owns this download session.
      */
-    public function apiKey()
+    public function apiKey(): BelongsTo
     {
         return $this->belongsTo(ApiKey::class);
     }
@@ -52,22 +46,28 @@ class DownloadSession extends Model
     /**
      * Get the user that owns this download session.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
     /**
-     * Mark the session as completed.
+     * Get the download options for this session.
      */
-    public function markAsCompleted(string $downloadUrl, int $fileSize): void
+    public function downloadOptions(): HasMany
+    {
+        return $this->hasMany(DownloadOption::class);
+    }
+
+    /**
+     * Mark the session as ready for download.
+     */
+    public function markAsReadyForDownload(): void
     {
         $this->update([
-            'status' => DownloadSessionStatus::COMPLETED,
-            'download_url' => $downloadUrl,
-            'file_size' => $fileSize,
+            'status' => DownloadSessionStatus::READY_FOR_DOWNLOAD,
             'error_message' => null,
-            'expires_at' => now()->addHours(24), // Download link expires in 24 hours
+            'expires_at' => now()->addHours(24), // Session expires in 24 hours
         ]);
     }
 
@@ -77,21 +77,30 @@ class DownloadSession extends Model
     public function markAsFailed(string $errorMessage): void
     {
         $this->update([
-            'status' => DownloadSessionStatus::FAILED,
+            'status' => DownloadSessionStatus::PENDING, // Reset to pending for retry
             'error_message' => $errorMessage,
-            'download_url' => null,
-            'file_size' => null,
             'expires_at' => now()->addHours(24), // Keep record for 24 hours
         ]);
     }
 
     /**
-     * Mark the session as processing.
+     * Mark the session as fetching metadata.
      */
-    public function markAsProcessing(): void
+    public function markAsFetchingMetadata(): void
     {
         $this->update([
-            'status' => DownloadSessionStatus::PROCESSING,
+            'status' => DownloadSessionStatus::FETCHING_METADATA,
+            'error_message' => null,
+        ]);
+    }
+
+    /**
+     * Mark the session as metadata fetched.
+     */
+    public function markAsMetadataFetched(): void
+    {
+        $this->update([
+            'status' => DownloadSessionStatus::METADATA_FETCHED,
             'error_message' => null,
         ]);
     }
@@ -102,7 +111,6 @@ class DownloadSession extends Model
     public function markAsExpired(): void
     {
         $this->update([
-            'status' => DownloadSessionStatus::EXPIRED,
             'expires_at' => now(),
         ]);
     }
@@ -116,19 +124,27 @@ class DownloadSession extends Model
     }
 
     /**
-     * Check if the session is completed.
+     * Check if the session is ready for download.
      */
-    public function isCompleted(): bool
+    public function isReadyForDownload(): bool
     {
-        return $this->status === DownloadSessionStatus::COMPLETED;
+        return $this->status === DownloadSessionStatus::READY_FOR_DOWNLOAD && !$this->isExpired();
     }
 
     /**
-     * Check if the session is failed.
+     * Check if the session is completed (ready for download).
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === DownloadSessionStatus::READY_FOR_DOWNLOAD;
+    }
+
+    /**
+     * Check if the session is failed (has error message).
      */
     public function isFailed(): bool
     {
-        return $this->status === DownloadSessionStatus::FAILED;
+        return !empty($this->error_message);
     }
 
     /**
@@ -140,11 +156,27 @@ class DownloadSession extends Model
     }
 
     /**
-     * Check if the session is processing.
+     * Check if the session is processing (fetching metadata).
      */
     public function isProcessing(): bool
     {
-        return $this->status === DownloadSessionStatus::PROCESSING;
+        return $this->status === DownloadSessionStatus::FETCHING_METADATA;
+    }
+
+    /**
+     * Check if the session is fetching metadata.
+     */
+    public function isFetchingMetadata(): bool
+    {
+        return $this->status === DownloadSessionStatus::FETCHING_METADATA;
+    }
+
+    /**
+     * Check if the session has metadata fetched.
+     */
+    public function isMetadataFetched(): bool
+    {
+        return $this->status === DownloadSessionStatus::METADATA_FETCHED;
     }
 
     /**
@@ -164,27 +196,51 @@ class DownloadSession extends Model
     }
 
     /**
-     * Scope to filter processing sessions.
+     * Scope to filter processing sessions (fetching metadata).
      */
     public function scopeProcessing($query)
     {
-        return $query->where('status', DownloadSessionStatus::PROCESSING);
+        return $query->where('status', DownloadSessionStatus::FETCHING_METADATA);
     }
 
     /**
-     * Scope to filter completed sessions.
+     * Scope to filter sessions that are fetching metadata.
+     */
+    public function scopeFetchingMetadata($query)
+    {
+        return $query->where('status', DownloadSessionStatus::FETCHING_METADATA);
+    }
+
+    /**
+     * Scope to filter sessions with metadata fetched.
+     */
+    public function scopeMetadataFetched($query)
+    {
+        return $query->where('status', DownloadSessionStatus::METADATA_FETCHED);
+    }
+
+    /**
+     * Scope to filter completed sessions (ready for download).
      */
     public function scopeCompleted($query)
     {
-        return $query->where('status', DownloadSessionStatus::COMPLETED);
+        return $query->where('status', DownloadSessionStatus::READY_FOR_DOWNLOAD);
     }
 
     /**
-     * Scope to filter failed sessions.
+     * Scope to filter sessions ready for download.
+     */
+    public function scopeReadyForDownload($query)
+    {
+        return $query->where('status', DownloadSessionStatus::READY_FOR_DOWNLOAD);
+    }
+
+    /**
+     * Scope to filter failed sessions (with error messages).
      */
     public function scopeFailed($query)
     {
-        return $query->where('status', DownloadSessionStatus::FAILED);
+        return $query->whereNotNull('error_message');
     }
 
     /**
@@ -192,11 +248,8 @@ class DownloadSession extends Model
      */
     public function scopeExpired($query)
     {
-        return $query->where('status', DownloadSessionStatus::EXPIRED)
-                    ->orWhere(function ($query) {
-                        $query->whereNotNull('expires_at')
-                              ->where('expires_at', '<', now());
-                    });
+        return $query->whereNotNull('expires_at')
+                    ->where('expires_at', '<', now());
     }
 
     /**
@@ -216,14 +269,15 @@ class DownloadSession extends Model
     }
 
     /**
-     * Scope to filter active sessions (not expired or failed).
+     * Scope to filter active sessions (not expired).
      */
     public function scopeActive($query)
     {
         return $query->whereIn('status', [
                         DownloadSessionStatus::PENDING,
-                        DownloadSessionStatus::PROCESSING,
-                        DownloadSessionStatus::COMPLETED
+                        DownloadSessionStatus::FETCHING_METADATA,
+                        DownloadSessionStatus::METADATA_FETCHED,
+                        DownloadSessionStatus::READY_FOR_DOWNLOAD
                     ])
                     ->where(function ($query) {
                         $query->whereNull('expires_at')
@@ -231,24 +285,7 @@ class DownloadSession extends Model
                     });
     }
 
-    /**
-     * Get formatted file size.
-     */
-    public function getFormattedFileSizeAttribute(): string
-    {
-        if (!$this->file_size) {
-            return 'N/A';
-        }
 
-        $bytes = $this->file_size;
-        $units = ['B', 'KB', 'MB', 'GB'];
-
-        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-            $bytes /= 1024;
-        }
-
-        return round($bytes, 2) . ' ' . $units[$i];
-    }
 
     /**
      * Get formatted duration.
@@ -276,11 +313,10 @@ class DownloadSession extends Model
     public function getStatusBadgeColorAttribute(): string
     {
         return match ($this->status) {
-            'pending' => 'warning',
-            'processing' => 'info',
-            'completed' => 'success',
-            'failed' => 'danger',
-            'expired' => 'secondary',
+            DownloadSessionStatus::PENDING => 'warning',
+            DownloadSessionStatus::FETCHING_METADATA => 'info',
+            DownloadSessionStatus::METADATA_FETCHED => 'primary',
+            DownloadSessionStatus::READY_FOR_DOWNLOAD => 'success',
             default => 'secondary',
         };
     }

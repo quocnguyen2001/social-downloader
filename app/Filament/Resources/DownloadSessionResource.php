@@ -4,9 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Enums\DownloadSessionStatus;
 use App\Enums\Platform;
-use App\Enums\VideoFormat;
-use App\Enums\VideoQuality;
 use App\Filament\Resources\DownloadSessionResource\Pages;
+use App\Filament\Resources\DownloadSessionResource\RelationManagers\DownloadOptionsRelationManager;
 use App\Models\DownloadSession;
 use App\Models\ApiKey;
 use Filament\Forms;
@@ -88,29 +87,7 @@ class DownloadSessionResource extends Resource
                             ->label(trans('messages.labels.duration')),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Download Settings')
-                    ->schema([
-                        Forms\Components\Select::make('quality')
-                            ->label(trans('messages.labels.quality'))
-                            ->options(VideoQuality::getOptions())
-                            ->required(),
 
-                        Forms\Components\Select::make('format')
-                            ->label(trans('messages.labels.format'))
-                            ->options(VideoFormat::getOptions())
-                            ->required(),
-
-                        Forms\Components\TextInput::make('file_size')
-                            ->numeric()
-                            ->label(trans('messages.labels.file_size'))
-                            ->placeholder(trans('messages.placeholders.enter_file_size')),
-
-                        Forms\Components\TextInput::make('download_url')
-                            ->url()
-                            ->maxLength(1000)
-                            ->label(trans('messages.labels.download_url'))
-                            ->placeholder(trans('messages.placeholders.enter_download_url')),
-                    ])->columns(2),
 
                 Forms\Components\Section::make('Status & Errors')
                     ->schema([
@@ -157,29 +134,15 @@ class DownloadSessionResource extends Resource
                         return $record->title;
                     }),
 
-                Tables\Columns\BadgeColumn::make('quality')
-                    ->label(trans('messages.table.columns.quality'))
-                    ->sortable(),
-
-                Tables\Columns\BadgeColumn::make('format')
-                    ->label(trans('messages.table.columns.format'))
-                    ->sortable(),
-
                 Tables\Columns\BadgeColumn::make('status')
                     ->label(trans('messages.table.columns.status'))
                     ->colors([
                         'warning' => DownloadSessionStatus::PENDING->value,
-                        'info' => DownloadSessionStatus::PROCESSING->value,
-                        'success' => DownloadSessionStatus::COMPLETED->value,
-                        'danger' => DownloadSessionStatus::FAILED->value,
-                        'secondary' => DownloadSessionStatus::EXPIRED->value,
+                        'info' => DownloadSessionStatus::FETCHING_METADATA->value,
+                        'primary' => DownloadSessionStatus::METADATA_FETCHED->value,
+                        'success' => DownloadSessionStatus::READY_FOR_DOWNLOAD->value,
                     ])
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('formatted_file_size')
-                    ->label('File Size')
-                    ->sortable('file_size')
-                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('formatted_duration')
                     ->label('Duration')
@@ -211,21 +174,7 @@ class DownloadSessionResource extends Resource
                     ]),
 
                 SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'completed' => 'Completed',
-                        'failed' => 'Failed',
-                        'expired' => 'Expired',
-                    ]),
-
-                SelectFilter::make('quality')
-                    ->options([
-                        '144p' => '144p',
-                        '360p' => '360p',
-                        '720p' => '720p',
-                        '1080p' => '1080p',
-                    ]),
+                    ->options(DownloadSessionStatus::getOptions()),
 
                 Filter::make('created_at')
                     ->form([
@@ -247,40 +196,47 @@ class DownloadSessionResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\Action::make('retry')
-                    ->label(trans('messages.table.actions.retry'))
+                Tables\Actions\Action::make('start_fetching')
+                    ->label('Start Fetching Metadata')
                     ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
+                    ->color('info')
+                    ->requiresConfirmation()
                     ->action(function (DownloadSession $record) {
-                        $record->markAsProcessing();
+                        $record->markAsFetchingMetadata();
                         Notification::make()
-                            ->title(trans('messages.success.download_retry_queued'))
+                            ->title('Started fetching metadata')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::FAILED),
+                    ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::PENDING),
 
-                Tables\Actions\Action::make('mark_completed')
+                Tables\Actions\Action::make('mark_metadata_fetched')
+                    ->label('Mark Metadata Fetched')
+                    ->icon('heroicon-o-document-check')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->action(function (DownloadSession $record) {
+                        $record->markAsMetadataFetched();
+                        Notification::make()
+                            ->title('Metadata marked as fetched')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::FETCHING_METADATA),
+
+                Tables\Actions\Action::make('mark_ready_for_download')
+                    ->label('Mark Ready for Download')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->form([
-                        Forms\Components\TextInput::make('download_url')
-                            ->url()
-                            ->required()
-                            ->label('Download URL'),
-                        Forms\Components\TextInput::make('file_size')
-                            ->numeric()
-                            ->required()
-                            ->label('File Size (bytes)'),
-                    ])
-                    ->action(function (DownloadSession $record, array $data) {
-                        $record->markAsCompleted($data['download_url'], $data['file_size']);
+                    ->requiresConfirmation()
+                    ->action(function (DownloadSession $record) {
+                        $record->markAsReadyForDownload();
                         Notification::make()
-                            ->title('Download session marked as completed')
+                            ->title('Session marked as ready for download')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (DownloadSession $record) => in_array($record->status, ['pending', 'processing'])),
+                    ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::METADATA_FETCHED),
 
                 Tables\Actions\Action::make('mark_failed')
                     ->icon('heroicon-o-x-circle')
@@ -297,7 +253,7 @@ class DownloadSessionResource extends Resource
                             ->warning()
                             ->send();
                     })
-                    ->visible(fn (DownloadSession $record) => in_array($record->status, ['pending', 'processing'])),
+                    ->visible(fn (DownloadSession $record) => in_array($record->status, [DownloadSessionStatus::PENDING, DownloadSessionStatus::FETCHING_METADATA])),
 
                 Tables\Actions\Action::make('mark_expired')
                     ->icon('heroicon-o-clock')
@@ -310,7 +266,7 @@ class DownloadSessionResource extends Resource
                             ->warning()
                             ->send();
                     })
-                    ->visible(fn (DownloadSession $record) => $record->status !== 'expired'),
+                    ->visible(fn (DownloadSession $record) => !$record->isExpired()),
 
                 Tables\Actions\ViewAction::make(),
             ])
@@ -332,15 +288,20 @@ class DownloadSessionResource extends Resource
                                 ->send();
                         }),
 
-                    Tables\Actions\BulkAction::make('retry_failed')
+                    Tables\Actions\BulkAction::make('reset_to_pending')
                         ->icon('heroicon-o-arrow-path')
                         ->color('warning')
                         ->action(function ($records) {
-                            $failedSessions = $records->filter(fn ($record) => $record->status === 'failed');
-                            $failedSessions->each->markAsProcessing();
+                            $resetSessions = $records->filter(fn ($record) => $record->isFailed());
+                            $resetSessions->each(function ($record) {
+                                $record->update([
+                                    'status' => DownloadSessionStatus::PENDING,
+                                    'error_message' => null,
+                                ]);
+                            });
 
                             Notification::make()
-                                ->title("Queued {$failedSessions->count()} failed sessions for retry")
+                                ->title("Reset {$resetSessions->count()} sessions to pending")
                                 ->success()
                                 ->send();
                         }),
@@ -352,7 +313,7 @@ class DownloadSessionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            DownloadOptionsRelationManager::class,
         ];
     }
 

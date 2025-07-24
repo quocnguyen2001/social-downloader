@@ -29,10 +29,20 @@ return [
     
     'download_session_status' => [
         'pending' => 'Đang chờ',
-        'processing' => 'Đang xử lý',
-        'completed' => 'Hoàn thành',
-        'failed' => 'Thất bại',
-        'expired' => 'Hết hạn',
+        'fetching_metadata' => 'Đang lấy thông tin',
+        'metadata_fetched' => 'Đã lấy thông tin',
+        'ready_for_download' => 'Sẵn sàng tải xuống',
+    ],
+
+    'download_option_status' => [
+        'downloaded' => 'Đã tải xuống',
+        'cdn' => 'CDN',
+    ],
+
+    'download_option_type' => [
+        'only_audio' => 'Chỉ âm thanh',
+        'only_video' => 'Chỉ video',
+        'full' => 'Video đầy đủ',
     ],
     
     'payment_method' => [

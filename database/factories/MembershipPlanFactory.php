@@ -93,7 +93,6 @@ class MembershipPlanFactory extends Factory
             'slug' => 'basic',
             'price' => 9.99,
             'daily_request_limit' => 500,
-            'weekly_request_limit' => 3500,
             'total_request_download' => 15000,
             'priority_processing' => false,
             'max_file_size_mb' => 100,
@@ -112,7 +111,6 @@ class MembershipPlanFactory extends Factory
             'slug' => 'pro',
             'price' => 19.99,
             'daily_request_limit' => 1000,
-            'weekly_request_limit' => 7000,
             'total_request_download' => 30000,
             'priority_processing' => true,
             'max_file_size_mb' => 250,
@@ -131,7 +129,6 @@ class MembershipPlanFactory extends Factory
             'slug' => 'premium',
             'price' => 49.99,
             'daily_request_limit' => 0, // unlimited
-            'weekly_request_limit' => 0, // unlimited
             'total_request_download' => 0, // unlimited
             'priority_processing' => true,
             'max_file_size_mb' => 1000,
@@ -177,7 +174,6 @@ class MembershipPlanFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'daily_request_limit' => 0,
-            'weekly_request_limit' => 0,
             'total_request_download' => 0,
         ]);
     }

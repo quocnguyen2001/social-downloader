@@ -9,10 +9,11 @@ use Filament\Support\Contracts\HasLabel;
 enum DownloadSessionStatus: string implements HasColor, HasIcon, HasLabel
 {
     case PENDING = 'pending';
-    case PROCESSING = 'processing';
-    case COMPLETED = 'completed';
+    case FETCHING_METADATA = 'fetching_metadata';
+    case METADATA_FETCHED = 'metadata_fetched';
+    case READY_FOR_DOWNLOAD = 'ready_for_download';
+
     case FAILED = 'failed';
-    case EXPIRED = 'expired';
 
     public function getLabel(): ?string
     {
@@ -23,10 +24,10 @@ enum DownloadSessionStatus: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::PENDING => 'warning',
-            self::PROCESSING => 'info',
-            self::COMPLETED => 'success',
+            self::FETCHING_METADATA => 'info',
+            self::METADATA_FETCHED => 'primary',
+            self::READY_FOR_DOWNLOAD => 'success',
             self::FAILED => 'danger',
-            self::EXPIRED => 'gray',
         };
     }
 
@@ -34,10 +35,10 @@ enum DownloadSessionStatus: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::PENDING => 'heroicon-o-clock',
-            self::PROCESSING => 'heroicon-o-arrow-path',
-            self::COMPLETED => 'heroicon-o-check-circle',
+            self::FETCHING_METADATA => 'heroicon-o-arrow-path',
+            self::METADATA_FETCHED => 'heroicon-o-document-check',
+            self::READY_FOR_DOWNLOAD => 'heroicon-o-check-circle',
             self::FAILED => 'heroicon-o-x-circle',
-            self::EXPIRED => 'heroicon-o-archive-box-x-mark',
         };
     }
 
@@ -55,26 +56,46 @@ enum DownloadSessionStatus: string implements HasColor, HasIcon, HasLabel
 
     public function isActive(): bool
     {
-        return in_array($this, [self::PENDING, self::PROCESSING, self::COMPLETED]);
+        return in_array($this, [self::PENDING, self::FETCHING_METADATA, self::METADATA_FETCHED]);
     }
 
     public function isFinished(): bool
     {
-        return in_array($this, [self::COMPLETED, self::FAILED, self::EXPIRED]);
+        return $this === self::READY_FOR_DOWNLOAD;
     }
 
-    public function canRetry(): bool
+    public function canFetchMetadata(): bool
     {
-        return $this === self::FAILED;
+        return $this === self::PENDING;
     }
 
-    public function canMarkCompleted(): bool
+    public function canMarkMetadataFetched(): bool
     {
-        return in_array($this, [self::PENDING, self::PROCESSING]);
+        return $this === self::FETCHING_METADATA;
     }
 
-    public function canMarkFailed(): bool
+    public function canMarkReadyForDownload(): bool
     {
-        return in_array($this, [self::PENDING, self::PROCESSING]);
+        return $this === self::METADATA_FETCHED;
+    }
+
+    public function isPending(): bool
+    {
+        return $this === self::PENDING;
+    }
+
+    public function isFetchingMetadata(): bool
+    {
+        return $this === self::FETCHING_METADATA;
+    }
+
+    public function isMetadataFetched(): bool
+    {
+        return $this === self::METADATA_FETCHED;
+    }
+
+    public function isReadyForDownload(): bool
+    {
+        return $this === self::READY_FOR_DOWNLOAD;
     }
 }

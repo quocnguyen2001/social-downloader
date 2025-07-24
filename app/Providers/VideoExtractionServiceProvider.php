@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Event;
 
 /**
  * Service provider for video extraction functionality.
- * 
+ *
  * This provider registers all the necessary bindings, events, and listeners
  * for the video extraction system.
  */
@@ -97,7 +97,7 @@ class VideoExtractionServiceProvider extends ServiceProvider
     private function createTempDirectory(): void
     {
         $tempDir = config('video-extraction.temp.directory');
-        
+
         if (!file_exists($tempDir)) {
             try {
                 mkdir($tempDir, 0755, true);
@@ -130,12 +130,12 @@ class VideoExtractionServiceProvider extends ServiceProvider
     private function validateYtDlpInstallation(): void
     {
         $binaryPath = config('video-extraction.yt_dlp.binary_path');
-        
+
         if (!file_exists($binaryPath) || !is_executable($binaryPath)) {
             \Illuminate\Support\Facades\Log::warning('yt-dlp binary not found or not executable', [
                 'binary_path' => $binaryPath,
                 'exists' => file_exists($binaryPath),
-                'executable' => file_exists($binaryPath) ? is_executable($binaryPath) : false,
+                'executable' => file_exists($binaryPath) && is_executable($binaryPath),
             ]);
         }
     }

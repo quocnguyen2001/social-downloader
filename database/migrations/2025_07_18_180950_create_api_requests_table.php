@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('api_requests', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('api_key_id')->constrained('api_keys')->onDelete('cascade');
+            $table->foreignUuid('api_key_id')->nullable()->constrained('api_keys')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
 
             // Request details

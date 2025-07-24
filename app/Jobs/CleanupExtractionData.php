@@ -14,7 +14,7 @@ use Carbon\Carbon;
 
 /**
  * Job for cleaning up extraction data.
- * 
+ *
  * This job handles cleanup of expired download sessions,
  * temporary files, and old extraction data.
  */
@@ -115,7 +115,7 @@ class CleanupExtractionData implements ShouldQueue
             $sessions = DownloadSession::where(function ($query) use ($threshold) {
                 $query->where('expires_at', '<', Carbon::now())
                       ->orWhere(function ($subQuery) use ($threshold) {
-                          $subQuery->where('status', DownloadSessionStatus::COMPLETED)
+                          $subQuery
                                    ->where('updated_at', '<', $threshold)
                                    ->whereNull('expires_at');
                       });
@@ -127,7 +127,7 @@ class CleanupExtractionData implements ShouldQueue
                 try {
                     // Update status to expired instead of deleting
                     $session->update([
-                        'status' => DownloadSessionStatus::EXPIRED,
+                        'status' => DownloadSessionStatus::FAILED,
                         'download_url' => null, // Clear the download URL
                         'error_message' => 'Session expired and cleaned up',
                     ]);

@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('download_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('api_key_id')->constrained('api_keys')->onDelete('cascade');
+            $table->foreignUuid('api_key_id')->nullable()->constrained('api_keys')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
 
             $table->string('original_url', 1000);
@@ -24,11 +24,7 @@ return new class extends Migration
             $table->string('title', 500)->nullable();
             $table->text('thumbnail_url', 1000)->nullable();
             $table->integer('duration')->nullable(); // seconds
-            $table->string('quality', 10);
-            $table->string('format', 10);
-            $table->bigInteger('file_size')->nullable();
-            $table->text('download_url')->nullable();
-            $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'expired'])->default('pending');
+            $table->string('status')->default('pending');
             $table->text('error_message')->nullable();
             $table->timestamp('expires_at')->nullable();
 

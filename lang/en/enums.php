@@ -29,10 +29,20 @@ return [
     
     'download_session_status' => [
         'pending' => 'Pending',
-        'processing' => 'Processing',
-        'completed' => 'Completed',
-        'failed' => 'Failed',
-        'expired' => 'Expired',
+        'fetching_metadata' => 'Fetching Metadata',
+        'metadata_fetched' => 'Metadata Fetched',
+        'ready_for_download' => 'Ready for Download',
+    ],
+
+    'download_option_status' => [
+        'downloaded' => 'Downloaded',
+        'cdn' => 'CDN',
+    ],
+
+    'download_option_type' => [
+        'only_audio' => 'Audio Only',
+        'only_video' => 'Video Only',
+        'full' => 'Full Video',
     ],
     
     'payment_method' => [

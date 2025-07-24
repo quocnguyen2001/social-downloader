@@ -100,45 +100,6 @@ class ViewDownloadSession extends ViewRecord
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Download Settings')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('quality')
-                            ->label('Quality')
-                            ->badge()
-                            ->color('success'),
-
-                        Infolists\Components\TextEntry::make('format')
-                            ->label('Format')
-                            ->badge()
-                            ->color('info'),
-
-                        Infolists\Components\TextEntry::make('file_size')
-                            ->label('File Size')
-                            ->formatStateUsing(function (?int $state): string {
-                                if (!$state) return 'Unknown';
-
-                                $bytes = $state;
-                                $units = ['B', 'KB', 'MB', 'GB'];
-
-                                for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-                                    $bytes /= 1024;
-                                }
-
-                                return round($bytes, 2) . ' ' . $units[$i];
-                            })
-                            ->badge()
-                            ->color('warning'),
-
-                        Infolists\Components\TextEntry::make('download_url')
-                            ->label('Download URL')
-                            ->copyable()
-                            ->copyMessage('Download URL copied!')
-                            ->icon('heroicon-m-arrow-down-tray')
-                            ->placeholder('Not available')
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2),
-
                 Infolists\Components\Section::make('Error Information')
                     ->schema([
                         Infolists\Components\TextEntry::make('error_message')

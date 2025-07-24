@@ -15,7 +15,7 @@ use Carbon\Carbon;
 
 /**
  * Job for refreshing video metadata.
- * 
+ *
  * This job re-extracts metadata for existing download sessions,
  * useful for updating expired download URLs or refreshing data.
  */
@@ -68,7 +68,7 @@ class RefreshVideoMetadata implements ShouldQueue
 
             // Create driver and extract fresh metadata
             $driver = $driverFactory->create($downloadSession->original_url);
-            
+
             $extractionResult = $driver->extractMetadata(
                 $downloadSession->original_url,
                 [
@@ -117,10 +117,10 @@ class RefreshVideoMetadata implements ShouldQueue
 
         try {
             $downloadSession = $this->getDownloadSession();
-            
+
             // Mark as expired if refresh failed
             $downloadSession->update([
-                'status' => DownloadSessionStatus::EXPIRED,
+                'status' => DownloadSessionStatus::FAILED,
                 'error_message' => 'Failed to refresh metadata: ' . $exception->getMessage(),
             ]);
 
@@ -138,7 +138,7 @@ class RefreshVideoMetadata implements ShouldQueue
     private function getDownloadSession(): DownloadSession
     {
         $session = DownloadSession::find($this->downloadSessionId);
-        
+
         if (!$session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }

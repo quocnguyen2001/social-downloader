@@ -314,4 +314,18 @@ return [
         'yesterday' => 'yesterday',
         'tomorrow' => 'tomorrow',
     ],
+
+    'actions' => [
+        'create_download_option' => 'Create Download Option',
+        'download' => 'Download',
+        'mark_downloaded' => 'Mark as Downloaded',
+    ],
+
+    'filters' => [
+        'available_only' => 'Available Only',
+    ],
+
+    'labels' => [
+        'unknown' => 'Unknown',
+    ],
 ];
