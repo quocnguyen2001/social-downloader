@@ -80,10 +80,8 @@ class YouTubeDriver extends AbstractDriver
             );
         }
 
-        // Use original metadata extraction approach (CDN URLs)
-        $ytDlpData = $this->executeYtDlp($cleanUrl, $options);
-
-        return $this->createExtractionResultFromYtDlp($ytDlpData, $options);
+        // Use new download-upload-cleanup workflow (same as TikTok driver)
+        return $this->performExtractionWithDownload($cleanUrl, $options);
     }
 
     /**
