@@ -3,8 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\VideoExtractionRequested;
-use App\Jobs\ProcessVideoExtraction;
-use App\Jobs\ValidateExtractedContent;
+use App\Jobs\ExtractVideoMetadataJob;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -39,8 +38,6 @@ class HandleExtractionRequest implements ShouldQueue
         Log::info('Handling video extraction request', [
             'download_session_id' => $event->getDownloadSessionId(),
             'platform' => $event->getPlatform()->value,
-            'quality' => $event->getQuality()->value,
-            'format' => $event->getFormat()->value,
             'has_api_key' => $event->hasApiKey(),
             'priority' => $event->getPriority(),
         ]);
@@ -51,34 +48,20 @@ class HandleExtractionRequest implements ShouldQueue
                 'ip_address' => $event->getIpAddress(),
                 'user_agent' => $event->getUserAgent(),
                 'platform' => $event->getPlatform()->value,
-                'quality' => $event->getQuality()->value,
-                'format' => $event->getFormat()->value,
             ];
 
-            // Dispatch the main extraction job
-            $extractionJob = new ProcessVideoExtraction(
+            // Dispatch the metadata extraction job
+            $metadataJob = new ExtractVideoMetadataJob(
                 $event->getDownloadSessionId(),
                 $jobOptions
             );
 
             // Set job priority and queue based on API key tier
             $queueName = $this->determineQueue($event);
-            $extractionJob->onQueue($queueName);
+            $metadataJob->onQueue($queueName);
 
             // Dispatch the job
-            dispatch($extractionJob);
-
-            // Schedule content validation job to run after extraction
-            $validationJob = new ValidateExtractedContent(
-                $event->getDownloadSessionId(),
-                ['validate_immediately' => false]
-            );
-
-            // Delay validation by 30 seconds to allow extraction to complete
-            $validationJob->delay(now()->addSeconds(30))
-                         ->onQueue('validation');
-
-            dispatch($validationJob);
+            dispatch($metadataJob);
 
             Log::info('Extraction jobs dispatched successfully', [
                 'download_session_id' => $event->getDownloadSessionId(),

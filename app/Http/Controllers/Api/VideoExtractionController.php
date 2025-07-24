@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Enums\DownloadSessionStatus;
 use App\Enums\HttpMethod;
 use App\Enums\Platform;
-use App\Enums\VideoFormat;
-use App\Enums\VideoQuality;
 use App\Events\VideoExtractionRequested;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
@@ -14,7 +12,7 @@ use App\Models\ApiRequest;
 use App\Models\DownloadSession;
 use App\Models\User;
 use App\Services\AuthenticatedApiKey;
-use App\Services\VideoExtraction\Factory\DriverFactory;
+use App\Services\VideoExtraction\PlatformDetector;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -29,124 +27,10 @@ use Illuminate\Support\Facades\Validator;
 class VideoExtractionController extends Controller
 {
     public function __construct(
-        private DriverFactory $driverFactory
+        private PlatformDetector $platformDetector
     ) {}
 
-    /**
-     * Request video extraction.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function extract(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'url' => 'required|url|max:2048',
-            'quality' => 'sometimes|in:144p,360p,720p,1080p',
-            'format' => 'sometimes|in:mp4,webm,mp3',
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        try {
-            $url = $request->input('url');
-            $quality = VideoQuality::from($request->input('quality', '720p'));
-            $format = VideoFormat::from($request->input('format', 'mp4'));
-
-            // Get API key from singleton (more efficient than request attributes)
-            $apiKey = AuthenticatedApiKey::get();
-
-            // Detect platform
-            $platform = $this->driverFactory->detectPlatform($url);
-            if (!$platform) {
-                // Log failed API request for unsupported platform
-                $this->createFailedApiRequestRecord($request, $apiKey, $url, 'Unsupported platform', 400);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unsupported platform or invalid URL',
-                ], 400);
-            }
-
-            // Create download session
-            $downloadSession = DownloadSession::create([
-                'api_key_id' => $apiKey->getKey(),
-                'original_url' => $url,
-                'platform' => $platform,
-                'quality' => $quality,
-                'format' => $format,
-                'status' => DownloadSessionStatus::PENDING,
-            ]);
-
-            // Create API request record immediately for tracking
-            $apiRequest = $this->createApiRequestRecord($request, $apiKey, $url, $platform, $quality, $format);
-
-            // Fire extraction requested event
-            VideoExtractionRequested::dispatch(
-                $downloadSession,
-                $url,
-                $platform,
-                $quality,
-                $format,
-                $apiKey,
-                [
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                ]
-            );
-
-            Log::info('Video extraction requested', [
-                'download_session_id' => $downloadSession->id,
-                'url' => $url,
-                'platform' => $platform->value,
-                'quality' => $quality->value,
-                'format' => $format->value,
-                'api_key_id' => $apiKey?->id,
-                'api_key_tier' => $apiKey?->tier,
-                'request_id' => AuthenticatedApiKey::getRequestId(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Extraction request submitted successfully',
-                'data' => [
-                    'session_id' => $downloadSession->id,
-                    'status' => $downloadSession->status->value,
-                    'platform' => $platform->value,
-                    'quality' => $quality->value,
-                    'format' => $format->value,
-                    'estimated_processing_time' => $this->getEstimatedProcessingTime($platform),
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            // Get API key for error logging
-            $apiKey = AuthenticatedApiKey::get();
-
-            // Log failed API request for server error
-            if ($apiKey) {
-                $this->createFailedApiRequestRecord($request, $apiKey, $request->input('url'), $e->getMessage(), 500);
-            }
-
-            Log::error('Video extraction request failed', [
-                'url' => $request->input('url'),
-                'error' => $e->getMessage(),
-                'api_key_id' => $apiKey?->id,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to process extraction request',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
 
     /**
      * Get extraction status.
@@ -195,20 +79,62 @@ class VideoExtractionController extends Controller
                 'session_id' => $downloadSession->id,
                 'status' => $downloadSession->status->value,
                 'platform' => $downloadSession->platform->value,
-                'quality' => $downloadSession->quality->value,
-                'format' => $downloadSession->format->value,
                 'created_at' => $downloadSession->created_at->toISOString(),
                 'updated_at' => $downloadSession->updated_at->toISOString(),
             ];
 
-            // Add extraction results if completed
-            if ($downloadSession->status === DownloadSessionStatus::COMPLETED) {
+            // Add video metadata if available
+            if ($downloadSession->title) {
+                $data['video_info'] = [
+                    'title' => $downloadSession->title,
+                    'thumbnail_url' => $downloadSession->thumbnail_url,
+                    'duration' => $downloadSession->duration,
+                ];
+            }
+
+            // Add available download options if metadata has been fetched
+            if ($downloadSession->status === DownloadSessionStatus::METADATA_FETCHED) {
+                $downloadOptions = $downloadSession->downloadOptions()
+                    ->orderBy('quality', 'desc')
+                    ->orderBy('type')
+                    ->get();
+
+                $data['download_options'] = $downloadOptions->map(function ($option) {
+                    return [
+                        'id' => $option->id,
+                        'quality' => $option->quality,
+                        'type' => $option->type->value,
+                        'type_label' => $option->type->getLabel(),
+                        'mime_type' => $option->mime_type,
+                        'file_size' => $option->file_size,
+                        'formatted_file_size' => $option->getFormattedFileSizeAttribute(),
+                        'estimated_download_time' => $option->estimated_download_time,
+                        'formatted_estimated_time' => $option->getFormattedEstimatedTimeAttribute(),
+                        'type_description' => $option->getFormatTypeDescription(),
+                        'is_audio_only' => $option->isAudioOnly(),
+                        'is_video_only' => $option->isVideoOnly(),
+                        'is_full_video' => $option->isFullVideo(),
+                        'status' => $option->status->value,
+                        'cdn_id' => $option->cdn_id,
+                    ];
+                })->toArray();
+
+                $data['total_options'] = count($data['download_options']);
+
+                // Group options by type for easier frontend handling
+                $data['options_by_type'] = [
+                    'full_video' => $downloadOptions->where('type', \App\Enums\DownloadOptionType::FULL)->values(),
+                    'video_only' => $downloadOptions->where('type', \App\Enums\DownloadOptionType::ONLY_VIDEO)->values(),
+                    'audio_only' => $downloadOptions->where('type', \App\Enums\DownloadOptionType::ONLY_AUDIO)->values(),
+                ];
+            }
+
+            // Add extraction results if completed (legacy support)
+            if ($downloadSession->status === DownloadSessionStatus::READY_FOR_DOWNLOAD) {
                 $data['result'] = [
                     'title' => $downloadSession->title,
                     'thumbnail_url' => $downloadSession->thumbnail_url,
                     'duration' => $downloadSession->duration,
-                    'file_size' => $downloadSession->file_size,
-                    'download_url' => $downloadSession->download_url,
                     'expires_at' => $downloadSession->expires_at?->toISOString(),
                 ];
             }
@@ -255,21 +181,13 @@ class VideoExtractionController extends Controller
         try {
             $platforms = [];
 
-            foreach ($this->driverFactory->getSupportedPlatforms() as $platform) {
-                $driver = $this->driverFactory->createForPlatform($platform);
-
+            foreach ($this->platformDetector->getSupportedPlatforms() as $platform) {
                 $platforms[] = [
                     'platform' => $platform->value,
                     'name' => $platform->getLabel(),
-                    'supported_qualities' => array_map(
-                        fn($quality) => $quality->value,
-                        $driver->getSupportedQualities()
-                    ),
-                    'supported_formats' => array_map(
-                        fn($format) => $format->value,
-                        $driver->getSupportedFormats()
-                    ),
-                    'url_patterns' => $driver->getUrlPatterns(),
+                    'description' => __('platforms.' . $platform->value . '.description'),
+                    'url_patterns' => $this->platformDetector->getUrlPatterns($platform),
+                    'supports_metadata_extraction' => true,
                 ];
             }
 
@@ -308,45 +226,7 @@ class VideoExtractionController extends Controller
         };
     }
 
-    /**
-     * Create API request record for immediate tracking.
-     *
-     * @param Request $request
-     * @param ApiKey $apiKey
-     * @param string $url
-     * @param Platform $platform
-     * @param VideoQuality $quality
-     * @param VideoFormat $format
-     * @return ApiRequest
-     */
-    private function createApiRequestRecord(
-        Request $request,
-        ApiKey $apiKey,
-        string $url,
-        Platform $platform,
-        VideoQuality $quality,
-        VideoFormat $format
-    ): ApiRequest {
-        return ApiRequest::create([
-            'api_key_id' => $apiKey->getKey(),
-            'user_id' => $apiKey->user_id, // Link to user if API key has user association
-            'endpoint' => '/api/v1/extract',
-            'method' => HttpMethod::POST,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'original_url' => $url,
-            'platform' => $platform,
-            'video_title' => null, // Will be updated when extraction completes
-            'requested_quality' => $quality,
-            'requested_format' => $format,
-            'status_code' => 200, // Request accepted
-            'response_time' => null, // Will be updated when extraction completes
-            'file_size' => null, // Will be updated when extraction completes
-            'download_url' => null, // Will be updated when extraction completes
-            'cost' => $this->calculateRequestCost($apiKey),
-            'billed' => false, // Will be processed by billing job
-        ]);
-    }
+
 
     /**
      * Calculate the cost for an API request based on the API key tier.
@@ -443,8 +323,6 @@ class VideoExtractionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'url' => 'required|url|max:2048',
-            'quality' => 'sometimes|in:144p,360p,720p,1080p',
-            'format' => 'sometimes|in:mp4,webm,mp3',
         ]);
 
         if ($validator->fails()) {
@@ -457,11 +335,9 @@ class VideoExtractionController extends Controller
 
         try {
             $url = $request->input('url');
-            $quality = VideoQuality::from($request->input('quality', '360p')); // Lower default for guests
-            $format = VideoFormat::from($request->input('format', 'mp4'));
 
             // Detect platform
-            $platform = $this->driverFactory->detectPlatform($url);
+            $platform = $this->platformDetector->detectPlatform($url);
             if (!$platform) {
                 // Log failed request for unsupported platform
                 $this->createFailedGuestApiRequestRecord($request, $url, 'Unsupported platform', 400);
@@ -480,21 +356,17 @@ class VideoExtractionController extends Controller
                 'user_id' => null, // No user for guests
                 'original_url' => $url,
                 'platform' => $platform,
-                'quality' => $quality,
-                'format' => $format,
                 'status' => DownloadSessionStatus::PENDING,
             ]);
 
             // Create API request record for tracking
-            $apiRequest = $this->createGuestApiRequestRecord($request, $url, $platform, $quality, $format);
+            $apiRequest = $this->createGuestApiRequestRecord($request, $url, $platform);
 
             // Fire extraction requested event (modified for guest)
             VideoExtractionRequested::dispatch(
                 $downloadSession,
                 $url,
                 $platform,
-                $quality,
-                $format,
                 null, // No API key for guests
                 [
                     'ip_address' => $request->ip(),
@@ -507,8 +379,6 @@ class VideoExtractionController extends Controller
                 'download_session_id' => $downloadSession->id,
                 'url' => $url,
                 'platform' => $platform->value,
-                'quality' => $quality->value,
-                'format' => $format->value,
                 'ip_address' => $request->ip(),
             ]);
 
@@ -519,8 +389,6 @@ class VideoExtractionController extends Controller
                     'session_id' => $downloadSession->id,
                     'status' => $downloadSession->status->value,
                     'platform' => $platform->value,
-                    'quality' => $quality->value,
-                    'format' => $format->value,
                     'estimated_processing_time' => $this->getEstimatedProcessingTime($platform),
                     'user_type' => 'guest',
                 ],
@@ -550,8 +418,6 @@ class VideoExtractionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'url' => 'required|url|max:2048',
-            'quality' => 'sometimes|in:144p,360p,720p,1080p',
-            'format' => 'sometimes|in:mp4,webm,mp3',
         ]);
 
         if ($validator->fails()) {
@@ -574,11 +440,9 @@ class VideoExtractionController extends Controller
             }
 
             $url = $request->input('url');
-            $quality = VideoQuality::from($request->input('quality', '720p')); // Higher default for authenticated users
-            $format = VideoFormat::from($request->input('format', 'mp4'));
 
             // Detect platform
-            $platform = $this->driverFactory->detectPlatform($url);
+            $platform = $this->platformDetector->detectPlatform($url);
             if (!$platform) {
                 // Log failed request for unsupported platform
                 $this->createFailedUserApiRequestRecord($request, $user, $url, 'Unsupported platform', 400);
@@ -597,21 +461,17 @@ class VideoExtractionController extends Controller
                 'user_id' => $user->id,
                 'original_url' => $url,
                 'platform' => $platform,
-                'quality' => $quality,
-                'format' => $format,
                 'status' => DownloadSessionStatus::PENDING,
             ]);
 
             // Create API request record for tracking
-            $apiRequest = $this->createUserApiRequestRecord($request, $user, $url, $platform, $quality, $format);
+            $apiRequest = $this->createUserApiRequestRecord($request, $user, $url, $platform);
 
             // Fire extraction requested event
             VideoExtractionRequested::dispatch(
                 $downloadSession,
                 $url,
                 $platform,
-                $quality,
-                $format,
                 null, // No API key for Sanctum auth
                 [
                     'ip_address' => $request->ip(),
@@ -626,8 +486,6 @@ class VideoExtractionController extends Controller
                 'download_session_id' => $downloadSession->id,
                 'url' => $url,
                 'platform' => $platform->value,
-                'quality' => $quality->value,
-                'format' => $format->value,
                 'user_id' => $user->id,
                 'membership_plan' => $user->membershipPlan?->name,
             ]);
@@ -639,8 +497,6 @@ class VideoExtractionController extends Controller
                     'session_id' => $downloadSession->id,
                     'status' => $downloadSession->status->value,
                     'platform' => $platform->value,
-                    'quality' => $quality->value,
-                    'format' => $format->value,
                     'estimated_processing_time' => $this->getEstimatedProcessingTime($platform),
                     'user_type' => 'authenticated',
                     'membership_plan' => $user->membershipPlan?->name,
@@ -669,16 +525,12 @@ class VideoExtractionController extends Controller
      * @param Request $request
      * @param string $url
      * @param Platform $platform
-     * @param VideoQuality $quality
-     * @param VideoFormat $format
      * @return ApiRequest
      */
     private function createGuestApiRequestRecord(
         Request $request,
         string $url,
-        Platform $platform,
-        VideoQuality $quality,
-        VideoFormat $format
+        Platform $platform
     ): ApiRequest {
         return ApiRequest::create([
             'api_key_id' => null,
@@ -690,8 +542,8 @@ class VideoExtractionController extends Controller
             'original_url' => $url,
             'platform' => $platform,
             'video_title' => null,
-            'requested_quality' => $quality,
-            'requested_format' => $format,
+            'requested_quality' => null,
+            'requested_format' => null,
             'status_code' => 200,
             'response_time' => null,
             'file_size' => null,
@@ -708,17 +560,13 @@ class VideoExtractionController extends Controller
      * @param User $user
      * @param string $url
      * @param Platform $platform
-     * @param VideoQuality $quality
-     * @param VideoFormat $format
      * @return ApiRequest
      */
     private function createUserApiRequestRecord(
         Request $request,
         User $user,
         string $url,
-        Platform $platform,
-        VideoQuality $quality,
-        VideoFormat $format
+        Platform $platform
     ): ApiRequest {
         return ApiRequest::create([
             'api_key_id' => null,
@@ -730,8 +578,8 @@ class VideoExtractionController extends Controller
             'original_url' => $url,
             'platform' => $platform,
             'video_title' => null,
-            'requested_quality' => $quality,
-            'requested_format' => $format,
+            'requested_quality' => null,
+            'requested_format' => null,
             'status_code' => 200,
             'response_time' => null,
             'file_size' => null,

@@ -3,8 +3,6 @@
 namespace App\Events;
 
 use App\Enums\Platform;
-use App\Enums\VideoFormat;
-use App\Enums\VideoQuality;
 use App\Models\ApiKey;
 use App\Models\DownloadSession;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -27,8 +25,6 @@ class VideoExtractionRequested
      * @param DownloadSession $downloadSession The download session being processed
      * @param string $originalUrl The original video URL
      * @param Platform $platform The detected platform
-     * @param VideoQuality $quality The requested video quality
-     * @param VideoFormat $format The requested video format
      * @param ApiKey|null $apiKey The API key used for the request (if any)
      * @param array $options Additional extraction options
      */
@@ -36,8 +32,6 @@ class VideoExtractionRequested
         public DownloadSession $downloadSession,
         public string $originalUrl,
         public Platform $platform,
-        public VideoQuality $quality,
-        public VideoFormat $format,
         public ?ApiKey $apiKey = null,
         public array $options = []
     ) {}
@@ -72,25 +66,7 @@ class VideoExtractionRequested
         return $this->platform;
     }
 
-    /**
-     * Get the requested quality.
-     *
-     * @return VideoQuality
-     */
-    public function getQuality(): VideoQuality
-    {
-        return $this->quality;
-    }
 
-    /**
-     * Get the requested format.
-     *
-     * @return VideoFormat
-     */
-    public function getFormat(): VideoFormat
-    {
-        return $this->format;
-    }
 
     /**
      * Get the API key (if any).
@@ -172,8 +148,6 @@ class VideoExtractionRequested
             'download_session_id' => $this->downloadSession->id,
             'original_url' => $this->originalUrl,
             'platform' => $this->platform->value,
-            'quality' => $this->quality->value,
-            'format' => $this->format->value,
             'api_key_id' => $this->apiKey?->id,
             'api_key_tier' => $this->apiKey?->tier,
             'priority' => $this->getPriority(),

@@ -159,4 +159,36 @@ class DownloadOption extends Model
             'storage_file_path' => null,
         ]);
     }
+
+    /**
+     * Get format type description.
+     */
+    public function getFormatTypeDescription(): string
+    {
+        return $this->type->getLabel();
+    }
+
+    /**
+     * Check if this is an audio-only format.
+     */
+    public function isAudioOnly(): bool
+    {
+        return $this->type === DownloadOptionType::ONLY_AUDIO;
+    }
+
+    /**
+     * Check if this is a video-only format.
+     */
+    public function isVideoOnly(): bool
+    {
+        return $this->type === DownloadOptionType::ONLY_VIDEO;
+    }
+
+    /**
+     * Check if this is a full video format (video + audio).
+     */
+    public function isFullVideo(): bool
+    {
+        return $this->type === DownloadOptionType::FULL;
+    }
 }
