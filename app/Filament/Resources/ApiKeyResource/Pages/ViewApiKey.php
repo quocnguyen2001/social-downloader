@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Filament\Resources\ApiKeyResource\Pages;
 
 use App\Enums\ApiKeyStatus;
+use App\Enums\Platform;
+use App\Enums\VideoFormat;
+use App\Enums\VideoQuality;
 use App\Filament\Resources\ApiKeyResource;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Arr;
 
 class ViewApiKey extends ViewRecord
 {
@@ -129,34 +133,22 @@ class ViewApiKey extends ViewRecord
 
                 Infolists\Components\Section::make('Permissions')
                     ->schema([
-                        Infolists\Components\RepeatableEntry::make('allowed_platforms')
+                        Infolists\Components\TextEntry::make('allowed_platforms')
                             ->label('Allowed Platforms')
-                            ->schema([
-                                Infolists\Components\TextEntry::make('platform')
-                                    ->hiddenLabel()
-                                    ->badge()
-                                    ->color('primary'),
-                            ])
+                            ->listWithLineBreaks()
+                            ->bulleted()
                             ->placeholder('All platforms allowed'),
 
-                        Infolists\Components\RepeatableEntry::make('allowed_qualities')
+                        Infolists\Components\TextEntry::make('allowed_qualities')
                             ->label('Allowed Qualities')
-                            ->schema([
-                                Infolists\Components\TextEntry::make('quality')
-                                    ->hiddenLabel()
-                                    ->badge()
-                                    ->color('info'),
-                            ])
+                            ->listWithLineBreaks()
+                            ->bulleted()
                             ->placeholder('All qualities allowed'),
 
-                        Infolists\Components\RepeatableEntry::make('allowed_formats')
+                        Infolists\Components\TextEntry::make('allowed_formats')
                             ->label('Allowed Formats')
-                            ->schema([
-                                Infolists\Components\TextEntry::make('format')
-                                    ->hiddenLabel()
-                                    ->badge()
-                                    ->color('success'),
-                            ])
+                            ->listWithLineBreaks()
+                            ->bulleted()
                             ->placeholder('All formats allowed'),
                     ])
                     ->columns(1),
