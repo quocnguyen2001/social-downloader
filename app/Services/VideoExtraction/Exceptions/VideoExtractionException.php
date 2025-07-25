@@ -6,7 +6,7 @@ use Exception;
 
 /**
  * Base exception for video extraction operations.
- * 
+ *
  * All video extraction related exceptions should extend this class
  * to provide consistent error handling across the system.
  */
@@ -22,10 +22,10 @@ class VideoExtractionException extends Exception
     /**
      * Create a new video extraction exception.
      *
-     * @param string $message The exception message
-     * @param int $code The exception code
-     * @param \Throwable|null $previous The previous exception
-     * @param array<string, mixed> $context Additional context data
+     * @param  string  $message  The exception message
+     * @param  int  $code  The exception code
+     * @param  \Throwable|null  $previous  The previous exception
+     * @param  array<string, mixed>  $context  Additional context data
      */
     public function __construct(
         string $message = '',
@@ -50,25 +50,22 @@ class VideoExtractionException extends Exception
     /**
      * Set additional context data.
      *
-     * @param array<string, mixed> $context
-     * @return self
+     * @param  array<string, mixed>  $context
      */
     public function setContext(array $context): self
     {
         $this->context = $context;
+
         return $this;
     }
 
     /**
      * Add a context item.
-     *
-     * @param string $key
-     * @param mixed $value
-     * @return self
      */
     public function addContext(string $key, mixed $value): self
     {
         $this->context[$key] = $value;
+
         return $this;
     }
 

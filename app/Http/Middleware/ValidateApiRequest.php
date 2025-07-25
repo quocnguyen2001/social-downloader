@@ -19,7 +19,7 @@ class ValidateApiRequest
     public function handle(Request $request, Closure $next): Response
     {
         // Validate request headers
-        if (!$this->validateHeaders($request)) {
+        if (! $this->validateHeaders($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid request headers',
@@ -28,7 +28,7 @@ class ValidateApiRequest
         }
 
         // Validate request size
-        if (!$this->validateRequestSize($request)) {
+        if (! $this->validateRequestSize($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Request payload too large',
@@ -37,7 +37,7 @@ class ValidateApiRequest
         }
 
         // Validate content type for POST/PUT/PATCH requests
-        if (!$this->validateContentType($request)) {
+        if (! $this->validateContentType($request)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid content type',
@@ -53,20 +53,17 @@ class ValidateApiRequest
 
     /**
      * Validate required headers.
-     *
-     * @param Request $request
-     * @return bool
      */
     private function validateHeaders(Request $request): bool
     {
         // Check for Accept header
-        if (!$request->hasHeader('Accept')) {
+        if (! $request->hasHeader('Accept')) {
             return false;
         }
 
         // Validate Accept header contains application/json
         $acceptHeader = $request->header('Accept');
-        if (!str_contains($acceptHeader, 'application/json') && !str_contains($acceptHeader, '*/*')) {
+        if (! str_contains($acceptHeader, 'application/json') && ! str_contains($acceptHeader, '*/*')) {
             return false;
         }
 
@@ -75,9 +72,6 @@ class ValidateApiRequest
 
     /**
      * Validate request size.
-     *
-     * @param Request $request
-     * @return bool
      */
     private function validateRequestSize(Request $request): bool
     {
@@ -89,22 +83,19 @@ class ValidateApiRequest
 
     /**
      * Validate content type for requests with body.
-     *
-     * @param Request $request
-     * @return bool
      */
     private function validateContentType(Request $request): bool
     {
         $methodsWithBody = ['POST', 'PUT', 'PATCH'];
 
-        if (!in_array($request->method(), $methodsWithBody)) {
+        if (! in_array($request->method(), $methodsWithBody)) {
             return true;
         }
 
         $contentType = $request->header('Content-Type');
 
         // Allow empty content type for requests with no body
-        if (!$contentType && !$request->getContent()) {
+        if (! $contentType && ! $request->getContent()) {
             return true;
         }
 
@@ -115,9 +106,6 @@ class ValidateApiRequest
 
     /**
      * Log suspicious activity.
-     *
-     * @param Request $request
-     * @return void
      */
     private function logSuspiciousActivity(Request $request): void
     {

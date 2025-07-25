@@ -103,8 +103,6 @@ class MembershipPlanResource extends Resource
                             ->minValue(0)
                             ->suffix('requests/day'),
 
-
-
                         Forms\Components\TextInput::make('total_request_download')
                             ->label('Total Download Requests')
                             ->required()
@@ -307,8 +305,6 @@ class MembershipPlanResource extends Resource
                             ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
                             ->badge()
                             ->color(fn ($state) => $state === 0 ? 'success' : 'info'),
-
-
 
                         Infolists\Components\TextEntry::make('total_request_download')
                             ->label('Total Download Requests')

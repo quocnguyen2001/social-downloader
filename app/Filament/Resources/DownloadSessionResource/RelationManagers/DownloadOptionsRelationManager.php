@@ -152,12 +152,12 @@ class DownloadOptionsRelationManager extends RelationManager
                     ->label(__('messages.filters.available_only'))
                     ->query(fn ($query) => $query->where(function ($q) {
                         $q->where('status', DownloadOptionStatus::DOWNLOADED->value)
-                          ->whereNotNull('storage_disk')
-                          ->whereNotNull('storage_file_path')
-                          ->orWhere(function ($q2) {
-                              $q2->where('status', DownloadOptionStatus::CDN->value)
-                                 ->whereNotNull('download_cdn_url');
-                          });
+                            ->whereNotNull('storage_disk')
+                            ->whereNotNull('storage_file_path')
+                            ->orWhere(function ($q2) {
+                                $q2->where('status', DownloadOptionStatus::CDN->value)
+                                    ->whereNotNull('download_cdn_url');
+                            });
                     }))
                     ->toggle(),
             ])
@@ -168,7 +168,7 @@ class DownloadOptionsRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                
+
                 Tables\Actions\Action::make('download')
                     ->label(__('messages.actions.download'))
                     ->icon('heroicon-o-arrow-down-tray')

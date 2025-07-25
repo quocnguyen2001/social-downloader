@@ -17,10 +17,10 @@ enum DownloadSessionStatus: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.download_session_status.' . $this->value);
+        return trans('enums.download_session_status.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::PENDING => 'warning',

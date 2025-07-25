@@ -4,11 +4,9 @@ namespace App\Models;
 
 use App\Enums\ApiKeyStatus;
 use App\Enums\Platform;
-use App\Enums\VideoQuality;
-use App\Enums\VideoFormat;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class ApiKey extends Model
 {
@@ -129,7 +127,7 @@ class ApiKey extends Model
      */
     public static function generateKey(): string
     {
-        return 'vd_live_' . \Illuminate\Support\Str::random(32);
+        return 'vd_live_'.\Illuminate\Support\Str::random(32);
     }
 
     /**
@@ -161,7 +159,7 @@ class ApiKey extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return number_format($this->price_per_request, 4) . ' VND';
+        return number_format($this->price_per_request, 4).' VND';
     }
 
     /**

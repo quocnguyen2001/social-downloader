@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Listener for handling video extraction requests.
- * 
+ *
  * This listener responds to VideoExtractionRequested events by
  * dispatching the appropriate jobs to process the extraction.
  */
@@ -30,8 +30,6 @@ class HandleExtractionRequest implements ShouldQueue
 
     /**
      * Handle the event.
-     *
-     * @param VideoExtractionRequested $event
      */
     public function handle(VideoExtractionRequested $event): void
     {
@@ -80,7 +78,7 @@ class HandleExtractionRequest implements ShouldQueue
             try {
                 $event->downloadSession->update([
                     'status' => \App\Enums\DownloadSessionStatus::FAILED,
-                    'error_message' => 'Failed to dispatch extraction job: ' . $exception->getMessage(),
+                    'error_message' => 'Failed to dispatch extraction job: '.$exception->getMessage(),
                 ]);
             } catch (\Exception $updateException) {
                 Log::error('Failed to update session after listener error', [
@@ -107,7 +105,7 @@ class HandleExtractionRequest implements ShouldQueue
         try {
             $event->downloadSession->update([
                 'status' => \App\Enums\DownloadSessionStatus::FAILED,
-                'error_message' => 'Extraction request handling failed: ' . $exception->getMessage(),
+                'error_message' => 'Extraction request handling failed: '.$exception->getMessage(),
             ]);
         } catch (\Exception $updateException) {
             Log::error('Failed to update session after permanent listener failure', [
@@ -122,12 +120,12 @@ class HandleExtractionRequest implements ShouldQueue
      */
     private function determineQueue(VideoExtractionRequested $event): string
     {
-        if (!$event->hasApiKey()) {
+        if (! $event->hasApiKey()) {
             return 'guest'; // Guest users get lower priority queue
         }
 
         $apiKey = $event->getApiKey();
-        
+
         return match ($apiKey->tier ?? 'basic') {
             'premium' => 'premium',
             'pro' => 'pro',

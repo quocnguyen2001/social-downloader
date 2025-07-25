@@ -14,10 +14,10 @@ enum DownloadOptionType: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.download_option_type.' . $this->value);
+        return trans('enums.download_option_type.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::ONLY_AUDIO => 'success',

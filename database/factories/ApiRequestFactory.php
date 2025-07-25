@@ -34,7 +34,7 @@ class ApiRequestFactory extends Factory
             'Tech Review: Latest Smartphone',
             'Beautiful Sunset Timelapse',
             'Dance Challenge Compilation',
-            'DIY Home Improvement Tips'
+            'DIY Home Improvement Tips',
         ];
 
         return [
@@ -69,10 +69,10 @@ class ApiRequestFactory extends Factory
     private function generatePlatformUrl(string $platform): string
     {
         return match ($platform) {
-            'youtube' => 'https://www.youtube.com/watch?v=' . Str::random(11),
-            'tiktok' => 'https://www.tiktok.com/@user/video/' . fake()->numerify('####################'),
-            'instagram' => 'https://www.instagram.com/p/' . Str::random(11) . '/',
-            'facebook' => 'https://www.facebook.com/watch/?v=' . fake()->numerify('####################'),
+            'youtube' => 'https://www.youtube.com/watch?v='.Str::random(11),
+            'tiktok' => 'https://www.tiktok.com/@user/video/'.fake()->numerify('####################'),
+            'instagram' => 'https://www.instagram.com/p/'.Str::random(11).'/',
+            'facebook' => 'https://www.facebook.com/watch/?v='.fake()->numerify('####################'),
             default => fake()->url(),
         };
     }

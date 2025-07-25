@@ -15,10 +15,10 @@ enum PaymentMethod: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.payment_method.' . $this->value);
+        return trans('enums.payment_method.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::BANK_TRANSFER => 'primary',

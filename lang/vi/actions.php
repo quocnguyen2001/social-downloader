@@ -17,7 +17,7 @@ return [
     'reset' => 'Đặt lại',
     'submit' => 'Gửi',
     'update' => 'Cập nhật',
-    
+
     'api_key' => [
         'activate' => 'Kích hoạt',
         'deactivate' => 'Vô hiệu hóa',
@@ -25,14 +25,14 @@ return [
         'reset_usage' => 'Đặt lại sử dụng',
         'generate_new_key' => 'Tạo khóa mới',
     ],
-    
+
     'monthly_billing' => [
         'mark_as_paid' => 'Đánh dấu đã thanh toán',
         'mark_as_unpaid' => 'Đánh dấu chưa thanh toán',
         'send_invoice' => 'Gửi hóa đơn',
         'recalculate' => 'Tính toán lại',
     ],
-    
+
     'download_session' => [
         'retry' => 'Thử lại',
         'mark_completed' => 'Đánh dấu hoàn thành',

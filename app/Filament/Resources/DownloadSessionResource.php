@@ -6,18 +6,18 @@ use App\Enums\DownloadSessionStatus;
 use App\Enums\Platform;
 use App\Filament\Resources\DownloadSessionResource\Pages;
 use App\Filament\Resources\DownloadSessionResource\RelationManagers\DownloadOptionsRelationManager;
-use App\Models\DownloadSession;
 use App\Models\ApiKey;
+use App\Models\DownloadSession;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Notifications\Notification;
 
 class DownloadSessionResource extends Resource
 {
@@ -86,8 +86,6 @@ class DownloadSessionResource extends Resource
                             ->numeric()
                             ->label(trans('messages.labels.duration')),
                     ])->columns(2),
-
-
 
                 Forms\Components\Section::make('Status & Errors')
                     ->schema([
@@ -266,7 +264,7 @@ class DownloadSessionResource extends Resource
                             ->warning()
                             ->send();
                     })
-                    ->visible(fn (DownloadSession $record) => !$record->isExpired()),
+                    ->visible(fn (DownloadSession $record) => ! $record->isExpired()),
 
                 Tables\Actions\ViewAction::make(),
             ])

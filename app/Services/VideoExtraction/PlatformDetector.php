@@ -41,7 +41,6 @@ class PlatformDetector
     /**
      * Detect platform from URL.
      *
-     * @param string $url
      * @return Platform|null
      */
     public function detectPlatform(string $url): Platform|int|null
@@ -69,9 +68,6 @@ class PlatformDetector
 
     /**
      * Check if URL is supported.
-     *
-     * @param string $url
-     * @return bool
      */
     public function isSupported(string $url): bool
     {
@@ -80,9 +76,6 @@ class PlatformDetector
 
     /**
      * Get URL patterns for a platform.
-     *
-     * @param Platform $platform
-     * @return array
      */
     public function getUrlPatterns(Platform $platform): array
     {

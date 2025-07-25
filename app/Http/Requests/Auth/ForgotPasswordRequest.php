@@ -58,14 +58,13 @@ class ForgotPasswordRequest extends FormRequest
     /**
      * Configure the validator instance.
      *
-     * @param \Illuminate\Validation\Validator $validator
-     * @return void
+     * @param  \Illuminate\Validation\Validator  $validator
      */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             // Check rate limiting for password reset requests
-            $key = 'password_reset:' . $this->ip();
+            $key = 'password_reset:'.$this->ip();
             $maxAttempts = 3;
 
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {

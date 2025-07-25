@@ -45,6 +45,7 @@ class ProcessScheduledFileDeletions extends Command
 
             if ($dueDeletions->isEmpty()) {
                 $this->info('No scheduled deletions are due for processing.');
+
                 return 0;
             }
 
@@ -66,12 +67,14 @@ class ProcessScheduledFileDeletions extends Command
 
             if ($dryRun) {
                 $this->info('DRY RUN completed. No files were deleted.');
+
                 return 0;
             }
 
             // Confirm before proceeding
-            if (!$this->confirm('Do you want to proceed with deleting these files?')) {
+            if (! $this->confirm('Do you want to proceed with deleting these files?')) {
                 $this->info('Operation cancelled.');
+
                 return 0;
             }
 
@@ -99,6 +102,7 @@ class ProcessScheduledFileDeletions extends Command
 
         } catch (\Exception $e) {
             $this->error("Failed to process scheduled deletions: {$e->getMessage()}");
+
             return 1;
         }
     }

@@ -4,13 +4,13 @@ namespace App\Jobs;
 
 use App\Enums\DownloadSessionStatus;
 use App\Models\DownloadSession;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Job for cleaning up extraction data.
@@ -35,7 +35,7 @@ class CleanupExtractionData implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param array $options Cleanup options
+     * @param  array  $options  Cleanup options
      */
     public function __construct(
         private array $options = []
@@ -114,14 +114,14 @@ class CleanupExtractionData implements ShouldQueue
         do {
             $sessions = DownloadSession::where(function ($query) use ($threshold) {
                 $query->where('expires_at', '<', Carbon::now())
-                      ->orWhere(function ($subQuery) use ($threshold) {
-                          $subQuery
-                                   ->where('updated_at', '<', $threshold)
-                                   ->whereNull('expires_at');
-                      });
+                    ->orWhere(function ($subQuery) use ($threshold) {
+                        $subQuery
+                            ->where('updated_at', '<', $threshold)
+                            ->whereNull('expires_at');
+                    });
             })
-            ->limit($this->options['batch_size'])
-            ->get();
+                ->limit($this->options['batch_size'])
+                ->get();
 
             foreach ($sessions as $session) {
                 try {

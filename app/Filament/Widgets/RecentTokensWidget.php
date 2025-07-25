@@ -15,7 +15,7 @@ class RecentTokensWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?string $pollingInterval = '30s';
 
@@ -86,7 +86,7 @@ class RecentTokensWidget extends BaseWidget
                     ->requiresConfirmation()
                     ->modalHeading('Revoke Token')
                     ->modalDescription('Are you sure you want to revoke this token? This action cannot be undone.')
-                    ->visible(fn ($record) => !($record->expires_at && $record->expires_at->isPast())),
+                    ->visible(fn ($record) => ! ($record->expires_at && $record->expires_at->isPast())),
             ])
             ->emptyStateHeading('No API tokens found')
             ->emptyStateDescription('No API tokens have been created yet.')

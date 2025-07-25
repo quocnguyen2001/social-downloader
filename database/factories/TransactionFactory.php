@@ -144,10 +144,10 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'payment_method' => 'stripe',
-            'transaction_id' => 'ch_' . fake()->regexify('[a-zA-Z0-9]{24}'),
+            'transaction_id' => 'ch_'.fake()->regexify('[a-zA-Z0-9]{24}'),
             'payment_logs' => [
-                'stripe_charge_id' => 'ch_' . fake()->regexify('[a-zA-Z0-9]{24}'),
-                'stripe_customer_id' => 'cus_' . fake()->regexify('[a-zA-Z0-9]{14}'),
+                'stripe_charge_id' => 'ch_'.fake()->regexify('[a-zA-Z0-9]{24}'),
+                'stripe_customer_id' => 'cus_'.fake()->regexify('[a-zA-Z0-9]{14}'),
                 'card_last4' => fake()->numerify('####'),
                 'card_brand' => fake()->randomElement(['visa', 'mastercard', 'amex']),
             ],

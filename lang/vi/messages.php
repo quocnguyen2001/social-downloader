@@ -23,12 +23,12 @@ return [
         'download_triggered' => 'Tải xuống video đã được kích hoạt và sẽ được xử lý trong nền',
         'download_ready' => 'Tải xuống video đã sẵn sàng để truy cập',
     ],
-    
+
     'warnings' => [
         'confirm_action' => 'Bạn có chắc chắn muốn thực hiện hành động này?',
         'generate_new_key_warning' => 'Điều này sẽ tạo khóa API mới và vô hiệu hóa khóa hiện tại.',
     ],
-    
+
     'info' => [
         'new_api_key' => 'Khóa API mới của bạn: :key',
         'usage_display' => ':usage / :limit',
@@ -38,7 +38,7 @@ return [
         'download_processing' => 'Tải xuống video đang được xử lý',
         'download_not_started' => 'Tải xuống video chưa được bắt đầu',
     ],
-    
+
     'navigation' => [
         'dashboard' => 'Bảng điều khiển',
         'api_keys' => 'Khóa API',
@@ -53,7 +53,7 @@ return [
         'note_title' => 'Cài đặt ngôn ngữ',
         'note_description' => 'Tùy chọn ngôn ngữ của bạn sẽ được lưu và áp dụng cho tất cả các thành phần giao diện quản trị.',
     ],
-    
+
     'widgets' => [
         'stats_overview' => [
             'total_api_keys' => 'Tổng khóa API',
@@ -64,7 +64,7 @@ return [
         'api_usage_chart' => 'Xu hướng sử dụng API & Doanh thu (30 ngày qua)',
         'top_clients' => 'Khách hàng hàng đầu tháng này',
     ],
-    
+
     'sections' => [
         'basic_information' => 'Thông tin cơ bản',
         'contact_information' => 'Thông tin liên hệ',

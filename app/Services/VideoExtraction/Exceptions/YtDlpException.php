@@ -14,7 +14,7 @@ class YtDlpException extends Exception
      */
     private ?int $exitCode;
 
-    public function __construct(string $message = '', int $exitCode = null, \Throwable $previous = null)
+    public function __construct(string $message = '', ?int $exitCode = null, ?\Throwable $previous = null)
     {
         parent::__construct($message, 0, $previous);
         $this->exitCode = $exitCode;
@@ -22,8 +22,6 @@ class YtDlpException extends Exception
 
     /**
      * Get the yt-dlp exit code.
-     *
-     * @return int|null
      */
     public function getExitCode(): ?int
     {
@@ -32,8 +30,6 @@ class YtDlpException extends Exception
 
     /**
      * Check if the error is due to unsupported URL.
-     *
-     * @return bool
      */
     public function isUnsupportedUrl(): bool
     {
@@ -44,8 +40,6 @@ class YtDlpException extends Exception
 
     /**
      * Check if the error is due to network issues.
-     *
-     * @return bool
      */
     public function isNetworkError(): bool
     {
@@ -57,8 +51,6 @@ class YtDlpException extends Exception
 
     /**
      * Check if the error is due to video being private or unavailable.
-     *
-     * @return bool
      */
     public function isVideoUnavailable(): bool
     {
@@ -70,8 +62,6 @@ class YtDlpException extends Exception
 
     /**
      * Get a user-friendly error message.
-     *
-     * @return string
      */
     public function getUserFriendlyMessage(): string
     {

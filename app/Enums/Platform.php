@@ -15,10 +15,10 @@ enum Platform: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.platform.' . $this->value);
+        return trans('enums.platform.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::YOUTUBE => 'danger',

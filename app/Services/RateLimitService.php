@@ -12,19 +12,16 @@ class RateLimitService
     /**
      * Check if the request is rate limited.
      *
-     * @param string $endpoint
-     * @param Request $request
-     * @param string|null $userStrategy
      * @return array{limited: bool, seconds: int, key: string}
      */
     public function checkRateLimit(string $endpoint, Request $request, ?string $userStrategy = null): array
     {
         $config = $this->getEndpointConfig($endpoint);
         $key = $this->generateKey($config['key_prefix'], $request);
-        
+
         // Apply strategy multiplier
         $maxAttempts = $this->applyStrategy($config['max_attempts'], $userStrategy);
-        
+
         // Check for bypass
         if ($this->shouldBypass($request)) {
             return [
@@ -33,10 +30,10 @@ class RateLimitService
                 'key' => $key,
             ];
         }
-        
+
         $isLimited = RateLimiter::tooManyAttempts($key, $maxAttempts);
         $seconds = $isLimited ? RateLimiter::availableIn($key) : 0;
-        
+
         return [
             'limited' => $isLimited,
             'seconds' => $seconds,
@@ -46,10 +43,6 @@ class RateLimitService
 
     /**
      * Hit the rate limiter for a failed attempt.
-     *
-     * @param string $key
-     * @param int $decayMinutes
-     * @return void
      */
     public function hit(string $key, int $decayMinutes): void
     {
@@ -58,9 +51,6 @@ class RateLimitService
 
     /**
      * Clear the rate limiter for successful attempts.
-     *
-     * @param string $key
-     * @return void
      */
     public function clear(string $key): void
     {
@@ -69,13 +59,10 @@ class RateLimitService
 
     /**
      * Get configuration for a specific endpoint.
-     *
-     * @param string $endpoint
-     * @return array
      */
     private function getEndpointConfig(string $endpoint): array
     {
-        $config = config("api_rate_limits.authentication.{$endpoint}") 
+        $config = config("api_rate_limits.authentication.{$endpoint}")
                  ?? config("api_rate_limits.api_endpoints.{$endpoint}")
                  ?? config('api_rate_limits.global.api_requests');
 
@@ -84,43 +71,34 @@ class RateLimitService
 
     /**
      * Generate a rate limiting key.
-     *
-     * @param string $prefix
-     * @param Request $request
-     * @return string
      */
     private function generateKey(string $prefix, Request $request): string
     {
         $identifier = $request->user()?->id ?? $request->ip();
+
         return "{$prefix}:{$identifier}";
     }
 
     /**
      * Apply strategy multiplier to max attempts.
-     *
-     * @param int $baseAttempts
-     * @param string|null $strategy
-     * @return int
      */
     private function applyStrategy(int $baseAttempts, ?string $strategy): int
     {
-        if (!$strategy) {
+        if (! $strategy) {
             return $baseAttempts;
         }
 
         $multiplier = config("api_rate_limits.strategies.{$strategy}.multiplier", 1.0);
+
         return (int) ceil($baseAttempts * $multiplier);
     }
 
     /**
      * Check if rate limiting should be bypassed.
-     *
-     * @param Request $request
-     * @return bool
      */
     private function shouldBypass(Request $request): bool
     {
-        if (!config('api_rate_limits.bypass.enabled', false)) {
+        if (! config('api_rate_limits.bypass.enabled', false)) {
             return false;
         }
 
@@ -142,15 +120,12 @@ class RateLimitService
 
     /**
      * Get user strategy based on user type.
-     *
-     * @param Request $request
-     * @return string
      */
     public function getUserStrategy(Request $request): string
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return 'guest';
         }
 
@@ -169,15 +144,11 @@ class RateLimitService
 
     /**
      * Get rate limit message for a specific endpoint.
-     *
-     * @param string $endpoint
-     * @param int $seconds
-     * @return string
      */
     public function getRateLimitMessage(string $endpoint, int $seconds): string
     {
         $minutes = ceil($seconds / 60);
-        
+
         $messageKey = match ($endpoint) {
             'registration' => 'registration_limit',
             'login' => 'login_limit',
@@ -186,7 +157,7 @@ class RateLimitService
         };
 
         $message = config("api_rate_limits.messages.{$messageKey}", 'Too many requests.');
-        
+
         return str_replace([':seconds', ':minutes'], [$seconds, $minutes], $message);
     }
 }

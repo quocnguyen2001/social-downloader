@@ -28,18 +28,19 @@ class DriverFactory
     /**
      * Create a new driver factory instance.
      */
-    public function __construct(DriverRegistry $registry = null)
+    public function __construct(?DriverRegistry $registry = null)
     {
-        $this->registry = $registry ?? new DriverRegistry();
+        $this->registry = $registry ?? new DriverRegistry;
         $this->registerDefaultDrivers();
     }
 
     /**
      * Create a driver for the given URL.
      *
-     * @param string $url The URL to create a driver for
-     * @param array $config Optional driver configuration
+     * @param  string  $url  The URL to create a driver for
+     * @param  array  $config  Optional driver configuration
      * @return DriverInterface The appropriate driver instance
+     *
      * @throws UnsupportedPlatformException If no driver supports the URL
      */
     public function create(string $url, array $config = []): DriverInterface
@@ -48,7 +49,7 @@ class DriverFactory
 
         $platform = $this->detectPlatform($url);
 
-        if (!$platform) {
+        if (! $platform) {
             throw new UnsupportedPlatformException($url);
         }
 
@@ -66,8 +67,8 @@ class DriverFactory
     /**
      * Create a driver for a specific platform.
      *
-     * @param Platform $platform The platform to create a driver for
-     * @param array $config Optional driver configuration
+     * @param  Platform  $platform  The platform to create a driver for
+     * @param  array  $config  Optional driver configuration
      * @return DriverInterface The driver instance
      */
     public function createForPlatform(Platform $platform, array $config = []): DriverInterface
@@ -78,7 +79,7 @@ class DriverFactory
     /**
      * Detect the platform from a URL.
      *
-     * @param string $url The URL to analyze
+     * @param  string  $url  The URL to analyze
      * @return int|null The detected platform or null if not supported
      */
     public function detectPlatform(string $url): ?Platform
@@ -131,13 +132,14 @@ class DriverFactory
         }
 
         Log::warning('No platform detected for URL', ['url' => $url]);
+
         return null;
     }
 
     /**
      * Check if a URL is supported by any driver.
      *
-     * @param string $url The URL to check
+     * @param  string  $url  The URL to check
      * @return bool True if the URL is supported
      */
     public function isSupported(string $url): bool
@@ -168,20 +170,20 @@ class DriverFactory
     /**
      * Register a custom driver.
      *
-     * @param Platform $platform The platform this driver handles
-     * @param string $driverClass The driver class name
-     * @return self
+     * @param  Platform  $platform  The platform this driver handles
+     * @param  string  $driverClass  The driver class name
      */
     public function registerDriver(Platform $platform, string $driverClass): self
     {
         $this->registry->register($platform, $driverClass);
+
         return $this;
     }
 
     /**
      * Check if a platform has a registered driver.
      *
-     * @param Platform $platform The platform to check
+     * @param  Platform  $platform  The platform to check
      * @return bool True if a driver is registered for the platform
      */
     public function hasDriver(Platform $platform): bool
@@ -192,7 +194,7 @@ class DriverFactory
     /**
      * Get detailed information about URL support.
      *
-     * @param string $url The URL to analyze
+     * @param  string  $url  The URL to analyze
      * @return array Information about URL support
      */
     public function analyzeUrl(string $url): array
@@ -210,11 +212,11 @@ class DriverFactory
             $driver = $this->registry->get($platform);
             $analysis['driver_class'] = get_class($driver);
             $analysis['supported_qualities'] = array_map(
-                fn($quality) => $quality->value,
+                fn ($quality) => $quality->value,
                 $driver->getSupportedQualities()
             );
             $analysis['supported_formats'] = array_map(
-                fn($format) => $format->value,
+                fn ($format) => $format->value,
                 $driver->getSupportedFormats()
             );
             $analysis['url_patterns'] = $driver->getUrlPatterns();

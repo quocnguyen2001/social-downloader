@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Event fired when video extraction fails.
- * 
+ *
  * This event is dispatched when a video extraction job fails
  * and contains information about the failure.
  */
@@ -21,12 +21,12 @@ class ExtractionFailed
     /**
      * Create a new event instance.
      *
-     * @param DownloadSession $downloadSession The failed download session
-     * @param \Throwable $exception The exception that caused the failure
-     * @param float $processingTime The time taken before failure (in seconds)
-     * @param int $attemptNumber The attempt number (for retries)
-     * @param bool $willRetry Whether the job will be retried
-     * @param array $metadata Additional metadata about the failure
+     * @param  DownloadSession  $downloadSession  The failed download session
+     * @param  \Throwable  $exception  The exception that caused the failure
+     * @param  float  $processingTime  The time taken before failure (in seconds)
+     * @param  int  $attemptNumber  The attempt number (for retries)
+     * @param  bool  $willRetry  Whether the job will be retried
+     * @param  array  $metadata  Additional metadata about the failure
      */
     public function __construct(
         public DownloadSession $downloadSession,
@@ -39,8 +39,6 @@ class ExtractionFailed
 
     /**
      * Get the download session.
-     *
-     * @return DownloadSession
      */
     public function getDownloadSession(): DownloadSession
     {
@@ -49,8 +47,6 @@ class ExtractionFailed
 
     /**
      * Get the exception that caused the failure.
-     *
-     * @return \Throwable
      */
     public function getException(): \Throwable
     {
@@ -59,8 +55,6 @@ class ExtractionFailed
 
     /**
      * Get the processing time before failure.
-     *
-     * @return float
      */
     public function getProcessingTime(): float
     {
@@ -69,8 +63,6 @@ class ExtractionFailed
 
     /**
      * Get the attempt number.
-     *
-     * @return int
      */
     public function getAttemptNumber(): int
     {
@@ -79,8 +71,6 @@ class ExtractionFailed
 
     /**
      * Check if the job will be retried.
-     *
-     * @return bool
      */
     public function willRetry(): bool
     {
@@ -89,8 +79,6 @@ class ExtractionFailed
 
     /**
      * Get additional metadata.
-     *
-     * @return array
      */
     public function getMetadata(): array
     {
@@ -99,8 +87,6 @@ class ExtractionFailed
 
     /**
      * Get the download session ID.
-     *
-     * @return string
      */
     public function getDownloadSessionId(): string
     {
@@ -109,8 +95,6 @@ class ExtractionFailed
 
     /**
      * Get the original URL.
-     *
-     * @return string
      */
     public function getOriginalUrl(): string
     {
@@ -119,8 +103,6 @@ class ExtractionFailed
 
     /**
      * Get the platform.
-     *
-     * @return \App\Enums\Platform
      */
     public function getPlatform(): \App\Enums\Platform
     {
@@ -129,8 +111,6 @@ class ExtractionFailed
 
     /**
      * Get the error message.
-     *
-     * @return string
      */
     public function getErrorMessage(): string
     {
@@ -139,8 +119,6 @@ class ExtractionFailed
 
     /**
      * Get the error code.
-     *
-     * @return int
      */
     public function getErrorCode(): int
     {
@@ -149,8 +127,6 @@ class ExtractionFailed
 
     /**
      * Check if the exception is a video extraction exception.
-     *
-     * @return bool
      */
     public function isVideoExtractionException(): bool
     {
@@ -159,14 +135,13 @@ class ExtractionFailed
 
     /**
      * Get the exception context (if it's a VideoExtractionException).
-     *
-     * @return array
      */
     public function getExceptionContext(): array
     {
         if ($this->isVideoExtractionException()) {
             /** @var VideoExtractionException $exception */
             $exception = $this->exception;
+
             return $exception->getContext();
         }
 
@@ -175,8 +150,6 @@ class ExtractionFailed
 
     /**
      * Get the failure category.
-     *
-     * @return string
      */
     public function getFailureCategory(): string
     {
@@ -200,8 +173,6 @@ class ExtractionFailed
 
     /**
      * Check if the failure is retryable.
-     *
-     * @return bool
      */
     public function isRetryable(): bool
     {
@@ -212,13 +183,11 @@ class ExtractionFailed
             'invalid_argument',
         ];
 
-        return !in_array($this->getFailureCategory(), $nonRetryableCategories);
+        return ! in_array($this->getFailureCategory(), $nonRetryableCategories);
     }
 
     /**
      * Get failure statistics.
-     *
-     * @return array
      */
     public function getFailureStatistics(): array
     {
@@ -235,8 +204,6 @@ class ExtractionFailed
 
     /**
      * Convert the event to an array for logging.
-     *
-     * @return array
      */
     public function toArray(): array
     {

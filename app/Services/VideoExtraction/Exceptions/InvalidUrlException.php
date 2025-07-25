@@ -10,9 +10,9 @@ class InvalidUrlException extends VideoExtractionException
     /**
      * Create a new invalid URL exception.
      *
-     * @param string $url The invalid URL
-     * @param string|null $reason The reason why the URL is invalid
-     * @param \Throwable|null $previous The previous exception
+     * @param  string  $url  The invalid URL
+     * @param  string|null  $reason  The reason why the URL is invalid
+     * @param  \Throwable|null  $previous  The previous exception
      */
     public function __construct(
         string $url,
@@ -20,7 +20,7 @@ class InvalidUrlException extends VideoExtractionException
         ?\Throwable $previous = null
     ) {
         $message = "Invalid URL: {$url}";
-        
+
         if ($reason) {
             $message .= " - {$reason}";
         }
@@ -38,8 +38,6 @@ class InvalidUrlException extends VideoExtractionException
 
     /**
      * Get the invalid URL.
-     *
-     * @return string
      */
     public function getUrl(): string
     {
@@ -48,8 +46,6 @@ class InvalidUrlException extends VideoExtractionException
 
     /**
      * Get the reason why the URL is invalid.
-     *
-     * @return string|null
      */
     public function getReason(): ?string
     {

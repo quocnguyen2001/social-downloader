@@ -9,7 +9,7 @@ use App\Services\VideoExtraction\DTOs\ExtractionResult;
 
 /**
  * Interface for video extraction drivers.
- * 
+ *
  * Each platform driver must implement this interface to provide
  * consistent video extraction capabilities across different platforms.
  */
@@ -18,9 +18,10 @@ interface DriverInterface
     /**
      * Extract video metadata from the given URL.
      *
-     * @param string $url The video URL to extract metadata from
-     * @param array $options Additional options for extraction
+     * @param  string  $url  The video URL to extract metadata from
+     * @param  array  $options  Additional options for extraction
      * @return ExtractionResult The extracted video metadata
+     *
      * @throws \App\Services\VideoExtraction\Exceptions\ExtractionFailedException
      * @throws \App\Services\VideoExtraction\Exceptions\InvalidUrlException
      */
@@ -29,10 +30,11 @@ interface DriverInterface
     /**
      * Get the download URL for the video with specified quality and format.
      *
-     * @param string $url The original video URL
-     * @param VideoQuality $quality The desired video quality
-     * @param VideoFormat $format The desired video format
+     * @param  string  $url  The original video URL
+     * @param  VideoQuality  $quality  The desired video quality
+     * @param  VideoFormat  $format  The desired video format
      * @return string The download URL
+     *
      * @throws \App\Services\VideoExtraction\Exceptions\ExtractionFailedException
      * @throws \App\Services\VideoExtraction\Exceptions\InvalidUrlException
      */
@@ -41,7 +43,7 @@ interface DriverInterface
     /**
      * Validate if the given URL is valid for this platform.
      *
-     * @param string $url The URL to validate
+     * @param  string  $url  The URL to validate
      * @return bool True if the URL is valid for this platform
      */
     public function validateUrl(string $url): bool;
@@ -49,7 +51,7 @@ interface DriverInterface
     /**
      * Check if this driver supports the given URL.
      *
-     * @param string $url The URL to check
+     * @param  string  $url  The URL to check
      * @return bool True if this driver can handle the URL
      */
     public function supports(string $url): bool;

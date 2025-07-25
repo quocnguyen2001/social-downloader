@@ -26,10 +26,6 @@ class ApiExceptionHandler
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -42,10 +38,6 @@ class ApiExceptionHandler
 
     /**
      * Handle the exception and return appropriate JSON response.
-     *
-     * @param Request $request
-     * @param Throwable $e
-     * @return JsonResponse
      */
     protected function handleException(Request $request, Throwable $e): JsonResponse
     {
@@ -75,9 +67,6 @@ class ApiExceptionHandler
 
     /**
      * Handle validation exceptions.
-     *
-     * @param ValidationException $e
-     * @return JsonResponse
      */
     protected function handleValidationException(ValidationException $e): JsonResponse
     {
@@ -89,9 +78,6 @@ class ApiExceptionHandler
 
     /**
      * Handle authentication exceptions.
-     *
-     * @param AuthenticationException $e
-     * @return JsonResponse
      */
     protected function handleAuthenticationException(AuthenticationException $e): JsonResponse
     {
@@ -102,13 +88,11 @@ class ApiExceptionHandler
 
     /**
      * Handle model not found exceptions.
-     *
-     * @param ModelNotFoundException $e
-     * @return JsonResponse
      */
     protected function handleModelNotFoundException(ModelNotFoundException $e): JsonResponse
     {
         $model = class_basename($e->getModel());
+
         return $this->notFoundResponse(
             trans('errors.model_not_found', ['model' => $model], "{$model} not found")
         );
@@ -116,9 +100,6 @@ class ApiExceptionHandler
 
     /**
      * Handle not found HTTP exceptions.
-     *
-     * @param NotFoundHttpException $e
-     * @return JsonResponse
      */
     protected function handleNotFoundHttpException(NotFoundHttpException $e): JsonResponse
     {
@@ -129,9 +110,6 @@ class ApiExceptionHandler
 
     /**
      * Handle HTTP exceptions.
-     *
-     * @param HttpException $e
-     * @return JsonResponse
      */
     protected function handleHttpException(HttpException $e): JsonResponse
     {
@@ -143,9 +121,6 @@ class ApiExceptionHandler
 
     /**
      * Handle generic exceptions.
-     *
-     * @param Throwable $e
-     * @return JsonResponse
      */
     protected function handleGenericException(Throwable $e): JsonResponse
     {

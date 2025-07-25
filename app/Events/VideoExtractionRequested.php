@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Event fired when a video extraction is requested.
- * 
+ *
  * This event is dispatched when a user requests video extraction
  * and contains all the necessary information to process the request.
  */
@@ -22,11 +22,11 @@ class VideoExtractionRequested
     /**
      * Create a new event instance.
      *
-     * @param DownloadSession $downloadSession The download session being processed
-     * @param string $originalUrl The original video URL
-     * @param Platform $platform The detected platform
-     * @param ApiKey|null $apiKey The API key used for the request (if any)
-     * @param array $options Additional extraction options
+     * @param  DownloadSession  $downloadSession  The download session being processed
+     * @param  string  $originalUrl  The original video URL
+     * @param  Platform  $platform  The detected platform
+     * @param  ApiKey|null  $apiKey  The API key used for the request (if any)
+     * @param  array  $options  Additional extraction options
      */
     public function __construct(
         public DownloadSession $downloadSession,
@@ -38,8 +38,6 @@ class VideoExtractionRequested
 
     /**
      * Get the download session ID.
-     *
-     * @return string
      */
     public function getDownloadSessionId(): string
     {
@@ -48,8 +46,6 @@ class VideoExtractionRequested
 
     /**
      * Get the original URL.
-     *
-     * @return string
      */
     public function getOriginalUrl(): string
     {
@@ -58,20 +54,14 @@ class VideoExtractionRequested
 
     /**
      * Get the detected platform.
-     *
-     * @return Platform
      */
     public function getPlatform(): Platform
     {
         return $this->platform;
     }
 
-
-
     /**
      * Get the API key (if any).
-     *
-     * @return ApiKey|null
      */
     public function getApiKey(): ?ApiKey
     {
@@ -80,8 +70,6 @@ class VideoExtractionRequested
 
     /**
      * Get additional extraction options.
-     *
-     * @return array
      */
     public function getOptions(): array
     {
@@ -90,8 +78,6 @@ class VideoExtractionRequested
 
     /**
      * Check if the request has an API key.
-     *
-     * @return bool
      */
     public function hasApiKey(): bool
     {
@@ -100,8 +86,6 @@ class VideoExtractionRequested
 
     /**
      * Get the user agent from options.
-     *
-     * @return string|null
      */
     public function getUserAgent(): ?string
     {
@@ -110,8 +94,6 @@ class VideoExtractionRequested
 
     /**
      * Get the IP address from options.
-     *
-     * @return string|null
      */
     public function getIpAddress(): ?string
     {
@@ -120,8 +102,6 @@ class VideoExtractionRequested
 
     /**
      * Get the priority for job processing.
-     *
-     * @return int
      */
     public function getPriority(): int
     {
@@ -139,8 +119,6 @@ class VideoExtractionRequested
 
     /**
      * Convert the event to an array for logging.
-     *
-     * @return array
      */
     public function toArray(): array
     {

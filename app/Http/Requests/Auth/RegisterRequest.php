@@ -84,6 +84,4 @@ class RegisterRequest extends FormRequest
             'password' => trans('auth.fields.password', [], 'Password'),
         ];
     }
-
-
 }

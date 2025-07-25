@@ -7,7 +7,6 @@ namespace App\Notifications;
 use App\Mail\PasswordResetEmail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ResetPasswordNotification extends Notification implements ShouldQueue
@@ -38,7 +37,7 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): PasswordResetEmail
     {
-        $resetUrl = url(config('app.frontend_url', config('app.url')) . '/reset-password?' . http_build_query([
+        $resetUrl = url(config('app.frontend_url', config('app.url')).'/reset-password?'.http_build_query([
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
         ]));

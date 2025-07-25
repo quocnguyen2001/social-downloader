@@ -4,7 +4,7 @@ namespace App\Services\VideoExtraction\Contracts;
 
 /**
  * Interface for video metadata handling.
- * 
+ *
  * This interface defines the contract for accessing and manipulating
  * video metadata extracted from various platforms.
  */
@@ -83,40 +83,35 @@ interface MetadataInterface
     /**
      * Set the video title.
      *
-     * @param string|null $title The video title
-     * @return self
+     * @param  string|null  $title  The video title
      */
     public function setTitle(?string $title): self;
 
     /**
      * Set the video thumbnail URL.
      *
-     * @param string|null $thumbnail The thumbnail URL
-     * @return self
+     * @param  string|null  $thumbnail  The thumbnail URL
      */
     public function setThumbnail(?string $thumbnail): self;
 
     /**
      * Set the video duration.
      *
-     * @param int|null $duration The duration in seconds
-     * @return self
+     * @param  int|null  $duration  The duration in seconds
      */
     public function setDuration(?int $duration): self;
 
     /**
      * Set the video ID.
      *
-     * @param string|null $videoId The video ID
-     * @return self
+     * @param  string|null  $videoId  The video ID
      */
     public function setVideoId(?string $videoId): self;
 
     /**
      * Set the file size.
      *
-     * @param int|null $fileSize The file size in bytes
-     * @return self
+     * @param  int|null  $fileSize  The file size in bytes
      */
     public function setFileSize(?int $fileSize): self;
 }

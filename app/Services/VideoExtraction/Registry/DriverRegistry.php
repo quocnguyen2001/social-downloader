@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Registry for managing video extraction drivers.
- * 
+ *
  * This registry maintains a collection of available drivers
  * and provides methods for registration, discovery, and instantiation.
  */
@@ -39,21 +39,21 @@ class DriverRegistry
     /**
      * Register a driver for a platform.
      *
-     * @param Platform $platform The platform this driver handles
-     * @param string $driverClass The driver class name
-     * @param array $config Optional default configuration for this driver
-     * @return self
+     * @param  Platform  $platform  The platform this driver handles
+     * @param  string  $driverClass  The driver class name
+     * @param  array  $config  Optional default configuration for this driver
+     *
      * @throws \InvalidArgumentException If the driver class doesn't implement DriverInterface
      */
     public function register(Platform $platform, string $driverClass, array $config = []): self
     {
-        if (!class_exists($driverClass)) {
+        if (! class_exists($driverClass)) {
             throw new \InvalidArgumentException("Driver class {$driverClass} does not exist");
         }
 
-        if (!is_subclass_of($driverClass, DriverInterface::class)) {
+        if (! is_subclass_of($driverClass, DriverInterface::class)) {
             throw new \InvalidArgumentException(
-                "Driver class {$driverClass} must implement " . DriverInterface::class
+                "Driver class {$driverClass} must implement ".DriverInterface::class
             );
         }
 
@@ -74,14 +74,15 @@ class DriverRegistry
     /**
      * Get a driver instance for a platform.
      *
-     * @param Platform $platform The platform to get a driver for
-     * @param array $config Optional configuration to override defaults
+     * @param  Platform  $platform  The platform to get a driver for
+     * @param  array  $config  Optional configuration to override defaults
      * @return DriverInterface The driver instance
+     *
      * @throws UnsupportedPlatformException If no driver is registered for the platform
      */
     public function get(Platform $platform, array $config = []): DriverInterface
     {
-        if (!$this->has($platform)) {
+        if (! $this->has($platform)) {
             throw new UnsupportedPlatformException(
                 url: '',
                 detectedPlatform: $platform->value
@@ -89,7 +90,7 @@ class DriverRegistry
         }
 
         $platformValue = $platform->value;
-        $configKey = $platformValue . '_' . md5(serialize($config));
+        $configKey = $platformValue.'_'.md5(serialize($config));
 
         // Return cached instance if available and no custom config
         if (empty($config) && isset($this->instances[$platformValue])) {
@@ -110,7 +111,7 @@ class DriverRegistry
         Log::debug('Driver instance created', [
             'platform' => $platform->value,
             'driver_class' => $driverClass,
-            'config_provided' => !empty($config),
+            'config_provided' => ! empty($config),
         ]);
 
         return $driver;
@@ -119,7 +120,7 @@ class DriverRegistry
     /**
      * Check if a driver is registered for a platform.
      *
-     * @param Platform $platform The platform to check
+     * @param  Platform  $platform  The platform to check
      * @return bool True if a driver is registered
      */
     public function has(Platform $platform): bool
@@ -130,13 +131,12 @@ class DriverRegistry
     /**
      * Unregister a driver for a platform.
      *
-     * @param Platform $platform The platform to unregister
-     * @return self
+     * @param  Platform  $platform  The platform to unregister
      */
     public function unregister(Platform $platform): self
     {
         $platformValue = $platform->value;
-        
+
         unset($this->drivers[$platformValue]);
         unset($this->instances[$platformValue]);
         unset($this->configurations[$platformValue]);
@@ -154,7 +154,7 @@ class DriverRegistry
     public function getAllDriverClasses(): array
     {
         $result = [];
-        
+
         foreach ($this->drivers as $platformValue => $driverClass) {
             $platform = Platform::from($platformValue);
             $result[$platform] = $driverClass;
@@ -171,7 +171,7 @@ class DriverRegistry
     public function getSupportedPlatforms(): array
     {
         return array_map(
-            fn($platformValue) => Platform::from($platformValue),
+            fn ($platformValue) => Platform::from($platformValue),
             array_keys($this->drivers)
         );
     }
@@ -184,7 +184,7 @@ class DriverRegistry
     public function getAllDrivers(): array
     {
         $result = [];
-        
+
         foreach ($this->getSupportedPlatforms() as $platform) {
             $result[$platform] = $this->get($platform);
         }
@@ -194,13 +194,11 @@ class DriverRegistry
 
     /**
      * Clear all cached driver instances.
-     *
-     * @return self
      */
     public function clearCache(): self
     {
         $this->instances = [];
-        
+
         Log::info('Driver registry cache cleared');
 
         return $this;
@@ -241,20 +239,20 @@ class DriverRegistry
 
             try {
                 // Check if class exists
-                if (!class_exists($driverClass)) {
+                if (! class_exists($driverClass)) {
                     $result['valid'] = false;
                     $result['errors'][] = 'Class does not exist';
                 }
 
                 // Check if class implements DriverInterface
-                if (!is_subclass_of($driverClass, DriverInterface::class)) {
+                if (! is_subclass_of($driverClass, DriverInterface::class)) {
                     $result['valid'] = false;
                     $result['errors'][] = 'Class does not implement DriverInterface';
                 }
 
                 // Try to instantiate the driver
                 $driver = $this->get($platform);
-                
+
                 // Check if the driver returns the correct platform
                 if ($driver->getPlatform() !== $platform) {
                     $result['valid'] = false;
@@ -275,14 +273,13 @@ class DriverRegistry
     /**
      * Set default configuration for a platform.
      *
-     * @param Platform $platform The platform
-     * @param array $config The configuration array
-     * @return self
+     * @param  Platform  $platform  The platform
+     * @param  array  $config  The configuration array
      */
     public function setDefaultConfig(Platform $platform, array $config): self
     {
         $this->configurations[$platform->value] = $config;
-        
+
         // Clear cached instance to force recreation with new config
         unset($this->instances[$platform->value]);
 
@@ -292,7 +289,7 @@ class DriverRegistry
     /**
      * Get default configuration for a platform.
      *
-     * @param Platform $platform The platform
+     * @param  Platform  $platform  The platform
      * @return array The configuration array
      */
     public function getDefaultConfig(Platform $platform): array

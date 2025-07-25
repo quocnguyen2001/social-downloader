@@ -17,14 +17,16 @@ class ApiKeyCacheServiceTest extends TestCase
     use RefreshDatabase;
 
     private ApiKeyCacheService $cacheService;
+
     private ApiKey $testApiKey;
+
     private string $testKeyHash;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->cacheService = new ApiKeyCacheService();
+        $this->cacheService = new ApiKeyCacheService;
 
         // Create test API key
         $this->testApiKey = ApiKey::create([
@@ -128,7 +130,7 @@ class ApiKeyCacheServiceTest extends TestCase
         $this->cacheService->cacheApiKey($this->testKeyHash, $this->testApiKey);
 
         // Get the raw cached data
-        $cacheKey = 'api_key:' . $this->testKeyHash;
+        $cacheKey = 'api_key:'.$this->testKeyHash;
         $rawCachedData = Cache::get($cacheKey);
 
         // Ensure sensitive fields are not cached
@@ -207,7 +209,7 @@ class ApiKeyCacheServiceTest extends TestCase
         $expectedProperties = [
             'id', 'name', 'tier', 'status', 'daily_limit', 'monthly_limit',
             'daily_usage', 'monthly_usage', 'total_usage', 'allowed_platforms',
-            'allowed_qualities', 'allowed_formats', 'last_reset_daily', 'last_reset_monthly'
+            'allowed_qualities', 'allowed_formats', 'last_reset_daily', 'last_reset_monthly',
         ];
 
         foreach ($expectedProperties as $property) {

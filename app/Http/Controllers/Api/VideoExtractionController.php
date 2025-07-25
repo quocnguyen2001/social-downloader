@@ -9,6 +9,7 @@ use App\Events\VideoExtractionRequested;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
+use App\Models\DownloadOption;
 use App\Models\DownloadSession;
 use App\Models\User;
 use App\Services\AuthenticatedApiKey;
@@ -30,14 +31,8 @@ class VideoExtractionController extends Controller
         private PlatformDetector $platformDetector
     ) {}
 
-
-
     /**
      * Get extraction status.
-     *
-     * @param Request $request
-     * @param string $sessionId
-     * @return JsonResponse
      */
     public function status(Request $request, string $sessionId): JsonResponse
     {
@@ -45,7 +40,7 @@ class VideoExtractionController extends Controller
             $apiKey = AuthenticatedApiKey::get();
             $downloadSession = DownloadSession::find($sessionId);
 
-            if (!$downloadSession) {
+            if (! $downloadSession) {
                 // Log failed API request for session not found
                 if ($apiKey) {
                     $this->createStatusApiRequestRecord($request, $apiKey, $sessionId, 404);
@@ -93,27 +88,21 @@ class VideoExtractionController extends Controller
             }
 
             // Add available download options if metadata has been fetched
-            if ($downloadSession->status === DownloadSessionStatus::METADATA_FETCHED) {
-                $downloadOptions = $downloadSession->downloadOptions()
-                    ->orderBy('quality', 'desc')
-                    ->orderBy('type')
+            if (in_array($downloadSession->status, [DownloadSessionStatus::METADATA_FETCHED, DownloadSessionStatus::READY_FOR_DOWNLOAD])) {
+
+                $downloadOptions = DownloadOption::query()
+                    ->where('download_session_id', $downloadSession->id)
                     ->get();
 
                 $data['download_options'] = $downloadOptions->map(function ($option) {
                     return [
                         'id' => $option->id,
                         'quality' => $option->quality,
-                        'type' => $option->type->value,
-                        'type_label' => $option->type->getLabel(),
                         'mime_type' => $option->mime_type,
                         'file_size' => $option->file_size,
                         'formatted_file_size' => $option->getFormattedFileSizeAttribute(),
                         'estimated_download_time' => $option->estimated_download_time,
                         'formatted_estimated_time' => $option->getFormattedEstimatedTimeAttribute(),
-                        'type_description' => $option->getFormatTypeDescription(),
-                        'is_audio_only' => $option->isAudioOnly(),
-                        'is_video_only' => $option->isVideoOnly(),
-                        'is_full_video' => $option->isFullVideo(),
                         'status' => $option->status->value,
                         'cdn_id' => $option->cdn_id,
                     ];
@@ -173,8 +162,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Get supported platforms and their capabilities.
-     *
-     * @return JsonResponse
      */
     public function platforms(): JsonResponse
     {
@@ -185,7 +172,7 @@ class VideoExtractionController extends Controller
                 $platforms[] = [
                     'platform' => $platform->value,
                     'name' => $platform->getLabel(),
-                    'description' => __('platforms.' . $platform->value . '.description'),
+                    'description' => __('platforms.'.$platform->value.'.description'),
                     'url_patterns' => $this->platformDetector->getUrlPatterns($platform),
                     'supports_metadata_extraction' => true,
                 ];
@@ -211,8 +198,6 @@ class VideoExtractionController extends Controller
         }
     }
 
-
-
     /**
      * Get estimated processing time for a platform.
      */
@@ -226,13 +211,8 @@ class VideoExtractionController extends Controller
         };
     }
 
-
-
     /**
      * Calculate the cost for an API request based on the API key tier.
-     *
-     * @param ApiKey $apiKey
-     * @return float
      */
     private function calculateRequestCost(ApiKey $apiKey): float
     {
@@ -241,13 +221,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Create API request record for failed requests.
-     *
-     * @param Request $request
-     * @param ApiKey $apiKey
-     * @param string $url
-     * @param string $errorMessage
-     * @param int $statusCode
-     * @return ApiRequest
      */
     private function createFailedApiRequestRecord(
         Request $request,
@@ -279,12 +252,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Create API request record for status endpoint calls.
-     *
-     * @param Request $request
-     * @param ApiKey $apiKey
-     * @param string $sessionId
-     * @param int $statusCode
-     * @return ApiRequest
      */
     private function createStatusApiRequestRecord(
         Request $request,
@@ -295,7 +262,7 @@ class VideoExtractionController extends Controller
         return ApiRequest::create([
             'api_key_id' => $apiKey->getKey(),
             'user_id' => $apiKey->user_id,
-            'endpoint' => '/api/v1/extract/status/' . $sessionId,
+            'endpoint' => '/api/v1/extract/status/'.$sessionId,
             'method' => HttpMethod::GET,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
@@ -315,9 +282,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Request video extraction for guest users (unauthenticated).
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function extractGuest(Request $request): JsonResponse
     {
@@ -338,7 +302,7 @@ class VideoExtractionController extends Controller
 
             // Detect platform
             $platform = $this->platformDetector->detectPlatform($url);
-            if (!$platform) {
+            if (! $platform) {
                 // Log failed request for unsupported platform
                 $this->createFailedGuestApiRequestRecord($request, $url, 'Unsupported platform', 400);
 
@@ -410,9 +374,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Request video extraction for authenticated users.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function extractAuthenticated(Request $request): JsonResponse
     {
@@ -432,7 +393,7 @@ class VideoExtractionController extends Controller
             /** @var User $user */
             $user = $request->user();
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Authentication required',
@@ -443,7 +404,7 @@ class VideoExtractionController extends Controller
 
             // Detect platform
             $platform = $this->platformDetector->detectPlatform($url);
-            if (!$platform) {
+            if (! $platform) {
                 // Log failed request for unsupported platform
                 $this->createFailedUserApiRequestRecord($request, $user, $url, 'Unsupported platform', 400);
 
@@ -521,11 +482,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Create API request record for guest users.
-     *
-     * @param Request $request
-     * @param string $url
-     * @param Platform $platform
-     * @return ApiRequest
      */
     private function createGuestApiRequestRecord(
         Request $request,
@@ -555,12 +511,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Create API request record for authenticated users.
-     *
-     * @param Request $request
-     * @param User $user
-     * @param string $url
-     * @param Platform $platform
-     * @return ApiRequest
      */
     private function createUserApiRequestRecord(
         Request $request,
@@ -591,12 +541,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Create failed API request record for guest users.
-     *
-     * @param Request $request
-     * @param string $url
-     * @param string $errorMessage
-     * @param int $statusCode
-     * @return ApiRequest
      */
     private function createFailedGuestApiRequestRecord(
         Request $request,
@@ -627,13 +571,6 @@ class VideoExtractionController extends Controller
 
     /**
      * Create failed API request record for authenticated users.
-     *
-     * @param Request $request
-     * @param User $user
-     * @param string $url
-     * @param string $errorMessage
-     * @param int $statusCode
-     * @return ApiRequest
      */
     private function createFailedUserApiRequestRecord(
         Request $request,

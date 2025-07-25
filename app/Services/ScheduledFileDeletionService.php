@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Service for managing scheduled file deletions.
- * 
+ *
  * This service provides methods to schedule, retrieve, update, and cancel
  * file deletions across different storage disks.
  */
@@ -21,11 +21,11 @@ class ScheduledFileDeletionService
     /**
      * Schedule a file for deletion.
      *
-     * @param string $filePath Full path to the file to be deleted
-     * @param string $storageDisk Storage disk identifier where the file is located
-     * @param float $hours Number of hours from now when the file should be deleted (default: 24)
-     * @param string|null $description Optional description or reason for deletion
-     * @return ScheduledFileDeletion
+     * @param  string  $filePath  Full path to the file to be deleted
+     * @param  string  $storageDisk  Storage disk identifier where the file is located
+     * @param  float  $hours  Number of hours from now when the file should be deleted (default: 24)
+     * @param  string|null  $description  Optional description or reason for deletion
+     *
      * @throws \Exception
      */
     public function schedule(
@@ -36,7 +36,7 @@ class ScheduledFileDeletionService
     ): ScheduledFileDeletion {
         try {
             // Validate storage disk exists
-            if (!$this->isDiskAvailable($storageDisk)) {
+            if (! $this->isDiskAvailable($storageDisk)) {
                 throw new \InvalidArgumentException("Storage disk '{$storageDisk}' is not available");
             }
 
@@ -86,11 +86,11 @@ class ScheduledFileDeletionService
     /**
      * Schedule a file for deletion at a specific date/time.
      *
-     * @param string $filePath Full path to the file to be deleted
-     * @param string $storageDisk Storage disk identifier where the file is located
-     * @param \DateTime $deleteAt Scheduled deletion time
-     * @param string|null $description Optional description or reason for deletion
-     * @return ScheduledFileDeletion
+     * @param  string  $filePath  Full path to the file to be deleted
+     * @param  string  $storageDisk  Storage disk identifier where the file is located
+     * @param  \DateTime  $deleteAt  Scheduled deletion time
+     * @param  string|null  $description  Optional description or reason for deletion
+     *
      * @throws \Exception
      */
     public function scheduleAt(
@@ -101,7 +101,7 @@ class ScheduledFileDeletionService
     ): ScheduledFileDeletion {
         try {
             // Validate storage disk exists
-            if (!$this->isDiskAvailable($storageDisk)) {
+            if (! $this->isDiskAvailable($storageDisk)) {
                 throw new \InvalidArgumentException("Storage disk '{$storageDisk}' is not available");
             }
 
@@ -111,7 +111,7 @@ class ScheduledFileDeletionService
             }
 
             // Validate deletion time is in the future
-            if ($deleteAt <= new \DateTime()) {
+            if ($deleteAt <= new \DateTime) {
                 throw new \InvalidArgumentException('Deletion time must be in the future');
             }
 
@@ -146,9 +146,6 @@ class ScheduledFileDeletionService
 
     /**
      * Find a scheduled deletion by ID.
-     *
-     * @param int $id
-     * @return ScheduledFileDeletion|null
      */
     public function find(int $id): ?ScheduledFileDeletion
     {
@@ -178,7 +175,7 @@ class ScheduledFileDeletionService
     /**
      * Get deletions for a specific storage disk.
      *
-     * @param string $disk Storage disk identifier
+     * @param  string  $disk  Storage disk identifier
      * @return Collection<ScheduledFileDeletion>
      */
     public function getDeletionsForDisk(string $disk): Collection
@@ -199,9 +196,6 @@ class ScheduledFileDeletionService
     /**
      * Update a scheduled deletion.
      *
-     * @param int $id
-     * @param array $data
-     * @return bool
      * @throws \Exception
      */
     public function update(int $id, array $data): bool
@@ -209,12 +203,12 @@ class ScheduledFileDeletionService
         try {
             $scheduledDeletion = $this->find($id);
 
-            if (!$scheduledDeletion) {
+            if (! $scheduledDeletion) {
                 throw new \InvalidArgumentException("Scheduled deletion with ID {$id} not found");
             }
 
             // Validate storage disk if being updated
-            if (isset($data['storage_disk']) && !$this->isDiskAvailable($data['storage_disk'])) {
+            if (isset($data['storage_disk']) && ! $this->isDiskAvailable($data['storage_disk'])) {
                 throw new \InvalidArgumentException("Storage disk '{$data['storage_disk']}' is not available");
             }
 
@@ -226,7 +220,7 @@ class ScheduledFileDeletionService
             // Validate deletion time if being updated
             if (isset($data['delete_at'])) {
                 $deleteAt = $data['delete_at'] instanceof \DateTime ? $data['delete_at'] : new \DateTime($data['delete_at']);
-                if ($deleteAt <= new \DateTime()) {
+                if ($deleteAt <= new \DateTime) {
                     throw new \InvalidArgumentException('Deletion time must be in the future');
                 }
             }
@@ -254,8 +248,6 @@ class ScheduledFileDeletionService
     /**
      * Cancel a scheduled deletion.
      *
-     * @param int $id
-     * @return bool
      * @throws \Exception
      */
     public function cancel(int $id): bool
@@ -263,7 +255,7 @@ class ScheduledFileDeletionService
         try {
             $scheduledDeletion = $this->find($id);
 
-            if (!$scheduledDeletion) {
+            if (! $scheduledDeletion) {
                 throw new \InvalidArgumentException("Scheduled deletion with ID {$id} not found");
             }
 
@@ -290,7 +282,7 @@ class ScheduledFileDeletionService
     /**
      * Process due deletions (actually delete the files).
      *
-     * @param int $batchSize Number of deletions to process in one batch
+     * @param  int  $batchSize  Number of deletions to process in one batch
      * @return array Statistics about processed deletions
      */
     public function processDueDeletions(int $batchSize = 50): array
@@ -314,7 +306,7 @@ class ScheduledFileDeletionService
 
                 // Check if file exists before attempting deletion
                 $disk = Storage::disk($deletion->storage_disk);
-                
+
                 if ($disk->exists($deletion->file_path)) {
                     $disk->delete($deletion->file_path);
                     Log::info('File deleted successfully', [
@@ -359,9 +351,6 @@ class ScheduledFileDeletionService
 
     /**
      * Check if a storage disk is available.
-     *
-     * @param string $disk
-     * @return bool
      */
     private function isDiskAvailable(string $disk): bool
     {
@@ -370,8 +359,6 @@ class ScheduledFileDeletionService
 
     /**
      * Get available storage disks.
-     *
-     * @return array
      */
     public function getAvailableDisks(): array
     {

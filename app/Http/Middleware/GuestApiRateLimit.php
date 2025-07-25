@@ -25,10 +25,6 @@ class GuestApiRateLimit
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -49,7 +45,7 @@ class GuestApiRateLimit
             // Check current usage against limits
             $usageCheck = $this->usageTracker->checkGuestLimits($ipAddress, $limits);
 
-            if (!$usageCheck['allowed']) {
+            if (! $usageCheck['allowed']) {
                 return $this->rateLimitExceededResponse($usageCheck, $ipAddress);
             }
 
@@ -89,9 +85,6 @@ class GuestApiRateLimit
 
     /**
      * Get the client's IP address with proxy support.
-     *
-     * @param Request $request
-     * @return string
      */
     private function getClientIpAddress(Request $request): string
     {
@@ -108,7 +101,7 @@ class GuestApiRateLimit
 
         foreach ($ipHeaders as $header) {
             $ip = $request->server($header);
-            if (!empty($ip) && $ip !== 'unknown') {
+            if (! empty($ip) && $ip !== 'unknown') {
                 // Handle comma-separated IPs (take the first one)
                 $ip = trim(explode(',', $ip)[0]);
                 if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
@@ -124,8 +117,6 @@ class GuestApiRateLimit
     /**
      * Validate request permissions against guest limits.
      *
-     * @param Request $request
-     * @param array $limits
      * @return JsonResponse|true
      */
     private function validateRequestPermissions(Request $request, array $limits): JsonResponse|bool
@@ -134,7 +125,7 @@ class GuestApiRateLimit
         $format = $request->input('format');
 
         // Validate quality if provided
-        if ($quality && !in_array($quality, $limits['allowed_qualities'])) {
+        if ($quality && ! in_array($quality, $limits['allowed_qualities'])) {
             return $this->permissionDeniedResponse(
                 'Quality not allowed for guest users',
                 'QUALITY_NOT_ALLOWED',
@@ -146,7 +137,7 @@ class GuestApiRateLimit
         }
 
         // Validate format if provided
-        if ($format && !in_array($format, $limits['allowed_formats'])) {
+        if ($format && ! in_array($format, $limits['allowed_formats'])) {
             return $this->permissionDeniedResponse(
                 'Format not allowed for guest users',
                 'FORMAT_NOT_ALLOWED',
@@ -162,10 +153,6 @@ class GuestApiRateLimit
 
     /**
      * Return rate limit exceeded response.
-     *
-     * @param array $usageCheck
-     * @param string $ipAddress
-     * @return JsonResponse
      */
     private function rateLimitExceededResponse(array $usageCheck, string $ipAddress): JsonResponse
     {
@@ -201,11 +188,6 @@ class GuestApiRateLimit
 
     /**
      * Return permission denied response.
-     *
-     * @param string $message
-     * @param string $errorCode
-     * @param array $details
-     * @return JsonResponse
      */
     private function permissionDeniedResponse(string $message, string $errorCode, array $details = []): JsonResponse
     {
@@ -219,9 +201,6 @@ class GuestApiRateLimit
 
     /**
      * Return generic error response.
-     *
-     * @param string $message
-     * @return JsonResponse
      */
     private function errorResponse(string $message): JsonResponse
     {
@@ -234,9 +213,6 @@ class GuestApiRateLimit
 
     /**
      * Build rate limit message based on which limit was exceeded.
-     *
-     * @param array $usageCheck
-     * @return string
      */
     private function buildRateLimitMessage(array $usageCheck): string
     {
@@ -249,9 +225,11 @@ class GuestApiRateLimit
             return 'Both hourly and daily rate limits exceeded. Please try again later.';
         } elseif ($hourlyExceeded) {
             $resetTime = $usageCheck['reset_times']['hourly']->diffForHumans();
+
             return "Hourly rate limit exceeded. Limit resets {$resetTime}.";
         } elseif ($dailyExceeded) {
             $resetTime = $usageCheck['reset_times']['daily']->diffForHumans();
+
             return "Daily rate limit exceeded. Limit resets {$resetTime}.";
         }
 
@@ -260,10 +238,6 @@ class GuestApiRateLimit
 
     /**
      * Add rate limit headers to the response.
-     *
-     * @param Response $response
-     * @param array $usageCheck
-     * @return void
      */
     private function addRateLimitHeaders(Response $response, array $usageCheck): void
     {

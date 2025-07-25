@@ -57,8 +57,6 @@ class GeneralSettings extends SettingsPage
         return 'Manage basic website information and configuration settings';
     }
 
-
-
     /**
      * Get the form schema.
      */

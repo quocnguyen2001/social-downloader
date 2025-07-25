@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Event fired when video extraction is completed successfully.
- * 
+ *
  * This event is dispatched when a video extraction job completes
  * successfully and contains the extraction results.
  */
@@ -21,10 +21,10 @@ class ExtractionCompleted
     /**
      * Create a new event instance.
      *
-     * @param DownloadSession $downloadSession The completed download session
-     * @param ExtractionResult $extractionResult The extraction results
-     * @param float $processingTime The time taken to process the extraction (in seconds)
-     * @param array $metadata Additional metadata about the extraction
+     * @param  DownloadSession  $downloadSession  The completed download session
+     * @param  ExtractionResult  $extractionResult  The extraction results
+     * @param  float  $processingTime  The time taken to process the extraction (in seconds)
+     * @param  array  $metadata  Additional metadata about the extraction
      */
     public function __construct(
         public DownloadSession $downloadSession,
@@ -35,8 +35,6 @@ class ExtractionCompleted
 
     /**
      * Get the download session.
-     *
-     * @return DownloadSession
      */
     public function getDownloadSession(): DownloadSession
     {
@@ -45,8 +43,6 @@ class ExtractionCompleted
 
     /**
      * Get the extraction result.
-     *
-     * @return ExtractionResult
      */
     public function getExtractionResult(): ExtractionResult
     {
@@ -55,8 +51,6 @@ class ExtractionCompleted
 
     /**
      * Get the processing time.
-     *
-     * @return float
      */
     public function getProcessingTime(): float
     {
@@ -65,8 +59,6 @@ class ExtractionCompleted
 
     /**
      * Get additional metadata.
-     *
-     * @return array
      */
     public function getMetadata(): array
     {
@@ -75,8 +67,6 @@ class ExtractionCompleted
 
     /**
      * Get the download session ID.
-     *
-     * @return string
      */
     public function getDownloadSessionId(): string
     {
@@ -85,8 +75,6 @@ class ExtractionCompleted
 
     /**
      * Get the original URL.
-     *
-     * @return string
      */
     public function getOriginalUrl(): string
     {
@@ -95,8 +83,6 @@ class ExtractionCompleted
 
     /**
      * Get the platform.
-     *
-     * @return \App\Enums\Platform
      */
     public function getPlatform(): \App\Enums\Platform
     {
@@ -105,8 +91,6 @@ class ExtractionCompleted
 
     /**
      * Get the video title.
-     *
-     * @return string|null
      */
     public function getVideoTitle(): ?string
     {
@@ -115,8 +99,6 @@ class ExtractionCompleted
 
     /**
      * Get the download URL.
-     *
-     * @return string|null
      */
     public function getDownloadUrl(): ?string
     {
@@ -125,8 +107,6 @@ class ExtractionCompleted
 
     /**
      * Get the file size.
-     *
-     * @return int|null
      */
     public function getFileSize(): ?int
     {
@@ -135,8 +115,6 @@ class ExtractionCompleted
 
     /**
      * Get the video duration.
-     *
-     * @return int|null
      */
     public function getDuration(): ?int
     {
@@ -145,8 +123,6 @@ class ExtractionCompleted
 
     /**
      * Check if the extraction was successful.
-     *
-     * @return bool
      */
     public function isSuccessful(): bool
     {
@@ -156,8 +132,6 @@ class ExtractionCompleted
 
     /**
      * Get performance metrics.
-     *
-     * @return array
      */
     public function getPerformanceMetrics(): array
     {
@@ -173,8 +147,6 @@ class ExtractionCompleted
 
     /**
      * Convert the event to an array for logging.
-     *
-     * @return array
      */
     public function toArray(): array
     {

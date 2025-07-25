@@ -14,10 +14,10 @@ enum ApiKeyStatus: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.api_key_status.' . $this->value);
+        return trans('enums.api_key_status.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::ACTIVE => 'success',

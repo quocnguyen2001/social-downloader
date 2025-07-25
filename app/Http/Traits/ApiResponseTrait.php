@@ -18,12 +18,6 @@ trait ApiResponseTrait
 {
     /**
      * Return a success response.
-     *
-     * @param mixed $data
-     * @param string $message
-     * @param int $statusCode
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function successResponse(
         mixed $data = null,
@@ -45,12 +39,6 @@ trait ApiResponseTrait
 
     /**
      * Return an error response.
-     *
-     * @param string $message
-     * @param mixed $errors
-     * @param int $statusCode
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function errorResponse(
         string $message = 'Error',
@@ -72,11 +60,6 @@ trait ApiResponseTrait
 
     /**
      * Return a paginated response.
-     *
-     * @param LengthAwarePaginator $paginator
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function paginatedResponse(
         LengthAwarePaginator $paginator,
@@ -101,11 +84,6 @@ trait ApiResponseTrait
 
     /**
      * Return a collection response.
-     *
-     * @param Collection $collection
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function collectionResponse(
         Collection $collection,
@@ -122,11 +100,6 @@ trait ApiResponseTrait
 
     /**
      * Return a created response.
-     *
-     * @param mixed $data
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function createdResponse(
         mixed $data = null,
@@ -138,10 +111,6 @@ trait ApiResponseTrait
 
     /**
      * Return a no content response.
-     *
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function noContentResponse(
         string $message = 'No content',
@@ -155,10 +124,6 @@ trait ApiResponseTrait
 
     /**
      * Return an unauthorized response.
-     *
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function unauthorizedResponse(
         string $message = 'Unauthorized',
@@ -169,10 +134,6 @@ trait ApiResponseTrait
 
     /**
      * Return a forbidden response.
-     *
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function forbiddenResponse(
         string $message = 'Forbidden',
@@ -183,10 +144,6 @@ trait ApiResponseTrait
 
     /**
      * Return a not found response.
-     *
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function notFoundResponse(
         string $message = 'Not found',
@@ -197,11 +154,6 @@ trait ApiResponseTrait
 
     /**
      * Return a validation error response.
-     *
-     * @param mixed $errors
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function validationErrorResponse(
         mixed $errors,
@@ -213,10 +165,6 @@ trait ApiResponseTrait
 
     /**
      * Return a server error response.
-     *
-     * @param string $message
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function serverErrorResponse(
         string $message = 'Internal server error',
@@ -227,11 +175,6 @@ trait ApiResponseTrait
 
     /**
      * Return a rate limit exceeded response.
-     *
-     * @param string $message
-     * @param int $retryAfter
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function rateLimitResponse(
         string $message = 'Too many requests',
@@ -239,17 +182,12 @@ trait ApiResponseTrait
         array $headers = []
     ): JsonResponse {
         $headers['Retry-After'] = $retryAfter;
+
         return $this->errorResponse($message, null, Response::HTTP_TOO_MANY_REQUESTS, $headers);
     }
 
     /**
      * Return a success response with the required API format.
-     *
-     * @param mixed $data
-     * @param string $message
-     * @param int $statusCode
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function apiSuccessResponse(
         mixed $data = null,
@@ -268,12 +206,6 @@ trait ApiResponseTrait
 
     /**
      * Return an error response with the required API format.
-     *
-     * @param string $message
-     * @param mixed $data
-     * @param int $statusCode
-     * @param array $headers
-     * @return JsonResponse
      */
     protected function apiErrorResponse(
         string $message = 'Error',

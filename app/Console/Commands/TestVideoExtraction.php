@@ -49,23 +49,25 @@ class TestVideoExtraction extends Command
                 ]
             );
 
-            if (!$analysis['is_supported']) {
+            if (! $analysis['is_supported']) {
                 $this->error('URL is not supported by any driver.');
+
                 return self::FAILURE;
             }
 
-            if (!$analysis['driver_available']) {
+            if (! $analysis['driver_available']) {
                 $this->error('No driver available for this platform.');
+
                 return self::FAILURE;
             }
 
             // Show supported qualities and formats
-            if (!empty($analysis['supported_qualities'])) {
-                $this->info('Supported Qualities: ' . implode(', ', $analysis['supported_qualities']));
+            if (! empty($analysis['supported_qualities'])) {
+                $this->info('Supported Qualities: '.implode(', ', $analysis['supported_qualities']));
             }
 
-            if (!empty($analysis['supported_formats'])) {
-                $this->info('Supported Formats: ' . implode(', ', $analysis['supported_formats']));
+            if (! empty($analysis['supported_formats'])) {
+                $this->info('Supported Formats: '.implode(', ', $analysis['supported_formats']));
             }
 
             $this->newLine();
@@ -75,8 +77,8 @@ class TestVideoExtraction extends Command
 
             $driver = $driverFactory->create($url);
 
-            $this->info("Using driver: " . get_class($driver));
-            $this->info("Platform: " . $driver->getPlatform()->value);
+            $this->info('Using driver: '.get_class($driver));
+            $this->info('Platform: '.$driver->getPlatform()->value);
 
             // Note: This would normally use yt-dlp, but for testing we'll just validate the setup
             $this->info('✓ Driver created successfully');
@@ -87,13 +89,14 @@ class TestVideoExtraction extends Command
             $this->info('Video extraction system is working correctly!');
 
             $this->warn('Note: Actual extraction requires yt-dlp to be installed and configured.');
-            $this->warn('Make sure yt-dlp is available at: ' . config('video-extraction.yt_dlp.binary_path'));
+            $this->warn('Make sure yt-dlp is available at: '.config('video-extraction.yt_dlp.binary_path'));
 
             return self::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error('Extraction test failed: ' . $e->getMessage());
-            $this->error('Stack trace: ' . $e->getTraceAsString());
+            $this->error('Extraction test failed: '.$e->getMessage());
+            $this->error('Stack trace: '.$e->getTraceAsString());
+
             return self::FAILURE;
         }
     }

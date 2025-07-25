@@ -62,14 +62,13 @@ class LoginRequest extends FormRequest
     /**
      * Configure the validator instance.
      *
-     * @param \Illuminate\Validation\Validator $validator
-     * @return void
+     * @param  \Illuminate\Validation\Validator  $validator
      */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             // Check rate limiting
-            $key = 'login_attempts:' . $this->ip();
+            $key = 'login_attempts:'.$this->ip();
             $maxAttempts = 5;
 
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {

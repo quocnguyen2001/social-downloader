@@ -30,7 +30,7 @@ class ApiKeyAuthentication
     /**
      * Handle an incoming request.
      *
-     * @param \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response) $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$scopes): Response
     {
@@ -38,14 +38,14 @@ class ApiKeyAuthentication
             // Extract API key from request
             $apiKeyValue = $this->extractApiKey($request);
 
-            if (!$apiKeyValue) {
+            if (! $apiKeyValue) {
                 return $this->unauthorizedResponse('API key is required');
             }
 
             // Validate and get API key with caching
             $apiKey = $this->validateApiKey($apiKeyValue);
 
-            if (!$apiKey) {
+            if (! $apiKey) {
                 return $this->unauthorizedResponse('Invalid API key');
             }
 
@@ -74,7 +74,7 @@ class ApiKeyAuthentication
             }
 
             // Check scopes if provided
-            if (!empty($scopes) && !$this->hasRequiredScopes($apiKey, $scopes)) {
+            if (! empty($scopes) && ! $this->hasRequiredScopes($apiKey, $scopes)) {
                 return $this->forbiddenResponse('Insufficient permissions for this endpoint');
             }
 
@@ -254,7 +254,7 @@ class ApiKeyAuthentication
         $apiKeyScopes = $tierPermissions[$apiKey->tier] ?? [];
 
         foreach ($requiredScopes as $scope) {
-            if (!in_array($scope, $apiKeyScopes)) {
+            if (! in_array($scope, $apiKeyScopes)) {
                 return false;
             }
         }

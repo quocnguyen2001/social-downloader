@@ -2,7 +2,7 @@
 
 /**
  * Simple test script for the Video Download API
- * 
+ *
  * This script tests the complete workflow:
  * 1. Trigger download
  * 2. Check status
@@ -18,7 +18,7 @@ $baseUrl = 'http://localhost:8000/api/v1';
 $downloadOptionId = '01983def-5e2a-7334-a71a-8eb2fc0390de'; // Replace with actual ID
 $apiKey = 'your-api-key'; // Replace with actual API key
 
-$http = new HttpClient();
+$http = new HttpClient;
 
 echo "=== Video Download API Test ===\n\n";
 
@@ -33,10 +33,10 @@ try {
         'X-API-Key' => $apiKey,
     ]);
 
-    echo "Status Code: " . $response->status() . "\n";
-    echo "Response: " . $response->body() . "\n\n";
+    echo 'Status Code: '.$response->status()."\n";
+    echo 'Response: '.$response->body()."\n\n";
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n\n";
+    echo 'Error: '.$e->getMessage()."\n\n";
 }
 
 // Test 2: Trigger download
@@ -50,10 +50,10 @@ try {
         'X-API-Key' => $apiKey,
     ]);
 
-    echo "Status Code: " . $response->status() . "\n";
-    echo "Response: " . $response->body() . "\n\n";
+    echo 'Status Code: '.$response->status()."\n";
+    echo 'Response: '.$response->body()."\n\n";
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n\n";
+    echo 'Error: '.$e->getMessage()."\n\n";
 }
 
 // Test 3: Monitor status changes
@@ -64,7 +64,7 @@ $attempt = 0;
 while ($attempt < $maxAttempts) {
     $attempt++;
     echo "Attempt {$attempt}: ";
-    
+
     try {
         $response = $http->post("{$baseUrl}/download/status", [
             'download_option_id' => $downloadOptionId,
@@ -79,7 +79,7 @@ while ($attempt < $maxAttempts) {
         echo "Status: {$status}\n";
 
         if ($status === 'downloaded') {
-            echo "Download completed! URL: " . ($data['data']['download_url'] ?? 'N/A') . "\n";
+            echo 'Download completed! URL: '.($data['data']['download_url'] ?? 'N/A')."\n";
             break;
         } elseif ($status === 'failed') {
             echo "Download failed!\n";
@@ -88,7 +88,7 @@ while ($attempt < $maxAttempts) {
 
         sleep(5); // Wait 5 seconds before next check
     } catch (Exception $e) {
-        echo "Error: " . $e->getMessage() . "\n";
+        echo 'Error: '.$e->getMessage()."\n";
         break;
     }
 }

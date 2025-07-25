@@ -57,8 +57,6 @@ class GuestUserApiLimitsSettings extends SettingsPage
         return 'Manage API restrictions and limitations for unauthenticated users';
     }
 
-
-
     /**
      * Get the form schema.
      */

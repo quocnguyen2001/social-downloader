@@ -26,10 +26,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -37,7 +33,7 @@ class AuthenticatedApiRateLimit
             /** @var User $user */
             $user = $request->user();
 
-            if (!$user) {
+            if (! $user) {
                 return $this->unauthorizedResponse();
             }
 
@@ -47,7 +43,7 @@ class AuthenticatedApiRateLimit
             // Check current usage against limits
             $usageCheck = $this->usageTracker->checkUserLimits($user, $limits);
 
-            if (!$usageCheck['allowed']) {
+            if (! $usageCheck['allowed']) {
                 return $this->rateLimitExceededResponse($usageCheck, $user, $limits);
             }
 
@@ -58,7 +54,7 @@ class AuthenticatedApiRateLimit
             }
 
             // Check membership plan expiration
-            if ($user->membershipPlan && !$user->hasActiveMembership()) {
+            if ($user->membershipPlan && ! $user->hasActiveMembership()) {
                 return $this->membershipExpiredResponse($user);
             }
 
@@ -95,8 +91,6 @@ class AuthenticatedApiRateLimit
     /**
      * Validate request permissions against user limits.
      *
-     * @param Request $request
-     * @param array $limits
      * @return JsonResponse|true
      */
     private function validateRequestPermissions(Request $request, array $limits): JsonResponse|bool
@@ -105,7 +99,7 @@ class AuthenticatedApiRateLimit
         $format = $request->input('format');
 
         // Validate quality if provided
-        if ($quality && !in_array($quality, $limits['allowed_qualities'])) {
+        if ($quality && ! in_array($quality, $limits['allowed_qualities'])) {
             return $this->permissionDeniedResponse(
                 'Quality not allowed for your membership plan',
                 'QUALITY_NOT_ALLOWED',
@@ -118,7 +112,7 @@ class AuthenticatedApiRateLimit
         }
 
         // Validate format if provided
-        if ($format && !in_array($format, $limits['allowed_formats'])) {
+        if ($format && ! in_array($format, $limits['allowed_formats'])) {
             return $this->permissionDeniedResponse(
                 'Format not allowed for your membership plan',
                 'FORMAT_NOT_ALLOWED',
@@ -135,11 +129,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Return rate limit exceeded response.
-     *
-     * @param array $usageCheck
-     * @param User $user
-     * @param array $limits
-     * @return JsonResponse
      */
     private function rateLimitExceededResponse(array $usageCheck, User $user, array $limits): JsonResponse
     {
@@ -200,9 +189,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Return membership expired response.
-     *
-     * @param User $user
-     * @return JsonResponse
      */
     private function membershipExpiredResponse(User $user): JsonResponse
     {
@@ -225,8 +211,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Return unauthorized response.
-     *
-     * @return JsonResponse
      */
     private function unauthorizedResponse(): JsonResponse
     {
@@ -239,11 +223,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Return permission denied response.
-     *
-     * @param string $message
-     * @param string $errorCode
-     * @param array $details
-     * @return JsonResponse
      */
     private function permissionDeniedResponse(string $message, string $errorCode, array $details = []): JsonResponse
     {
@@ -257,9 +236,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Return generic error response.
-     *
-     * @param string $message
-     * @return JsonResponse
      */
     private function errorResponse(string $message): JsonResponse
     {
@@ -272,23 +248,19 @@ class AuthenticatedApiRateLimit
 
     /**
      * Build rate limit message based on which limit was exceeded.
-     *
-     * @param array $usageCheck
-     * @param array $limits
-     * @return string
      */
     private function buildRateLimitMessage(array $usageCheck, array $limits): string
     {
-        $hourlyExceeded = isset($usageCheck['limits']['hourly']) && 
-                         $usageCheck['limits']['hourly'] > 0 && 
+        $hourlyExceeded = isset($usageCheck['limits']['hourly']) &&
+                         $usageCheck['limits']['hourly'] > 0 &&
                          $usageCheck['current_usage']['hourly'] >= $usageCheck['limits']['hourly'];
-        
-        $dailyExceeded = isset($usageCheck['limits']['daily']) && 
-                        $usageCheck['limits']['daily'] > 0 && 
+
+        $dailyExceeded = isset($usageCheck['limits']['daily']) &&
+                        $usageCheck['limits']['daily'] > 0 &&
                         $usageCheck['current_usage']['daily'] >= $usageCheck['limits']['daily'];
-        
-        $totalExceeded = isset($usageCheck['limits']['total']) && 
-                        $usageCheck['limits']['total'] > 0 && 
+
+        $totalExceeded = isset($usageCheck['limits']['total']) &&
+                        $usageCheck['limits']['total'] > 0 &&
                         $usageCheck['current_usage']['total'] >= $usageCheck['limits']['total'];
 
         $planInfo = $limits['plan_name'] ? " for your {$limits['plan_name']} plan" : '';
@@ -299,9 +271,11 @@ class AuthenticatedApiRateLimit
             return "Both hourly and daily rate limits exceeded{$planInfo}. Please try again later.";
         } elseif ($hourlyExceeded) {
             $resetTime = $usageCheck['reset_times']['hourly']->diffForHumans();
+
             return "Hourly rate limit exceeded{$planInfo}. Limit resets {$resetTime}.";
         } elseif ($dailyExceeded) {
             $resetTime = $usageCheck['reset_times']['daily']->diffForHumans();
+
             return "Daily rate limit exceeded{$planInfo}. Limit resets {$resetTime}.";
         }
 
@@ -310,11 +284,6 @@ class AuthenticatedApiRateLimit
 
     /**
      * Add rate limit headers to the response.
-     *
-     * @param Response $response
-     * @param array $usageCheck
-     * @param array $limits
-     * @return void
      */
     private function addRateLimitHeaders(Response $response, array $usageCheck, array $limits): void
     {

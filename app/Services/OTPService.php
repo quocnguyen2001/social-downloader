@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * OTP Service for generating and validating one-time passwords.
@@ -29,9 +29,8 @@ class OTPService
     /**
      * Generate a new OTP for the given email and type.
      *
-     * @param string $email
-     * @param string $type
      * @return string The generated OTP code
+     *
      * @throws \Exception If rate limit exceeded
      */
     public function generate(string $email, string $type = 'password_reset'): string
@@ -66,11 +65,6 @@ class OTPService
 
     /**
      * Validate an OTP for the given email and type.
-     *
-     * @param string $email
-     * @param string $otp
-     * @param string $type
-     * @return bool
      */
     public function validate(string $email, string $otp, string $type = 'password_reset'): bool
     {
@@ -82,12 +76,13 @@ class OTPService
             ->where('expires_at', '>', Carbon::now())
             ->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             Log::warning('OTP validation failed', [
                 'email' => $email,
                 'type' => $type,
                 'reason' => 'OTP not found or expired',
             ]);
+
             return false;
         }
 
@@ -110,8 +105,6 @@ class OTPService
     /**
      * Check if the email has exceeded the rate limit for OTP generation.
      *
-     * @param string $email
-     * @param string $type
      * @throws \Exception If rate limit exceeded
      */
     private function checkRateLimit(string $email, string $type): void
@@ -135,9 +128,6 @@ class OTPService
 
     /**
      * Invalidate existing unused OTPs for the given email and type.
-     *
-     * @param string $email
-     * @param string $type
      */
     private function invalidateExisting(string $email, string $type): void
     {
@@ -171,8 +161,6 @@ class OTPService
 
     /**
      * Get the expiration time in minutes.
-     *
-     * @return int
      */
     public function getExpirationMinutes(): int
     {

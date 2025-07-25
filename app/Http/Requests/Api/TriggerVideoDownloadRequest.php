@@ -41,16 +41,16 @@ class TriggerVideoDownloadRequest extends FormRequest
     {
         return [
             'download_option_id.required' => __('validation.required', [
-                'attribute' => __('models.download_option.fields.id')
+                'attribute' => __('models.download_option.fields.id'),
             ]),
             'download_option_id.string' => __('validation.string', [
-                'attribute' => __('models.download_option.fields.id')
+                'attribute' => __('models.download_option.fields.id'),
             ]),
             'download_option_id.uuid' => __('validation.uuid', [
-                'attribute' => __('models.download_option.fields.id')
+                'attribute' => __('models.download_option.fields.id'),
             ]),
             'download_option_id.exists' => __('validation.exists', [
-                'attribute' => __('models.download_option.fields.id')
+                'attribute' => __('models.download_option.fields.id'),
             ]),
         ];
     }

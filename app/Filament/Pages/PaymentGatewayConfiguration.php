@@ -110,7 +110,7 @@ class PaymentGatewayConfiguration extends SettingsPage
                 ->schema([
                     Forms\Components\Select::make('bank_name')
                         ->label(trans('payment_gateway.fields.bank_name'))
-                        ->options(fn(): array => $this->getBankOptions())
+                        ->options(fn (): array => $this->getBankOptions())
                         ->searchable()
                         ->placeholder(trans('payment_gateway.placeholders.bank_name'))
                         ->helperText(trans('payment_gateway.help.bank_name'))

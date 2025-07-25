@@ -22,9 +22,6 @@ class SettingsController extends Controller
 
     /**
      * Get all general settings.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -48,8 +45,8 @@ class SettingsController extends Controller
                 'meta_keywords' => $settings->meta_keywords,
                 'copyright_text' => $settings->copyright_text,
                 'copyright_year' => $settings->copyright_year,
-                'logo_path' => $settings->logo_path ? asset('storage/' . $settings->logo_path) : null,
-                'favicon_path' => $settings->favicon_path ? asset('storage/' . $settings->favicon_path) : null,
+                'logo_path' => $settings->logo_path ? asset('storage/'.$settings->logo_path) : null,
+                'favicon_path' => $settings->favicon_path ? asset('storage/'.$settings->favicon_path) : null,
             ];
 
             Log::info('Settings retrieved via API', [

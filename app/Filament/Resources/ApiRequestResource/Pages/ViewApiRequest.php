@@ -113,8 +113,7 @@ class ViewApiRequest extends ViewRecord
 
                         Infolists\Components\TextEntry::make('response_time')
                             ->label('Response Time')
-                            ->formatStateUsing(fn (?int $state): string =>
-                                $state ? $state . ' ms' : 'Unknown'
+                            ->formatStateUsing(fn (?int $state): string => $state ? $state.' ms' : 'Unknown'
                             )
                             ->badge()
                             ->color('info'),
@@ -122,7 +121,9 @@ class ViewApiRequest extends ViewRecord
                         Infolists\Components\TextEntry::make('file_size')
                             ->label('File Size')
                             ->formatStateUsing(function (?int $state): string {
-                                if (!$state) return 'Unknown';
+                                if (! $state) {
+                                    return 'Unknown';
+                                }
 
                                 $bytes = $state;
                                 $units = ['B', 'KB', 'MB', 'GB'];
@@ -131,7 +132,7 @@ class ViewApiRequest extends ViewRecord
                                     $bytes /= 1024;
                                 }
 
-                                return round($bytes, 2) . ' ' . $units[$i];
+                                return round($bytes, 2).' '.$units[$i];
                             })
                             ->badge()
                             ->color('warning'),

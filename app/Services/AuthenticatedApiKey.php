@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Singleton service for managing the authenticated API key throughout the request lifecycle.
- * 
+ *
  * This service provides a centralized way to store and retrieve the authenticated
  * API key after it passes through the authentication middleware, making it accessible
  * throughout the entire request without additional database queries.
@@ -37,9 +37,8 @@ class AuthenticatedApiKey
     /**
      * Set the authenticated API key for the current request.
      *
-     * @param ApiKey $apiKey The authenticated API key
-     * @param array $metadata Additional metadata about the authentication
-     * @return void
+     * @param  ApiKey  $apiKey  The authenticated API key
+     * @param  array  $metadata  Additional metadata about the authentication
      */
     public static function set(ApiKey $apiKey, array $metadata = []): void
     {
@@ -122,7 +121,7 @@ class AuthenticatedApiKey
     /**
      * Get authentication metadata.
      *
-     * @param string|null $key Specific metadata key to retrieve
+     * @param  string|null  $key  Specific metadata key to retrieve
      * @return mixed The metadata value or all metadata if no key specified
      */
     public static function getMetadata(?string $key = null): mixed
@@ -201,7 +200,7 @@ class AuthenticatedApiKey
     /**
      * Check if the authenticated API key has a specific tier.
      *
-     * @param string $tier The tier to check
+     * @param  string  $tier  The tier to check
      * @return bool True if the API key has the specified tier
      */
     public static function hasTier(string $tier): bool
@@ -246,7 +245,7 @@ class AuthenticatedApiKey
      */
     public static function getUsageStats(): array
     {
-        if (!self::$apiKey) {
+        if (! self::$apiKey) {
             return [];
         }
 
@@ -263,8 +262,6 @@ class AuthenticatedApiKey
 
     /**
      * Clear the authenticated API key (typically called at the end of request).
-     *
-     * @return void
      */
     public static function clear(): void
     {
@@ -307,7 +304,7 @@ class AuthenticatedApiKey
      */
     public static function toArray(): ?array
     {
-        if (!self::$apiKey) {
+        if (! self::$apiKey) {
             return null;
         }
 
@@ -328,7 +325,7 @@ class AuthenticatedApiKey
      */
     private static function generateRequestId(): string
     {
-        return 'req_' . uniqid() . '_' . substr(md5(microtime(true)), 0, 8);
+        return 'req_'.uniqid().'_'.substr(md5(microtime(true)), 0, 8);
     }
 
     /**
@@ -346,6 +343,6 @@ class AuthenticatedApiKey
      */
     public function __wakeup()
     {
-        throw new \Exception("Cannot unserialize singleton");
+        throw new \Exception('Cannot unserialize singleton');
     }
 }

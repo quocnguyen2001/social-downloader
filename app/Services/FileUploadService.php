@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Exception;
 
 /**
  * Service for uploading files to cloud storage with support for large files.
@@ -16,11 +16,12 @@ class FileUploadService
     /**
      * Upload a file to cloud storage.
      *
-     * @param string $localFilePath Path to the local file
-     * @param string $fileName Desired filename in storage
-     * @param string|null $storageDisk Storage disk to use (defaults to configured default)
-     * @param bool $deleteLocalFile Whether to delete local file after successful upload
+     * @param  string  $localFilePath  Path to the local file
+     * @param  string  $fileName  Desired filename in storage
+     * @param  string|null  $storageDisk  Storage disk to use (defaults to configured default)
+     * @param  bool  $deleteLocalFile  Whether to delete local file after successful upload
      * @return array Upload result with storage_disk and storage_file_path
+     *
      * @throws Exception
      */
     public function uploadFile(
@@ -32,14 +33,14 @@ class FileUploadService
         try {
             // Use default storage disk if none specified
             $storageDisk = $storageDisk ?? config('filesystems.default');
-            
+
             // Validate local file exists
-            if (!file_exists($localFilePath)) {
+            if (! file_exists($localFilePath)) {
                 throw new Exception("Local file not found: {$localFilePath}");
             }
 
             $fileSize = filesize($localFilePath);
-            
+
             Log::info('Starting file upload', [
                 'local_file_path' => $localFilePath,
                 'file_name' => $fileName,
@@ -61,7 +62,7 @@ class FileUploadService
             }
 
             // Verify upload was successful
-            if (!$disk->exists($storageFilePath)) {
+            if (! $disk->exists($storageFilePath)) {
                 throw new Exception("File upload verification failed: {$storageFilePath}");
             }
 
@@ -93,7 +94,7 @@ class FileUploadService
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             throw new Exception("Failed to upload file: {$e->getMessage()}", $e->getCode(), $e);
         }
     }
@@ -145,10 +146,10 @@ class FileUploadService
     {
         $date = now()->format('Y/m/d');
         $uniqueId = uniqid();
-        
+
         // Sanitize filename
         $sanitizedFileName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $fileName);
-        
+
         return "downloads/{$date}/{$uniqueId}_{$sanitizedFileName}";
     }
 

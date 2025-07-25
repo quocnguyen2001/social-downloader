@@ -16,7 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -104,7 +104,7 @@ class User extends Authenticatable
      */
     public function canMakeRequest(string $period = 'daily'): bool
     {
-        if (!$this->membershipPlan) {
+        if (! $this->membershipPlan) {
             return false; // No plan assigned
         }
 
@@ -141,7 +141,7 @@ class User extends Authenticatable
      */
     public function getRemainingRequests(string $period = 'daily'): int
     {
-        if (!$this->membershipPlan) {
+        if (! $this->membershipPlan) {
             return 0;
         }
 
@@ -161,12 +161,12 @@ class User extends Authenticatable
      */
     public function hasMembershipActive(): bool
     {
-        if (!$this->membershipPlan) {
+        if (! $this->membershipPlan) {
             return false;
         }
 
         // If no expiration date, consider it active
-        if (!$this->membership_expires_at) {
+        if (! $this->membership_expires_at) {
             return true;
         }
 
@@ -178,7 +178,7 @@ class User extends Authenticatable
      */
     public function hasMembershipExpired(): bool
     {
-        return !$this->hasMembershipActive();
+        return ! $this->hasMembershipActive();
     }
 
     /**
@@ -186,7 +186,7 @@ class User extends Authenticatable
      */
     public function getDaysUntilExpiration(): ?int
     {
-        if (!$this->membership_expires_at) {
+        if (! $this->membership_expires_at) {
             return null; // No expiration
         }
 
@@ -236,8 +236,7 @@ class User extends Authenticatable
     /**
      * Send the password reset notification.
      *
-     * @param string $token
-     * @return void
+     * @param  string  $token
      */
     public function sendPasswordResetNotification($token): void
     {

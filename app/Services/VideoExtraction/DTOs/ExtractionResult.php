@@ -9,7 +9,7 @@ use App\Services\VideoExtraction\Contracts\MetadataInterface;
 
 /**
  * Data Transfer Object for video extraction results.
- * 
+ *
  * This class encapsulates all the data extracted from a video URL,
  * including metadata and download information.
  */
@@ -35,8 +35,7 @@ class ExtractionResult implements MetadataInterface
     /**
      * Create a new ExtractionResult instance.
      *
-     * @param array $data The extraction data
-     * @return self
+     * @param  array  $data  The extraction data
      */
     public static function create(array $data): self
     {
@@ -137,30 +136,35 @@ class ExtractionResult implements MetadataInterface
     public function setTitle(?string $title): self
     {
         $this->title = $title;
+
         return $this;
     }
 
     public function setThumbnail(?string $thumbnail): self
     {
         $this->thumbnailUrl = $thumbnail;
+
         return $this;
     }
 
     public function setDuration(?int $duration): self
     {
         $this->duration = $duration;
+
         return $this;
     }
 
     public function setVideoId(?string $videoId): self
     {
         $this->videoId = $videoId;
+
         return $this;
     }
 
     public function setFileSize(?int $fileSize): self
     {
         $this->fileSize = $fileSize;
+
         return $this;
     }
 
@@ -189,54 +193,63 @@ class ExtractionResult implements MetadataInterface
     public function setDownloadUrl(?string $downloadUrl): self
     {
         $this->downloadUrl = $downloadUrl;
+
         return $this;
     }
 
     public function setPlatform(?Platform $platform): self
     {
         $this->platform = $platform;
+
         return $this;
     }
 
     public function setQuality(?VideoQuality $quality): self
     {
         $this->quality = $quality;
+
         return $this;
     }
 
     public function setFormat(?VideoFormat $format): self
     {
         $this->format = $format;
+
         return $this;
     }
 
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
     public function setAuthor(?string $author): self
     {
         $this->author = $author;
+
         return $this;
     }
 
     public function setUploadDate(?\DateTimeInterface $uploadDate): self
     {
         $this->uploadDate = $uploadDate;
+
         return $this;
     }
 
     public function setViewCount(?int $viewCount): self
     {
         $this->viewCount = $viewCount;
+
         return $this;
     }
 
     public function setAdditionalMetadata(array $additionalMetadata): self
     {
         $this->additionalMetadata = $additionalMetadata;
+
         return $this;
     }
 }

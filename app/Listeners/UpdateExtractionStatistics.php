@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Listener for updating extraction statistics.
- * 
+ *
  * This listener responds to extraction completion and failure events
  * to update usage statistics and metrics.
  */
@@ -80,17 +80,17 @@ class UpdateExtractionStatistics implements ShouldQueue
      */
     private function updateApiKeyUsage(?ApiKey $apiKey, bool $successful = true): void
     {
-        if (!$apiKey) {
+        if (! $apiKey) {
             return; // No API key to update
         }
 
         try {
             // Update daily usage
             $apiKey->increment('daily_usage');
-            
+
             // Update monthly usage
             $apiKey->increment('monthly_usage');
-            
+
             // Update total usage
             $apiKey->increment('total_usage');
 
@@ -117,8 +117,8 @@ class UpdateExtractionStatistics implements ShouldQueue
      */
     private function updatePlatformStatistics(string $platform, string $status): void
     {
-        $cacheKey = "platform_stats:{$platform}:" . now()->format('Y-m-d');
-        
+        $cacheKey = "platform_stats:{$platform}:".now()->format('Y-m-d');
+
         $stats = Cache::get($cacheKey, [
             'total' => 0,
             'completed' => 0,
@@ -144,9 +144,9 @@ class UpdateExtractionStatistics implements ShouldQueue
     {
         $platform = $event->getPlatform()->value;
         $processingTime = $event->getProcessingTime();
-        
-        $cacheKey = "performance_metrics:{$platform}:" . now()->format('Y-m-d');
-        
+
+        $cacheKey = "performance_metrics:{$platform}:".now()->format('Y-m-d');
+
         $metrics = Cache::get($cacheKey, [
             'count' => 0,
             'total_time' => 0,
@@ -177,15 +177,15 @@ class UpdateExtractionStatistics implements ShouldQueue
     {
         $platform = $event->getPlatform()->value;
         $failureCategory = $event->getFailureCategory();
-        
-        $cacheKey = "failure_stats:{$platform}:" . now()->format('Y-m-d');
-        
+
+        $cacheKey = "failure_stats:{$platform}:".now()->format('Y-m-d');
+
         $stats = Cache::get($cacheKey, []);
-        
-        if (!isset($stats[$failureCategory])) {
+
+        if (! isset($stats[$failureCategory])) {
             $stats[$failureCategory] = 0;
         }
-        
+
         $stats[$failureCategory]++;
 
         Cache::put($cacheKey, $stats, now()->addDays(7));
@@ -202,8 +202,8 @@ class UpdateExtractionStatistics implements ShouldQueue
      */
     private function updateDailyStatistics(string $status): void
     {
-        $cacheKey = "daily_stats:" . now()->format('Y-m-d');
-        
+        $cacheKey = 'daily_stats:'.now()->format('Y-m-d');
+
         $stats = Cache::get($cacheKey, [
             'total' => 0,
             'completed' => 0,
@@ -227,7 +227,7 @@ class UpdateExtractionStatistics implements ShouldQueue
     private function resetUsageCountersIfNeeded(ApiKey $apiKey): void
     {
         $now = now();
-        
+
         // Reset daily usage if it's a new day
         if ($apiKey->last_reset_daily->format('Y-m-d') !== $now->format('Y-m-d')) {
             $apiKey->update([

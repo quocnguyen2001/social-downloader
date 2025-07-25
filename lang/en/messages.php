@@ -23,12 +23,12 @@ return [
         'download_triggered' => 'Video download has been triggered and will be processed in the background',
         'download_ready' => 'Video download is ready for access',
     ],
-    
+
     'warnings' => [
         'confirm_action' => 'Are you sure you want to perform this action?',
         'generate_new_key_warning' => 'This will generate a new API key and invalidate the current one.',
     ],
-    
+
     'info' => [
         'new_api_key' => 'Your new API key: :key',
         'usage_display' => ':usage / :limit',
@@ -38,7 +38,7 @@ return [
         'download_processing' => 'Video download is currently being processed',
         'download_not_started' => 'Video download has not been started yet',
     ],
-    
+
     'navigation' => [
         'dashboard' => 'Dashboard',
         'api_keys' => 'API Keys',
@@ -53,7 +53,7 @@ return [
         'note_title' => 'Language Settings',
         'note_description' => 'Your language preference will be saved and applied to all admin interface elements.',
     ],
-    
+
     'widgets' => [
         'stats_overview' => [
             'total_api_keys' => 'Total API Keys',
@@ -64,7 +64,7 @@ return [
         'api_usage_chart' => 'API Usage & Revenue Trends (Last 30 Days)',
         'top_clients' => 'Top Clients This Month',
     ],
-    
+
     'sections' => [
         'basic_information' => 'Basic Information',
         'contact_information' => 'Contact Information',

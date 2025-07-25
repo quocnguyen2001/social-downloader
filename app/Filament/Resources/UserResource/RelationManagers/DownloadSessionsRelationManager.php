@@ -32,6 +32,7 @@ class DownloadSessionsRelationManager extends RelationManager
                     ->limit(50)
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
+
                         return strlen($state) > 50 ? $state : null;
                     }),
 
@@ -113,7 +114,7 @@ class DownloadSessionsRelationManager extends RelationManager
                     ->color('success')
                     ->url(fn ($record) => $record->download_url)
                     ->openUrlInNewTab()
-                    ->visible(fn ($record) => $record->isCompleted() && !$record->isExpired()),
+                    ->visible(fn ($record) => $record->isCompleted() && ! $record->isExpired()),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

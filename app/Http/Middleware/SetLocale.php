@@ -23,7 +23,7 @@ class SetLocale
                  ?? config('app.locale', 'en');
 
         // Validate locale (only allow 'en' and 'vi')
-        if (!in_array($locale, ['en', 'vi'])) {
+        if (! in_array($locale, ['en', 'vi'])) {
             $locale = 'en';
         }
 

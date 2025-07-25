@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Models\ApiKey;
-use App\Models\ApiRequest;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -20,7 +19,7 @@ class TopClientsWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
@@ -30,12 +29,12 @@ class TopClientsWidget extends BaseWidget
                     ->withCount([
                         'apiRequests as monthly_requests_count' => function (Builder $query) {
                             $query->thisMonth();
-                        }
+                        },
                     ])
                     ->withSum([
                         'apiRequests as monthly_revenue' => function (Builder $query) {
                             $query->thisMonth()->where('billed', true);
-                        }
+                        },
                     ], 'cost')
                     ->having('monthly_requests_count', '>', 0)
                     ->orderByDesc('monthly_requests_count')
@@ -71,19 +70,17 @@ class TopClientsWidget extends BaseWidget
 
                 Tables\Columns\TextColumn::make('monthly_usage_percentage')
                     ->label('Monthly Usage %')
-                    ->getStateUsing(fn (ApiKey $record) => $record->monthly_usage_percentage . '%')
+                    ->getStateUsing(fn (ApiKey $record) => $record->monthly_usage_percentage.'%')
                     ->badge()
-                    ->color(fn (ApiKey $record) =>
-                        $record->monthly_usage_percentage > 80 ? 'danger' :
+                    ->color(fn (ApiKey $record) => $record->monthly_usage_percentage > 80 ? 'danger' :
                         ($record->monthly_usage_percentage > 60 ? 'warning' : 'success')
                     ),
 
                 Tables\Columns\TextColumn::make('daily_usage_percentage')
                     ->label('Daily Usage %')
-                    ->getStateUsing(fn (ApiKey $record) => $record->daily_usage_percentage . '%')
+                    ->getStateUsing(fn (ApiKey $record) => $record->daily_usage_percentage.'%')
                     ->badge()
-                    ->color(fn (ApiKey $record) =>
-                        $record->daily_usage_percentage > 80 ? 'danger' :
+                    ->color(fn (ApiKey $record) => $record->daily_usage_percentage > 80 ? 'danger' :
                         ($record->daily_usage_percentage > 60 ? 'warning' : 'success')
                     )
                     ->toggleable(),

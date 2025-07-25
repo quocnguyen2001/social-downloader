@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Models\User;
-use App\Models\MembershipPlan;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -16,7 +15,7 @@ class UserStatsWidget extends BaseWidget
         $activeMembers = User::whereNotNull('membership_plan_id')
             ->where(function ($query) {
                 $query->whereNull('membership_expires_at')
-                      ->orWhere('membership_expires_at', '>', now());
+                    ->orWhere('membership_expires_at', '>', now());
             })
             ->count();
         $expiredMembers = User::whereNotNull('membership_expires_at')

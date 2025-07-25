@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Enums\Platform;
-use App\Enums\VideoQuality;
-use App\Enums\VideoFormat;
 use App\Enums\HttpMethod;
+use App\Enums\Platform;
+use App\Enums\VideoFormat;
+use App\Enums\VideoQuality;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class ApiRequest extends Model
 {
@@ -138,7 +138,7 @@ class ApiRequest extends Model
     public function scopeThisMonth($query)
     {
         return $query->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
+            ->whereYear('created_at', now()->year);
     }
 
     /**
@@ -146,7 +146,7 @@ class ApiRequest extends Model
      */
     public function getFormattedCostAttribute(): string
     {
-        return number_format($this->cost, 4) . ' VND';
+        return number_format($this->cost, 4).' VND';
     }
 
     /**
@@ -154,11 +154,11 @@ class ApiRequest extends Model
      */
     public function getFormattedResponseTimeAttribute(): string
     {
-        if (!$this->response_time) {
+        if (! $this->response_time) {
             return 'N/A';
         }
 
-        return $this->response_time . 'ms';
+        return $this->response_time.'ms';
     }
 
     /**
@@ -166,7 +166,7 @@ class ApiRequest extends Model
      */
     public function getFormattedFileSizeAttribute(): string
     {
-        if (!$this->file_size) {
+        if (! $this->file_size) {
             return 'N/A';
         }
 
@@ -177,7 +177,7 @@ class ApiRequest extends Model
             $bytes /= 1024;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 
     /**

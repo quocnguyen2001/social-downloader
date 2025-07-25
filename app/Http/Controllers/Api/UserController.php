@@ -25,9 +25,6 @@ class UserController extends Controller
 
     /**
      * Get current authenticated user information.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function me(Request $request): JsonResponse
     {
@@ -68,9 +65,6 @@ class UserController extends Controller
 
     /**
      * Update current authenticated user information.
-     *
-     * @param UpdateProfileRequest $request
-     * @return JsonResponse
      */
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\DownloadSessionResource\Pages;
 
 use App\Filament\Resources\DownloadSessionResource;
-use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListDownloadSessions extends ListRecords

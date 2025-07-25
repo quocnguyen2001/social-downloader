@@ -15,10 +15,10 @@ enum VideoQuality: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.video_quality.' . $this->value);
+        return trans('enums.video_quality.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::Q144P => 'gray',

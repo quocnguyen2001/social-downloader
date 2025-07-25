@@ -25,9 +25,6 @@ class SanitizeInput
 
     /**
      * Sanitize request data to prevent XSS and other attacks.
-     *
-     * @param Request $request
-     * @return void
      */
     private function sanitizeRequestData(Request $request): void
     {
@@ -38,9 +35,6 @@ class SanitizeInput
 
     /**
      * Recursively sanitize an array of data.
-     *
-     * @param array $data
-     * @return array
      */
     private function sanitizeArray(array $data): array
     {
@@ -63,9 +57,6 @@ class SanitizeInput
 
     /**
      * Sanitize a string value.
-     *
-     * @param string $value
-     * @return string
      */
     private function sanitizeString(string $value): string
     {
@@ -89,9 +80,6 @@ class SanitizeInput
 
     /**
      * Determine if HTML should be stripped from a value.
-     *
-     * @param string $value
-     * @return bool
      */
     private function shouldStripHtml(string $value): bool
     {

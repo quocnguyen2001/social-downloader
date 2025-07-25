@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Middleware to clear the authenticated API key singleton after request completion.
- * 
+ *
  * This middleware ensures that the AuthenticatedApiKey singleton is properly
  * cleaned up at the end of each request to prevent memory leaks and data
  * bleeding between requests.
@@ -20,7 +20,7 @@ class ClearAuthenticatedApiKey
     /**
      * Handle an incoming request.
      *
-     * @param \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response) $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -35,10 +35,6 @@ class ClearAuthenticatedApiKey
 
     /**
      * Handle tasks after the response has been sent to the browser.
-     *
-     * @param Request $request
-     * @param Response $response
-     * @return void
      */
     public function terminate(Request $request, Response $response): void
     {
@@ -48,14 +44,12 @@ class ClearAuthenticatedApiKey
 
     /**
      * Clear the authenticated API key singleton.
-     *
-     * @return void
      */
     private function clearAuthenticatedApiKey(): void
     {
         if (AuthenticatedApiKey::has()) {
             $debugInfo = AuthenticatedApiKey::getDebugInfo();
-            
+
             Log::debug('Clearing authenticated API key singleton', [
                 'api_key_id' => $debugInfo['api_key_id'],
                 'request_id' => $debugInfo['request_id'],

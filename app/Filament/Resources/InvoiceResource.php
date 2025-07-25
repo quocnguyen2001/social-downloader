@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
-use App\Models\Invoice;
 use App\Models\ApiKey;
+use App\Models\Invoice;
 use App\Models\MembershipPlan;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Notifications\Notification;
 
 class InvoiceResource extends Resource
 {
@@ -217,8 +217,8 @@ class InvoiceResource extends Resource
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data['billing_from'], fn($q) => $q->whereDate('billing_month', '>=', $data['billing_from']))
-                            ->when($data['billing_until'], fn($q) => $q->whereDate('billing_month', '<=', $data['billing_until']));
+                            ->when($data['billing_from'], fn ($q) => $q->whereDate('billing_month', '>=', $data['billing_from']))
+                            ->when($data['billing_until'], fn ($q) => $q->whereDate('billing_month', '<=', $data['billing_until']));
                     }),
             ])
             ->actions([
@@ -235,7 +235,7 @@ class InvoiceResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Invoice $record): bool => !$record->invoice_sent),
+                    ->visible(fn (Invoice $record): bool => ! $record->invoice_sent),
 
                 Tables\Actions\Action::make('mark_as_paid')
                     ->icon('heroicon-o-check-circle')
@@ -257,7 +257,7 @@ class InvoiceResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Invoice $record): bool => !$record->paid),
+                    ->visible(fn (Invoice $record): bool => ! $record->paid),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -269,7 +269,7 @@ class InvoiceResource extends Resource
                         ->action(function ($records) {
                             $sentCount = 0;
                             foreach ($records as $record) {
-                                if (!$record->invoice_sent) {
+                                if (! $record->invoice_sent) {
                                     $record->sendInvoice();
                                     $sentCount++;
                                 }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PaymentMethod;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -76,7 +76,7 @@ class Invoice extends Model
         $endOfMonth = $this->billing_month->copy()->endOfMonth();
 
         return $this->apiKey->apiRequests()
-                    ->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
     }
 
     /**
@@ -88,9 +88,9 @@ class Invoice extends Model
         $endOfMonth = $this->billing_month->copy()->endOfMonth();
 
         $requests = $this->apiKey->apiRequests()
-                         ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-                         ->where('billed', true)
-                         ->get();
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->where('billed', true)
+            ->get();
 
         $this->total_requests = $requests->count();
         $this->total_cost = $requests->sum('cost');
@@ -180,7 +180,7 @@ class Invoice extends Model
     public function scopeForMonth($query, $year, $month)
     {
         return $query->whereYear('billing_month', $year)
-                    ->whereMonth('billing_month', $month);
+            ->whereMonth('billing_month', $month);
     }
 
     /**
@@ -196,7 +196,7 @@ class Invoice extends Model
      */
     public function getFormattedTotalCostAttribute(): string
     {
-        return number_format($this->total_cost, 2) . ' VND';
+        return number_format($this->total_cost, 2).' VND';
     }
 
     /**
@@ -228,7 +228,7 @@ class Invoice extends Model
      */
     public function isOverdue(): bool
     {
-        return !$this->paid &&
+        return ! $this->paid &&
                $this->invoice_sent &&
                $this->invoice_sent_at &&
                $this->invoice_sent_at->diffInDays(now()) > 30;

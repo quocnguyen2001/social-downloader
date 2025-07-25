@@ -22,9 +22,6 @@ class MembershipPlanController extends Controller
 
     /**
      * Get all active membership plans.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {

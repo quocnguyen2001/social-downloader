@@ -12,10 +12,10 @@ class RateLimitExceededException extends VideoExtractionException
     /**
      * Create a new rate limit exceeded exception.
      *
-     * @param Platform|null $platform The platform that rate limited the request
-     * @param int|null $retryAfter The number of seconds to wait before retrying
-     * @param string|null $reason Additional reason for the rate limit
-     * @param \Throwable|null $previous The previous exception
+     * @param  Platform|null  $platform  The platform that rate limited the request
+     * @param  int|null  $retryAfter  The number of seconds to wait before retrying
+     * @param  string|null  $reason  Additional reason for the rate limit
+     * @param  \Throwable|null  $previous  The previous exception
      */
     public function __construct(
         ?Platform $platform = null,
@@ -24,15 +24,15 @@ class RateLimitExceededException extends VideoExtractionException
         ?\Throwable $previous = null
     ) {
         $message = 'Rate limit exceeded';
-        
+
         if ($platform) {
             $message .= " for platform: {$platform->value}";
         }
-        
+
         if ($retryAfter) {
             $message .= ". Retry after {$retryAfter} seconds";
         }
-        
+
         if ($reason) {
             $message .= " - {$reason}";
         }
@@ -51,19 +51,16 @@ class RateLimitExceededException extends VideoExtractionException
 
     /**
      * Get the platform that rate limited the request.
-     *
-     * @return Platform|null
      */
     public function getPlatform(): ?Platform
     {
         $platformValue = $this->context['platform'] ?? null;
+
         return $platformValue ? Platform::from($platformValue) : null;
     }
 
     /**
      * Get the number of seconds to wait before retrying.
-     *
-     * @return int|null
      */
     public function getRetryAfter(): ?int
     {
@@ -72,8 +69,6 @@ class RateLimitExceededException extends VideoExtractionException
 
     /**
      * Get the additional reason for the rate limit.
-     *
-     * @return string|null
      */
     public function getReason(): ?string
     {

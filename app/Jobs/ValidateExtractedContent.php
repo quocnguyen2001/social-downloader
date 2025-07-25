@@ -35,8 +35,8 @@ class ValidateExtractedContent implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $downloadSessionId The download session ID to validate
-     * @param array $validationOptions Validation options
+     * @param  string  $downloadSessionId  The download session ID to validate
+     * @param  array  $validationOptions  Validation options
      */
     public function __construct(
         private string $downloadSessionId,
@@ -57,11 +57,12 @@ class ValidateExtractedContent implements ShouldQueue
             $downloadSession = $this->getDownloadSession();
 
             // Skip validation for certain statuses
-            if (!$this->shouldValidate($downloadSession)) {
+            if (! $this->shouldValidate($downloadSession)) {
                 Log::info('Content validation skipped', [
                     'download_session_id' => $this->downloadSessionId,
                     'status' => $downloadSession->status->value,
                 ]);
+
                 return;
             }
 
@@ -100,8 +101,8 @@ class ValidateExtractedContent implements ShouldQueue
 
             // Mark validation as failed in error message
             $currentError = $downloadSession->error_message ?? '';
-            $newError = $currentError ? $currentError . ' | ' : '';
-            $newError .= 'Content validation failed: ' . $exception->getMessage();
+            $newError = $currentError ? $currentError.' | ' : '';
+            $newError .= 'Content validation failed: '.$exception->getMessage();
 
             $downloadSession->update(['error_message' => $newError]);
 
@@ -120,7 +121,7 @@ class ValidateExtractedContent implements ShouldQueue
     {
         $session = DownloadSession::find($this->downloadSessionId);
 
-        if (!$session) {
+        if (! $session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }
 
@@ -138,7 +139,7 @@ class ValidateExtractedContent implements ShouldQueue
         }
 
         // Must have a download URL to validate
-        if (!$session->download_url) {
+        if (! $session->download_url) {
             return false;
         }
 
@@ -195,7 +196,7 @@ class ValidateExtractedContent implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            $results['errors'][] = "Request failed: " . $e->getMessage();
+            $results['errors'][] = 'Request failed: '.$e->getMessage();
         }
 
         return $results;
@@ -206,7 +207,7 @@ class ValidateExtractedContent implements ShouldQueue
      */
     private function isValidContentType(?string $contentType, DownloadSession $session): bool
     {
-        if (!$contentType) {
+        if (! $contentType) {
             return false;
         }
 
@@ -231,7 +232,7 @@ class ValidateExtractedContent implements ShouldQueue
      */
     private function isFileSizeMatch(?int $actualSize, ?int $expectedSize): bool
     {
-        if (!$actualSize || !$expectedSize) {
+        if (! $actualSize || ! $expectedSize) {
             return false;
         }
 
@@ -250,36 +251,36 @@ class ValidateExtractedContent implements ShouldQueue
         $updateData = [];
 
         // Update file size if we got a more accurate value
-        if ($results['content_length'] && !$session->file_size) {
+        if ($results['content_length'] && ! $session->file_size) {
             $updateData['file_size'] = $results['content_length'];
         }
 
         // Mark as expired if URL is not accessible
-        if (!$results['url_accessible']) {
+        if (! $results['url_accessible']) {
             $updateData['status'] = DownloadSessionStatus::FAILED;
             $errorMessage = 'Download URL is no longer accessible';
-            if (!empty($results['errors'])) {
-                $errorMessage .= ': ' . implode(', ', $results['errors']);
+            if (! empty($results['errors'])) {
+                $errorMessage .= ': '.implode(', ', $results['errors']);
             }
             $updateData['error_message'] = $errorMessage;
         }
 
         // Add validation warnings to error message if there are issues
         $warnings = [];
-        if (!$results['content_type_valid'] && $results['content_type']) {
+        if (! $results['content_type_valid'] && $results['content_type']) {
             $warnings[] = "Unexpected content type: {$results['content_type']}";
         }
-        if (!$results['file_size_matches'] && $results['content_length']) {
+        if (! $results['file_size_matches'] && $results['content_length']) {
             $warnings[] = "File size mismatch: expected {$session->file_size}, got {$results['content_length']}";
         }
 
-        if (!empty($warnings)) {
+        if (! empty($warnings)) {
             $currentError = $session->error_message ?? '';
-            $warningText = 'Validation warnings: ' . implode(', ', $warnings);
-            $updateData['error_message'] = $currentError ? $currentError . ' | ' . $warningText : $warningText;
+            $warningText = 'Validation warnings: '.implode(', ', $warnings);
+            $updateData['error_message'] = $currentError ? $currentError.' | '.$warningText : $warningText;
         }
 
-        if (!empty($updateData)) {
+        if (! empty($updateData)) {
             $session->update($updateData);
         }
     }

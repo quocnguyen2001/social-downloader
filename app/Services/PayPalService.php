@@ -6,13 +6,9 @@ namespace App\Services;
 
 use App\Settings\PaymentGatewaySettings;
 use Illuminate\Support\Facades\Log;
+use PayPalServerSDK\Environment;
 use PayPalServerSDK\PayPalServerSDKClient;
 use PayPalServerSDK\PayPalServerSDKClientBuilder;
-use PayPalServerSDK\Environment;
-use PayPalServerSDK\Models\OrderRequest;
-use PayPalServerSDK\Models\PurchaseUnitRequest;
-use PayPalServerSDK\Models\AmountWithBreakdown;
-use PayPalServerSDK\Models\ApplicationContext;
 
 /**
  * PayPal Service Wrapper.
@@ -43,7 +39,6 @@ class PayPalService
     /**
      * Get PayPal SDK client.
      *
-     * @return PayPalServerSDKClient
      * @throws \Exception
      */
     private function getClient(): PayPalServerSDKClient
@@ -58,12 +53,11 @@ class PayPalService
     /**
      * Create PayPal SDK client.
      *
-     * @return PayPalServerSDKClient
      * @throws \Exception
      */
     private function createClient(): PayPalServerSDKClient
     {
-        if (!$this->settings->isPayPalConfigured()) {
+        if (! $this->settings->isPayPalConfigured()) {
             throw new \Exception('PayPal is not properly configured');
         }
 
@@ -83,8 +77,6 @@ class PayPalService
     /**
      * Create a PayPal order.
      *
-     * @param array $orderData
-     * @return array
      * @throws \Exception
      */
     public function createOrder(array $orderData): array
@@ -94,7 +86,7 @@ class PayPalService
             // This will be implemented when actual payment processing is needed
             return [
                 'success' => true,
-                'order_id' => 'test_order_' . uniqid(),
+                'order_id' => 'test_order_'.uniqid(),
                 'status' => 'CREATED',
                 'message' => 'PayPal order creation placeholder - implement when needed',
             ];
@@ -115,8 +107,6 @@ class PayPalService
     /**
      * Capture a PayPal order.
      *
-     * @param string $orderId
-     * @return array
      * @throws \Exception
      */
     public function captureOrder(string $orderId): array
@@ -133,8 +123,6 @@ class PayPalService
     /**
      * Get PayPal order details.
      *
-     * @param string $orderId
-     * @return array
      * @throws \Exception
      */
     public function getOrder(string $orderId): array
@@ -152,9 +140,6 @@ class PayPalService
 
     /**
      * Build PayPal order request body.
-     *
-     * @param array $orderData
-     * @return array
      */
     private function buildOrderRequest(array $orderData): array
     {
@@ -184,8 +169,6 @@ class PayPalService
 
     /**
      * Validate PayPal configuration.
-     *
-     * @return array
      */
     public function validateConfiguration(): array
     {
@@ -199,11 +182,11 @@ class PayPalService
             $errors[] = 'PayPal Client Secret is required';
         }
 
-        if (!in_array($this->settings->paypal_environment, ['sandbox', 'live'])) {
+        if (! in_array($this->settings->paypal_environment, ['sandbox', 'live'])) {
             $errors[] = 'PayPal Environment must be either sandbox or live';
         }
 
-        if (!in_array($this->settings->paypal_currency, ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'])) {
+        if (! in_array($this->settings->paypal_currency, ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'])) {
             $errors[] = 'PayPal Currency is not supported';
         }
 
@@ -215,14 +198,12 @@ class PayPalService
 
     /**
      * Test PayPal connection.
-     *
-     * @return array
      */
     public function testConnection(): array
     {
         try {
             $validation = $this->validateConfiguration();
-            if (!$validation['valid']) {
+            if (! $validation['valid']) {
                 return [
                     'success' => false,
                     'error' => 'Configuration validation failed',
@@ -249,8 +230,6 @@ class PayPalService
 
     /**
      * Get PayPal environment info.
-     *
-     * @return array
      */
     public function getEnvironmentInfo(): array
     {

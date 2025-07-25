@@ -56,6 +56,7 @@ class TokenStatsWidget extends BaseWidget
             $count = PersonalAccessToken::whereDate('created_at', $date)->count();
             $data[] = $count;
         }
+
         return $data;
     }
 }

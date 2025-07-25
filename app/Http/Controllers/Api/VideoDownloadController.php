@@ -20,9 +20,6 @@ class VideoDownloadController extends Controller
 {
     /**
      * Trigger video download for a specific download option.
-     *
-     * @param TriggerVideoDownloadRequest $request
-     * @return JsonResponse
      */
     public function triggerDownload(TriggerVideoDownloadRequest $request): JsonResponse
     {
@@ -32,11 +29,11 @@ class VideoDownloadController extends Controller
             // Find the download option
             $downloadOption = DownloadOption::with('downloadSession')->find($downloadOptionId);
 
-            if (!$downloadOption) {
+            if (! $downloadOption) {
                 return response()->json([
                     'success' => false,
                     'message' => __('messages.error.not_found', [
-                        'resource' => __('models.download_option.singular')
+                        'resource' => __('models.download_option.singular'),
                     ]),
                 ], 404);
             }
@@ -60,21 +57,21 @@ class VideoDownloadController extends Controller
             }
 
             // Validate that the download option has required data
-            if (!$downloadOption->cdn_id) {
+            if (! $downloadOption->cdn_id) {
                 return response()->json([
                     'success' => false,
                     'message' => __('messages.error.missing_cdn_id'),
                 ], 400);
             }
 
-            if (!$downloadOption->downloadSession) {
+            if (! $downloadOption->downloadSession) {
                 return response()->json([
                     'success' => false,
                     'message' => __('messages.error.missing_download_session'),
                 ], 400);
             }
 
-            if (!$downloadOption->downloadSession->original_url) {
+            if (! $downloadOption->downloadSession->original_url) {
                 return response()->json([
                     'success' => false,
                     'message' => __('messages.error.missing_origin_url'),
@@ -115,9 +112,6 @@ class VideoDownloadController extends Controller
 
     /**
      * Check download status for a specific download option.
-     *
-     * @param CheckDownloadStatusRequest $request
-     * @return JsonResponse
      */
     public function checkStatus(CheckDownloadStatusRequest $request): JsonResponse
     {
@@ -127,11 +121,11 @@ class VideoDownloadController extends Controller
             // Find the download option
             $downloadOption = DownloadOption::find($downloadOptionId);
 
-            if (!$downloadOption) {
+            if (! $downloadOption) {
                 return response()->json([
                     'success' => false,
                     'message' => __('messages.error.not_found', [
-                        'resource' => __('models.download_option.singular')
+                        'resource' => __('models.download_option.singular'),
                     ]),
                 ], 404);
             }
@@ -145,7 +139,7 @@ class VideoDownloadController extends Controller
             // Add download URL if status is downloaded
             if ($downloadOption->status === DownloadOptionStatus::DOWNLOADED) {
                 $downloadUrl = $downloadOption->getDownloadUrl();
-                
+
                 if ($downloadUrl) {
                     $responseData['download_url'] = $downloadUrl;
                     $responseData['file_size'] = $downloadOption->file_size;

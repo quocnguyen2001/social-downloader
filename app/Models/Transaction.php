@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
@@ -52,7 +52,7 @@ class Transaction extends Model
     /**
      * Mark this transaction as completed.
      */
-    public function markAsCompleted(string $transactionId = null): void
+    public function markAsCompleted(?string $transactionId = null): void
     {
         $this->update([
             'status' => 'completed',
@@ -64,7 +64,7 @@ class Transaction extends Model
     /**
      * Mark this transaction as failed.
      */
-    public function markAsFailed(string $reason = null): void
+    public function markAsFailed(?string $reason = null): void
     {
         $logs = $this->payment_logs ?? [];
         if ($reason) {
@@ -157,11 +157,11 @@ class Transaction extends Model
      */
     public function getFormattedAmountAttribute(): string
     {
-        if (!$this->amount) {
+        if (! $this->amount) {
             return 'N/A';
         }
 
-        return number_format($this->amount, 2) . ' ' . strtoupper($this->currency);
+        return number_format($this->amount, 2).' '.strtoupper($this->currency);
     }
 
     /**
@@ -207,6 +207,7 @@ class Transaction extends Model
     public function getLatestPaymentLogAttribute(): ?array
     {
         $logs = $this->payment_logs ?? [];
+
         return empty($logs) ? null : end($logs);
     }
 }

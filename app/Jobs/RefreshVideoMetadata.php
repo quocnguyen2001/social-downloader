@@ -5,13 +5,13 @@ namespace App\Jobs;
 use App\Enums\DownloadSessionStatus;
 use App\Models\DownloadSession;
 use App\Services\VideoExtraction\Factory\DriverFactory;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Job for refreshing video metadata.
@@ -36,8 +36,8 @@ class RefreshVideoMetadata implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $downloadSessionId The download session ID to refresh
-     * @param bool $forceRefresh Whether to force refresh even if not expired
+     * @param  string  $downloadSessionId  The download session ID to refresh
+     * @param  bool  $forceRefresh  Whether to force refresh even if not expired
      */
     public function __construct(
         private string $downloadSessionId,
@@ -58,11 +58,12 @@ class RefreshVideoMetadata implements ShouldQueue
             $downloadSession = $this->getDownloadSession();
 
             // Check if refresh is needed
-            if (!$this->shouldRefresh($downloadSession)) {
+            if (! $this->shouldRefresh($downloadSession)) {
                 Log::info('Metadata refresh not needed', [
                     'download_session_id' => $this->downloadSessionId,
                     'expires_at' => $downloadSession->expires_at?->toISOString(),
                 ]);
+
                 return;
             }
 
@@ -87,7 +88,7 @@ class RefreshVideoMetadata implements ShouldQueue
                 'expires_at' => Carbon::now()->addHours(24),
             ];
 
-            $downloadSession->update(array_filter($updateData, fn($value) => $value !== null));
+            $downloadSession->update(array_filter($updateData, fn ($value) => $value !== null));
 
             Log::info('Metadata refreshed successfully', [
                 'download_session_id' => $this->downloadSessionId,
@@ -121,7 +122,7 @@ class RefreshVideoMetadata implements ShouldQueue
             // Mark as expired if refresh failed
             $downloadSession->update([
                 'status' => DownloadSessionStatus::FAILED,
-                'error_message' => 'Failed to refresh metadata: ' . $exception->getMessage(),
+                'error_message' => 'Failed to refresh metadata: '.$exception->getMessage(),
             ]);
 
         } catch (\Exception $e) {
@@ -139,7 +140,7 @@ class RefreshVideoMetadata implements ShouldQueue
     {
         $session = DownloadSession::find($this->downloadSessionId);
 
-        if (!$session) {
+        if (! $session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }
 
@@ -167,7 +168,7 @@ class RefreshVideoMetadata implements ShouldQueue
         }
 
         // Refresh if no download URL
-        if (!$session->download_url) {
+        if (! $session->download_url) {
             return true;
         }
 

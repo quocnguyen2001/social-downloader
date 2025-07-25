@@ -8,14 +8,13 @@ use App\Events\ExtractionFailed;
 use App\Models\ApiRequest;
 use App\Models\DownloadSession;
 use App\Services\VideoExtraction\Factory\DriverFactory;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * Job for processing video extraction requests.
@@ -45,8 +44,8 @@ class ProcessVideoExtraction implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $downloadSessionId The download session ID to process
-     * @param array $options Additional processing options
+     * @param  string  $downloadSessionId  The download session ID to process
+     * @param  array  $options  Additional processing options
      */
     public function __construct(
         private string $downloadSessionId,
@@ -167,7 +166,7 @@ class ProcessVideoExtraction implements ShouldQueue
     {
         $session = DownloadSession::find($this->downloadSessionId);
 
-        if (!$session) {
+        if (! $session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }
 
@@ -202,7 +201,7 @@ class ProcessVideoExtraction implements ShouldQueue
             'expires_at' => Carbon::now()->addHours(24), // Download URL expires in 24 hours
         ];
 
-        $session->update(array_filter($updateData, fn($value) => $value !== null));
+        $session->update(array_filter($updateData, fn ($value) => $value !== null));
 
         Log::debug('Download session updated with extraction results', [
             'download_session_id' => $session->id,
@@ -216,7 +215,7 @@ class ProcessVideoExtraction implements ShouldQueue
      */
     private function logApiRequest(DownloadSession $session, float $startTime): void
     {
-        if (!$session->api_key_id) {
+        if (! $session->api_key_id) {
             return; // No API key, no billing
         }
 
@@ -288,14 +287,14 @@ class ProcessVideoExtraction implements ShouldQueue
             $downloadSession = $this->getDownloadSession();
 
             // Update error message but don't change status if we're retrying
-            if (!$willRetry) {
+            if (! $willRetry) {
                 $downloadSession->update([
                     'status' => DownloadSessionStatus::FAILED,
                     'error_message' => $exception->getMessage(),
                 ]);
             } else {
                 $downloadSession->update([
-                    'error_message' => "Attempt {$this->attempts()}: " . $exception->getMessage(),
+                    'error_message' => "Attempt {$this->attempts()}: ".$exception->getMessage(),
                 ]);
             }
 

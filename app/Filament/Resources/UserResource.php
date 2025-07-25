@@ -14,7 +14,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * User Resource for Filament Admin Panel.
@@ -204,9 +203,8 @@ class UserResource extends Resource
 
                 Tables\Filters\Filter::make('membership_expired')
                     ->label('Membership Expired')
-                    ->query(fn (Builder $query): Builder =>
-                        $query->whereNotNull('membership_expires_at')
-                              ->where('membership_expires_at', '<', now())
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('membership_expires_at')
+                        ->where('membership_expires_at', '<', now())
                     ),
 
                 Tables\Filters\Filter::make('created_at')
@@ -272,7 +270,7 @@ class UserResource extends Resource
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
                         ->action(fn (User $record) => $record->update(['email_verified_at' => now()]))
-                        ->visible(fn (User $record) => !$record->email_verified_at)
+                        ->visible(fn (User $record) => ! $record->email_verified_at)
                         ->requiresConfirmation(),
                     Tables\Actions\Action::make('extend_membership')
                         ->label('Extend Membership')
@@ -282,8 +280,7 @@ class UserResource extends Resource
                             Forms\Components\DateTimePicker::make('new_expiry')
                                 ->label('New Expiry Date')
                                 ->required()
-                                ->default(fn (User $record) =>
-                                    $record->membership_expires_at?->addMonth() ?? now()->addMonth()
+                                ->default(fn (User $record) => $record->membership_expires_at?->addMonth() ?? now()->addMonth()
                                 ),
                         ])
                         ->action(function (User $record, array $data) {
@@ -296,7 +293,7 @@ class UserResource extends Resource
                         ->color('info')
                         ->action(function (User $record) {
                             // Generate token with default settings
-                            $tokenName = $record->name . ' - ' . now()->format('M j, Y g:i A');
+                            $tokenName = $record->name.' - '.now()->format('M j, Y g:i A');
                             $token = $record->createToken(
                                 $tokenName,
                                 ['*'], // All abilities
@@ -306,7 +303,7 @@ class UserResource extends Resource
                             // Show success notification with the token
                             Notification::make()
                                 ->title('API Token Generated Successfully')
-                                ->body('Token: ' . $token->plainTextToken . "\n\nExpires: " . now()->addDays(30)->format('M j, Y g:i A') . "\n\n⚠️ Copy this token now - it won't be shown again!")
+                                ->body('Token: '.$token->plainTextToken."\n\nExpires: ".now()->addDays(30)->format('M j, Y g:i A')."\n\n⚠️ Copy this token now - it won't be shown again!")
                                 ->success()
                                 ->duration(30000) // Show for 30 seconds
                                 ->persistent() // Keep until manually dismissed
@@ -336,7 +333,7 @@ class UserResource extends Resource
                                 ->close(),
                         ])
                         ->modalWidth('4xl')
-                        ->modalHeading(fn (User $record) => 'Manage API Tokens for ' . $record->name)
+                        ->modalHeading(fn (User $record) => 'Manage API Tokens for '.$record->name)
                         ->visible(fn (User $record) => $record->tokens()->count() > 0),
                     Tables\Actions\Action::make('revoke_all_tokens')
                         ->label('Revoke All Tokens')
@@ -421,7 +418,7 @@ class UserResource extends Resource
                             $expiresAt = $data['expires_at'] ? \Carbon\Carbon::parse($data['expires_at']) : null;
 
                             foreach ($records as $user) {
-                                $tokenName = $data['token_name_prefix'] . ' - ' . $user->name . ' - ' . now()->format('M j, Y');
+                                $tokenName = $data['token_name_prefix'].' - '.$user->name.' - '.now()->format('M j, Y');
                                 $user->createToken($tokenName, $data['abilities'], $expiresAt);
                                 $generatedCount++;
                             }
@@ -452,7 +449,7 @@ class UserResource extends Resource
 
                             Notification::make()
                                 ->title('Bulk Token Revocation Complete')
-                                ->body("Successfully revoked {$totalRevoked} API token(s) from " . $records->count() . " user(s)")
+                                ->body("Successfully revoked {$totalRevoked} API token(s) from ".$records->count().' user(s)')
                                 ->success()
                                 ->send();
                         })

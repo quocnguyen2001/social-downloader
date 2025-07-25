@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::table('download_options', function (Blueprint $table) {
             // Modify the status enum to include new values
             $table->enum('status', ['downloaded', 'cdn', 'processing', 'failed'])
-                  ->default('cdn')
-                  ->change();
+                ->default('cdn')
+                ->change();
         });
     }
 
@@ -27,8 +27,8 @@ return new class extends Migration
         Schema::table('download_options', function (Blueprint $table) {
             // Revert back to original enum values
             $table->enum('status', ['downloaded', 'cdn'])
-                  ->default('cdn')
-                  ->change();
+                ->default('cdn')
+                ->change();
         });
     }
 };

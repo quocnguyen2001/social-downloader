@@ -18,13 +18,11 @@ use App\Services\OTPService;
 use App\Services\RateLimitService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\Rules\Password as PasswordRule;
 
 /**
  * Authentication Controller for API endpoints.
@@ -39,13 +37,10 @@ class AuthController extends Controller
     public function __construct(
         private RateLimitService $rateLimitService,
         private OTPService $otpService
-    ) {
-    }
+    ) {}
+
     /**
      * Register a new user.
-     *
-     * @param RegisterRequest $request
-     * @return JsonResponse
      */
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -131,20 +126,18 @@ class AuthController extends Controller
 
     /**
      * Authenticate user and return token.
-     *
-     * @param LoginRequest $request
-     * @return JsonResponse
      */
     public function login(LoginRequest $request): JsonResponse
     {
         try {
             // Rate limiting
-            $key = 'login_attempts:' . $request->ip();
+            $key = 'login_attempts:'.$request->ip();
             $maxAttempts = 5;
             $decayMinutes = 15;
 
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
                 $seconds = RateLimiter::availableIn($key);
+
                 return $this->rateLimitResponse(
                     trans('auth.throttle', ['seconds' => $seconds]),
                     $seconds
@@ -156,8 +149,9 @@ class AuthController extends Controller
             // Attempt authentication
             $user = User::where('email', $request->email)->first();
 
-            if (!$user || !Hash::check($request->password, $user->password)) {
+            if (! $user || ! Hash::check($request->password, $user->password)) {
                 RateLimiter::hit($key, $decayMinutes * 60);
+
                 return $this->unauthorizedResponse(
                     trans('auth.messages.login_failed')
                 );
@@ -223,20 +217,18 @@ class AuthController extends Controller
 
     /**
      * Send OTP for password reset.
-     *
-     * @param ForgotPasswordRequest $request
-     * @return JsonResponse
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         try {
             // Rate limiting for password reset requests
-            $key = 'password_reset:' . $request->ip();
+            $key = 'password_reset:'.$request->ip();
             $maxAttempts = 3;
             $decayMinutes = 60;
 
             if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
                 $seconds = RateLimiter::availableIn($key);
+
                 return $this->apiErrorResponse(
                     __('Too many password reset attempts. Please try again later.'),
                     null,
@@ -249,7 +241,7 @@ class AuthController extends Controller
 
             // Check if user exists
             $user = User::where('email', $email)->first();
-            if (!$user) {
+            if (! $user) {
                 // Don't reveal if user exists or not for security
                 return $this->apiSuccessResponse(
                     null,
@@ -296,9 +288,6 @@ class AuthController extends Controller
 
     /**
      * Reset password with token.
-     *
-     * @param ResetPasswordRequest $request
-     * @return JsonResponse
      */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
@@ -373,9 +362,6 @@ class AuthController extends Controller
 
     /**
      * Reset password using OTP.
-     *
-     * @param NewPasswordRequest $request
-     * @return JsonResponse
      */
     public function newPassword(NewPasswordRequest $request): JsonResponse
     {
@@ -385,7 +371,7 @@ class AuthController extends Controller
             $password = $request->password;
 
             // Validate OTP
-            if (!$this->otpService->validate($email, $otp, 'password_reset')) {
+            if (! $this->otpService->validate($email, $otp, 'password_reset')) {
                 return $this->apiErrorResponse(
                     __('Invalid or expired OTP. Please request a new password reset.'),
                     null,
@@ -395,7 +381,7 @@ class AuthController extends Controller
 
             // Find user
             $user = User::where('email', $email)->first();
-            if (!$user) {
+            if (! $user) {
                 return $this->apiErrorResponse(
                     __('User not found.'),
                     null,
@@ -453,9 +439,6 @@ class AuthController extends Controller
 
     /**
      * Logout user and revoke token.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function logout(Request $request): JsonResponse
     {
@@ -471,7 +454,7 @@ class AuthController extends Controller
             if ($logoutAll) {
                 // Revoke all tokens
                 $user->tokens()->delete();
-                $message = trans('auth.messages.logout_success') . ' (all devices)';
+                $message = trans('auth.messages.logout_success').' (all devices)';
             } else {
                 // Revoke only current token
                 $currentToken?->delete();
@@ -506,9 +489,6 @@ class AuthController extends Controller
 
     /**
      * Get authenticated user information.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function user(Request $request): JsonResponse
     {
@@ -557,6 +537,4 @@ class AuthController extends Controller
             );
         }
     }
-
-
 }

@@ -15,10 +15,10 @@ enum HttpMethod: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.http_method.' . $this->value);
+        return trans('enums.http_method.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::GET => 'success',

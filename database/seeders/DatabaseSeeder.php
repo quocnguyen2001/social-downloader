@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
-use App\Models\Invoice;
 use App\Models\DownloadSession;
+use App\Models\Invoice;
+use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MembershipPlanSeeder::class);
 
         // Create admin user for Filament if it doesn't exist
-        if (!User::where('email', 'admin@example.com')->exists()) {
+        if (! User::where('email', 'admin@example.com')->exists()) {
             User::factory()->create([
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',

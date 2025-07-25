@@ -19,7 +19,9 @@ class ApiKeyAuthenticationTest extends TestCase
     use RefreshDatabase;
 
     private string $testApiKey;
+
     private string $testApiKeyHash;
+
     private ApiKey $apiKeyModel;
 
     protected function setUp(): void
@@ -27,7 +29,7 @@ class ApiKeyAuthenticationTest extends TestCase
         parent::setUp();
 
         // Generate test API key
-        $this->testApiKey = 'test_api_key_' . uniqid();
+        $this->testApiKey = 'test_api_key_'.uniqid();
         $this->testApiKeyHash = hash('sha256', $this->testApiKey);
 
         // Create test API key model
@@ -50,7 +52,7 @@ class ApiKeyAuthenticationTest extends TestCase
 
         // Clear cache, rate limiter, and singleton before each test
         Cache::flush();
-        RateLimiter::clear('api_rate_limit:' . $this->apiKeyModel->id);
+        RateLimiter::clear('api_rate_limit:'.$this->apiKeyModel->id);
         AuthenticatedApiKey::clear();
     }
 
@@ -62,11 +64,11 @@ class ApiKeyAuthenticationTest extends TestCase
             'quality' => '720p',
             'format' => 'mp4',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200)
-                ->assertJson(['success' => true]);
+            ->assertJson(['success' => true]);
     }
 
     /** @test */
@@ -81,7 +83,7 @@ class ApiKeyAuthenticationTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                ->assertJson(['success' => true]);
+            ->assertJson(['success' => true]);
     }
 
     /** @test */
@@ -92,11 +94,11 @@ class ApiKeyAuthenticationTest extends TestCase
         ]);
 
         $response->assertStatus(401)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'API key is required',
-                    'error_code' => 'UNAUTHORIZED',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'API key is required',
+                'error_code' => 'UNAUTHORIZED',
+            ]);
     }
 
     /** @test */
@@ -109,11 +111,11 @@ class ApiKeyAuthenticationTest extends TestCase
         ]);
 
         $response->assertStatus(401)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Invalid API key',
-                    'error_code' => 'UNAUTHORIZED',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Invalid API key',
+                'error_code' => 'UNAUTHORIZED',
+            ]);
     }
 
     /** @test */
@@ -124,15 +126,15 @@ class ApiKeyAuthenticationTest extends TestCase
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(401)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'API key is not active',
-                    'error_code' => 'UNAUTHORIZED',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'API key is not active',
+                'error_code' => 'UNAUTHORIZED',
+            ]);
     }
 
     /** @test */
@@ -146,14 +148,14 @@ class ApiKeyAuthenticationTest extends TestCase
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(429)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Daily usage limit exceeded',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Daily usage limit exceeded',
+            ]);
     }
 
     /** @test */
@@ -167,14 +169,14 @@ class ApiKeyAuthenticationTest extends TestCase
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(429)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Monthly usage limit exceeded',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Monthly usage limit exceeded',
+            ]);
     }
 
     /** @test */
@@ -182,20 +184,20 @@ class ApiKeyAuthenticationTest extends TestCase
     {
         // Make requests up to the rate limit
         for ($i = 0; $i < 60; $i++) { // Basic tier limit is 60 per minute
-            RateLimiter::hit('api_rate_limit:' . $this->apiKeyModel->id, 60);
+            RateLimiter::hit('api_rate_limit:'.$this->apiKeyModel->id, 60);
         }
 
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(429)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Rate limit exceeded',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Rate limit exceeded',
+            ]);
     }
 
     /** @test */
@@ -209,7 +211,7 @@ class ApiKeyAuthenticationTest extends TestCase
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200);
@@ -226,14 +228,14 @@ class ApiKeyAuthenticationTest extends TestCase
     /** @test */
     public function it_caches_invalid_api_keys()
     {
-        $invalidKey = 'invalid_key_' . uniqid();
+        $invalidKey = 'invalid_key_'.uniqid();
         $invalidKeyHash = hash('sha256', $invalidKey);
         $cacheService = app(ApiKeyCacheService::class);
 
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $invalidKey,
+            'Authorization' => 'Bearer '.$invalidKey,
         ]);
 
         $response->assertStatus(401);
@@ -249,7 +251,7 @@ class ApiKeyAuthenticationTest extends TestCase
         $response = $this->getJson('/api/v1/extract/platforms');
 
         $response->assertStatus(200)
-                ->assertJson(['success' => true]);
+            ->assertJson(['success' => true]);
     }
 
     /** @test */
@@ -289,18 +291,18 @@ class ApiKeyAuthenticationTest extends TestCase
         ]);
 
         $response->assertStatus(403)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Access denied to this session',
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Access denied to this session',
+            ]);
 
         // Access with correct API key should work
         $response = $this->getJson("/api/v1/extract/status/{$session->id}", [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200)
-                ->assertJson(['success' => true]);
+            ->assertJson(['success' => true]);
     }
 
     /** @test */
@@ -348,7 +350,7 @@ class ApiKeyAuthenticationTest extends TestCase
             'quality' => '720p',
             'format' => 'mp4',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200);

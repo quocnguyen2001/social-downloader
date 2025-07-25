@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MembershipPlanController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\VideoExtractionController;
 use App\Http\Controllers\Api\VideoDownloadController;
+use App\Http\Controllers\Api\VideoExtractionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
 // Video extraction API (existing functionality)
 Route::prefix('v1')->group(function () {
     // Authentication routes (public)
@@ -33,7 +32,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('api.auth.reset-password');
     });
 
-// Protected authentication routes (require Sanctum authentication)
+    // Protected authentication routes (require Sanctum authentication)
     Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
         Route::get('/user', [AuthController::class, 'user'])->name('api.auth.user');

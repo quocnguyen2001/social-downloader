@@ -27,7 +27,7 @@ return [
             'updated_at' => 'Updated At',
         ],
     ],
-    
+
     'api_request' => [
         'singular' => 'API Request',
         'plural' => 'API Requests',
@@ -53,7 +53,7 @@ return [
             'updated_at' => 'Updated At',
         ],
     ],
-    
+
     'invoice' => [
         'singular' => 'Invoice',
         'plural' => 'Invoices',
@@ -76,7 +76,7 @@ return [
             'updated_at' => 'Updated At',
         ],
     ],
-    
+
     'download_session' => [
         'singular' => 'Download Session',
         'plural' => 'Download Sessions',

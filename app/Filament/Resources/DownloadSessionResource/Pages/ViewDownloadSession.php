@@ -7,7 +7,6 @@ namespace App\Filament\Resources\DownloadSessionResource\Pages;
 use App\Enums\DownloadSessionStatus;
 use App\Enums\Platform;
 use App\Filament\Resources\DownloadSessionResource;
-use Filament\Actions;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
@@ -92,8 +91,7 @@ class ViewDownloadSession extends ViewRecord
 
                         Infolists\Components\TextEntry::make('duration')
                             ->label('Duration')
-                            ->formatStateUsing(fn (?int $state): string =>
-                                $state ? gmdate('H:i:s', $state) : 'Unknown'
+                            ->formatStateUsing(fn (?int $state): string => $state ? gmdate('H:i:s', $state) : 'Unknown'
                             )
                             ->badge()
                             ->color('info'),
@@ -108,7 +106,7 @@ class ViewDownloadSession extends ViewRecord
                             ->placeholder('No errors')
                             ->columnSpanFull(),
                     ])
-                    ->visible(fn ($record) => !empty($record->error_message)),
+                    ->visible(fn ($record) => ! empty($record->error_message)),
             ]);
     }
 

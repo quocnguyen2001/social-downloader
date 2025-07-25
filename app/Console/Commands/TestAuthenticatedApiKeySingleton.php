@@ -48,7 +48,7 @@ class TestAuthenticatedApiKeySingleton extends Command
             $this->cleanup();
         }
 
-        if (!$this->hasOptions()) {
+        if (! $this->hasOptions()) {
             $this->runAllTests();
         }
 
@@ -75,8 +75,8 @@ class TestAuthenticatedApiKeySingleton extends Command
 
         try {
             $apiKey = $this->createTestApiKey();
-            
-            $this->line("✅ API Key created successfully:");
+
+            $this->line('✅ API Key created successfully:');
             $this->line("   ID: {$apiKey->id}");
             $this->line("   Name: {$apiKey->name}");
             $this->line("   Tier: {$apiKey->tier}");
@@ -98,10 +98,10 @@ class TestAuthenticatedApiKeySingleton extends Command
         try {
             // Clear singleton first
             AuthenticatedApiKey::clear();
-            
+
             // Test empty state
             $this->line('Testing empty state...');
-            if (!AuthenticatedApiKey::has() && AuthenticatedApiKey::get() === null) {
+            if (! AuthenticatedApiKey::has() && AuthenticatedApiKey::get() === null) {
                 $this->line('✅ Empty state working correctly');
             } else {
                 $this->error('❌ Empty state not working');
@@ -199,7 +199,7 @@ class TestAuthenticatedApiKeySingleton extends Command
             // Test clear
             $this->line('Testing clear method...');
             AuthenticatedApiKey::clear();
-            if (!AuthenticatedApiKey::has()) {
+            if (! AuthenticatedApiKey::has()) {
                 $this->line('✅ clear() method working');
             } else {
                 $this->error('❌ clear() method failed');
@@ -220,7 +220,7 @@ class TestAuthenticatedApiKeySingleton extends Command
         $this->info('🌐 Testing Integration with HTTP Requests...');
 
         $apiKey = $this->getOrCreateTestApiKey();
-        $testKey = 'test_singleton_key_' . $apiKey->id;
+        $testKey = 'test_singleton_key_'.$apiKey->id;
 
         // Update the API key hash to match our test key
         $apiKey->update(['key_hash' => hash('sha256', $testKey)]);
@@ -250,11 +250,11 @@ class TestAuthenticatedApiKeySingleton extends Command
                 }
             } else {
                 $this->error("❌ Authenticated request failed: {$response->status()}");
-                $this->error("   Response: " . $response->body());
+                $this->error('   Response: '.$response->body());
             }
 
             // Verify singleton is cleared after request
-            if (!AuthenticatedApiKey::has()) {
+            if (! AuthenticatedApiKey::has()) {
                 $this->line('✅ Singleton properly cleared after request');
             } else {
                 $this->error('❌ Singleton not cleared after request');
@@ -273,8 +273,8 @@ class TestAuthenticatedApiKeySingleton extends Command
     private function createTestApiKey(): ApiKey
     {
         return ApiKey::create([
-            'name' => 'Singleton Test API Key - ' . now()->format('Y-m-d H:i:s'),
-            'key_hash' => hash('sha256', 'singleton_test_key_' . Str::random(16)),
+            'name' => 'Singleton Test API Key - '.now()->format('Y-m-d H:i:s'),
+            'key_hash' => hash('sha256', 'singleton_test_key_'.Str::random(16)),
             'tier' => 'pro',
             'status' => ApiKeyStatus::ACTIVE,
             'daily_limit' => 500,
@@ -296,8 +296,8 @@ class TestAuthenticatedApiKeySingleton extends Command
     private function getOrCreateTestApiKey(): ApiKey
     {
         $testApiKey = ApiKey::where('name', 'LIKE', 'Singleton Test API Key%')->first();
-        
-        if (!$testApiKey) {
+
+        if (! $testApiKey) {
             $testApiKey = $this->createTestApiKey();
         }
 
@@ -332,9 +332,9 @@ class TestAuthenticatedApiKeySingleton extends Command
      */
     private function hasOptions(): bool
     {
-        return $this->option('create-key') || 
-               $this->option('test-methods') || 
-               $this->option('test-integration') || 
+        return $this->option('create-key') ||
+               $this->option('test-methods') ||
+               $this->option('test-integration') ||
                $this->option('cleanup');
     }
 }

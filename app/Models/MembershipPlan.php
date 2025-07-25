@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $currency
  * @property string $billing_cycle
  * @property int $daily_request_limit
-
  * @property int $total_request_download
  * @property array|null $allowed_platforms
  * @property array|null $allowed_qualities

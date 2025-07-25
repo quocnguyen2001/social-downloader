@@ -12,10 +12,10 @@ class ExtractionFailedException extends VideoExtractionException
     /**
      * Create a new extraction failed exception.
      *
-     * @param string $url The URL that failed to extract
-     * @param Platform|null $platform The platform being extracted from
-     * @param string|null $reason The reason for failure
-     * @param \Throwable|null $previous The previous exception
+     * @param  string  $url  The URL that failed to extract
+     * @param  Platform|null  $platform  The platform being extracted from
+     * @param  string|null  $reason  The reason for failure
+     * @param  \Throwable|null  $previous  The previous exception
      */
     public function __construct(
         string $url,
@@ -24,11 +24,11 @@ class ExtractionFailedException extends VideoExtractionException
         ?\Throwable $previous = null
     ) {
         $message = "Failed to extract video from URL: {$url}";
-        
+
         if ($platform) {
             $message .= " (platform: {$platform->value})";
         }
-        
+
         if ($reason) {
             $message .= " - {$reason}";
         }
@@ -47,8 +47,6 @@ class ExtractionFailedException extends VideoExtractionException
 
     /**
      * Get the URL that failed to extract.
-     *
-     * @return string
      */
     public function getUrl(): string
     {
@@ -57,19 +55,16 @@ class ExtractionFailedException extends VideoExtractionException
 
     /**
      * Get the platform being extracted from.
-     *
-     * @return Platform|null
      */
     public function getPlatform(): ?Platform
     {
         $platformValue = $this->context['platform'] ?? null;
+
         return $platformValue ? Platform::from($platformValue) : null;
     }
 
     /**
      * Get the reason for failure.
-     *
-     * @return string|null
      */
     public function getReason(): ?string
     {

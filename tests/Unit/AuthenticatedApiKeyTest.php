@@ -234,7 +234,7 @@ class AuthenticatedApiKeyTest extends TestCase
     public function it_includes_default_metadata()
     {
         // Mock request data
-        $this->app->instance('request', new \Illuminate\Http\Request());
+        $this->app->instance('request', new \Illuminate\Http\Request);
 
         AuthenticatedApiKey::set($this->testApiKey);
 
@@ -250,7 +250,7 @@ class AuthenticatedApiKeyTest extends TestCase
     public function it_prevents_instantiation()
     {
         $this->expectException(\Error::class);
-        new AuthenticatedApiKey();
+        new AuthenticatedApiKey;
     }
 
     /** @test */
@@ -258,7 +258,7 @@ class AuthenticatedApiKeyTest extends TestCase
     {
         $reflection = new \ReflectionClass(AuthenticatedApiKey::class);
         $cloneMethod = $reflection->getMethod('__clone');
-        
+
         $this->assertTrue($cloneMethod->isPrivate());
     }
 
@@ -268,8 +268,10 @@ class AuthenticatedApiKeyTest extends TestCase
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Cannot unserialize singleton');
 
-        $instance = new class extends AuthenticatedApiKey {
-            public function testWakeup() {
+        $instance = new class extends AuthenticatedApiKey
+        {
+            public function test_wakeup()
+            {
                 $this->__wakeup();
             }
         };
@@ -288,7 +290,7 @@ class AuthenticatedApiKeyTest extends TestCase
         // Multiple calls should return the same data
         $this->assertEquals($this->testApiKey->id, AuthenticatedApiKey::getId());
         $this->assertEquals($this->testApiKey->id, AuthenticatedApiKey::getId());
-        
+
         $this->assertEquals('pro', AuthenticatedApiKey::getTier());
         $this->assertEquals('pro', AuthenticatedApiKey::getTier());
 

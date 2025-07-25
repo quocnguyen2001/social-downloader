@@ -3,12 +3,12 @@
 return [
     'title' => 'Cài Đặt Cổng Thanh Toán',
     'description' => 'Cấu hình các phương thức thanh toán và cài đặt cổng thanh toán',
-    
+
     'tabs' => [
         'bank_transfer' => 'Chuyển Khoản Ngân Hàng',
         'paypal' => 'PayPal',
     ],
-    
+
     'sections' => [
         'bank_transfer_config' => 'Cấu Hình Chuyển Khoản Ngân Hàng',
         'bank_transfer_config_description' => 'Cấu hình cài đặt phương thức thanh toán chuyển khoản ngân hàng',
@@ -17,7 +17,7 @@ return [
         'general_settings' => 'Cài Đặt Chung',
         'general_settings_description' => 'Bật hoặc tắt các phương thức thanh toán',
     ],
-    
+
     'fields' => [
         // Bank Transfer Fields
         'bank_name' => 'Tên Ngân Hàng',
@@ -27,7 +27,7 @@ return [
         'api_transactions_api' => 'API Kiểm Tra Giao Dịch',
         'bank_transfer_enabled' => 'Bật Chuyển Khoản Ngân Hàng',
         'bank_transfer_currency' => 'Tiền Tệ Chuyển Khoản',
-        
+
         // PayPal Fields
         'paypal_client_id' => 'PayPal Client ID',
         'paypal_client_secret' => 'PayPal Client Secret',
@@ -37,7 +37,7 @@ return [
         'paypal_enabled' => 'Bật PayPal',
         'paypal_currency' => 'Tiền Tệ PayPal',
     ],
-    
+
     'placeholders' => [
         'bank_name' => 'Chọn ngân hàng từ danh sách',
         'bank_account' => 'Nhập tên chủ tài khoản',
@@ -49,7 +49,7 @@ return [
         'paypal_webhook_id' => 'Nhập PayPal Webhook ID (tùy chọn)',
         'paypal_webhook_secret' => 'Nhập PayPal Webhook Secret (tùy chọn)',
     ],
-    
+
     'help' => [
         'bank_name' => 'Chọn ngân hàng nơi sẽ nhận thanh toán',
         'bank_account' => 'Họ tên đầy đủ của chủ tài khoản như đã đăng ký với ngân hàng',
@@ -66,7 +66,7 @@ return [
         'paypal_enabled' => 'Bật PayPal làm phương thức thanh toán',
         'paypal_currency' => 'Tiền tệ cho thanh toán PayPal',
     ],
-    
+
     'options' => [
         'paypal_environment' => [
             'sandbox' => 'Sandbox (Thử nghiệm)',
@@ -87,14 +87,14 @@ return [
             ],
         ],
     ],
-    
+
     'actions' => [
         'test_connection' => 'Kiểm Tra Kết Nối',
         'refresh_banks' => 'Làm Mới Danh Sách Ngân Hàng',
         'clear_cache' => 'Xóa Cache',
         'save' => 'Lưu Cài Đặt',
     ],
-    
+
     'messages' => [
         'success' => [
             'settings_saved' => 'Cài đặt cổng thanh toán đã được lưu thành công',
@@ -118,7 +118,7 @@ return [
             'test_mode_warning' => 'PayPal đang ở chế độ test. Chuyển sang Live cho production',
         ],
     ],
-    
+
     'validation' => [
         'bank_name_required' => 'Tên ngân hàng là bắt buộc khi bật chuyển khoản ngân hàng',
         'bank_account_required' => 'Tên chủ tài khoản là bắt buộc khi bật chuyển khoản ngân hàng',
@@ -128,7 +128,7 @@ return [
         'invalid_api_url' => 'Định dạng URL API không hợp lệ',
         'invalid_currency' => 'Mã tiền tệ không hợp lệ',
     ],
-    
+
     'status' => [
         'enabled' => 'Đã Bật',
         'disabled' => 'Đã Tắt',

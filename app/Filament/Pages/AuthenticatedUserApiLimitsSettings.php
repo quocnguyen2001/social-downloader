@@ -57,8 +57,6 @@ class AuthenticatedUserApiLimitsSettings extends SettingsPage
         return 'Manage API restrictions and limitations for authenticated users without subscription packages';
     }
 
-
-
     /**
      * Get the form schema.
      */

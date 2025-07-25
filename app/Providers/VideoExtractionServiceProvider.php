@@ -29,10 +29,10 @@ class VideoExtractionServiceProvider extends ServiceProvider
             HandleExtractionRequest::class,
         ],
         ExtractionCompleted::class => [
-            UpdateExtractionStatistics::class . '@handleCompleted',
+            UpdateExtractionStatistics::class.'@handleCompleted',
         ],
         ExtractionFailed::class => [
-            UpdateExtractionStatistics::class . '@handleFailed',
+            UpdateExtractionStatistics::class.'@handleFailed',
         ],
     ];
 
@@ -43,18 +43,19 @@ class VideoExtractionServiceProvider extends ServiceProvider
     {
         // Merge configuration
         $this->mergeConfigFrom(
-            __DIR__ . '/../../config/video-extraction.php',
+            __DIR__.'/../../config/video-extraction.php',
             'video-extraction'
         );
 
         // Register the driver registry as a singleton
         $this->app->singleton(DriverRegistry::class, function ($app) {
-            return new DriverRegistry();
+            return new DriverRegistry;
         });
 
         // Register the driver factory as a singleton
         $this->app->singleton(DriverFactory::class, function ($app) {
             $registry = $app->make(DriverRegistry::class);
+
             return new DriverFactory($registry);
         });
 
@@ -74,7 +75,7 @@ class VideoExtractionServiceProvider extends ServiceProvider
         // Publish configuration file
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../../config/video-extraction.php' => config_path('video-extraction.php'),
+                __DIR__.'/../../config/video-extraction.php' => config_path('video-extraction.php'),
             ], 'video-extraction-config');
         }
 
@@ -97,7 +98,7 @@ class VideoExtractionServiceProvider extends ServiceProvider
     {
         $tempDir = config('video-extraction.temp.directory');
 
-        if (!file_exists($tempDir)) {
+        if (! file_exists($tempDir)) {
             try {
                 mkdir($tempDir, 0755, true);
             } catch (\Exception $e) {
@@ -131,7 +132,7 @@ class VideoExtractionServiceProvider extends ServiceProvider
     {
         $binaryPath = config('video-extraction.yt_dlp.binary_path');
 
-        if (!file_exists($binaryPath) || !is_executable($binaryPath)) {
+        if (! file_exists($binaryPath) || ! is_executable($binaryPath)) {
             \Illuminate\Support\Facades\Log::warning('yt-dlp binary not found or not executable', [
                 'binary_path' => $binaryPath,
                 'exists' => file_exists($binaryPath),

@@ -17,7 +17,9 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
     use RefreshDatabase;
 
     private string $testApiKey;
+
     private string $testApiKeyHash;
+
     private ApiKey $apiKeyModel;
 
     protected function setUp(): void
@@ -25,7 +27,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         parent::setUp();
 
         // Generate test API key
-        $this->testApiKey = 'test_api_key_' . uniqid();
+        $this->testApiKey = 'test_api_key_'.uniqid();
         $this->testApiKeyHash = hash('sha256', $this->testApiKey);
 
         // Create test API key model
@@ -68,7 +70,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
             'quality' => '720p',
             'format' => 'mp4',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200);
@@ -84,7 +86,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         // Create a test route that checks the singleton
         $this->app['router']->post('/test/singleton-check', function () {
             $apiKey = AuthenticatedApiKey::get();
-            
+
             return response()->json([
                 'has_api_key' => AuthenticatedApiKey::has(),
                 'api_key_id' => AuthenticatedApiKey::getId(),
@@ -98,7 +100,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         })->middleware('api.auth');
 
         $response = $this->postJson('/test/singleton-check', [], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200);
@@ -129,7 +131,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         })->middleware('api.auth');
 
         $response = $this->postJson('/test/metadata-check', [], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
             'User-Agent' => 'Test User Agent',
         ]);
 
@@ -171,7 +173,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         $response = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200);
@@ -185,7 +187,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
     public function singleton_handles_multiple_requests_independently()
     {
         // Create another API key
-        $anotherApiKey = 'another_key_' . uniqid();
+        $anotherApiKey = 'another_key_'.uniqid();
         $anotherApiKeyModel = ApiKey::create([
             'name' => 'Another API Key',
             'key_hash' => hash('sha256', $anotherApiKey),
@@ -213,7 +215,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
 
         // First request with first API key
         $response1 = $this->postJson('/test/multi-request', [], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response1->assertStatus(200);
@@ -224,7 +226,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
 
         // Second request with different API key
         $response2 = $this->postJson('/test/multi-request', [], [
-            'Authorization' => 'Bearer ' . $anotherApiKey,
+            'Authorization' => 'Bearer '.$anotherApiKey,
         ]);
 
         $response2->assertStatus(200);
@@ -251,7 +253,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
                     'request_id' => AuthenticatedApiKey::getRequestId(),
                     'has_api_key' => AuthenticatedApiKey::has(),
                 ];
-                
+
                 // Small delay to ensure time passes
                 usleep(100);
             }
@@ -260,7 +262,7 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         })->middleware('api.auth');
 
         $response = $this->postJson('/test/consistency', [], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200);
@@ -284,11 +286,11 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
             'quality' => '720p',
             'format' => 'mp4',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $response->assertStatus(200)
-                ->assertJson(['success' => true]);
+            ->assertJson(['success' => true]);
 
         $data = $response->json();
         $this->assertArrayHasKey('data', $data);
@@ -297,11 +299,11 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         // Test status endpoint with the same API key
         $sessionId = $data['data']['session_id'];
         $statusResponse = $this->getJson("/api/v1/extract/status/{$sessionId}", [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $statusResponse->assertStatus(200)
-                      ->assertJson(['success' => true]);
+            ->assertJson(['success' => true]);
     }
 
     /** @test */
@@ -311,13 +313,13 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
         $response1 = $this->postJson('/api/v1/extract', [
             'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ], [
-            'Authorization' => 'Bearer ' . $this->testApiKey,
+            'Authorization' => 'Bearer '.$this->testApiKey,
         ]);
 
         $sessionId = $response1->json()['data']['session_id'];
 
         // Create another API key
-        $anotherApiKey = 'another_key_' . uniqid();
+        $anotherApiKey = 'another_key_'.uniqid();
         ApiKey::create([
             'name' => 'Another API Key',
             'key_hash' => hash('sha256', $anotherApiKey),
@@ -337,13 +339,13 @@ class AuthenticatedApiKeySingletonIntegrationTest extends TestCase
 
         // Try to access session with different API key
         $response2 = $this->getJson("/api/v1/extract/status/{$sessionId}", [
-            'Authorization' => 'Bearer ' . $anotherApiKey,
+            'Authorization' => 'Bearer '.$anotherApiKey,
         ]);
 
         $response2->assertStatus(403)
-                  ->assertJson([
-                      'success' => false,
-                      'message' => 'Access denied to this session',
-                  ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Access denied to this session',
+            ]);
     }
 }

@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Models\ApiRequest;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 
 class ApiUsageChart extends ChartWidget
 {
@@ -17,7 +16,7 @@ class ApiUsageChart extends ChartWidget
 
     protected static ?int $sort = 2;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -62,7 +61,7 @@ class ApiUsageChart extends ChartWidget
                     'yAxisID' => 'y',
                 ],
                 [
-                    'label' => trans('models.monthly_billing.fields.total_cost') . ' (VND)',
+                    'label' => trans('models.monthly_billing.fields.total_cost').' (VND)',
                     'data' => $revenueCounts,
                     'borderColor' => 'rgb(34, 197, 94)',
                     'backgroundColor' => 'rgba(34, 197, 94, 0.1)',

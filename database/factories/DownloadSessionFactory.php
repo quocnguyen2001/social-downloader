@@ -35,7 +35,7 @@ class DownloadSessionFactory extends Factory
             'Dance Challenge Compilation',
             'DIY Home Improvement Tips',
             'Music Video - Latest Hit',
-            'Tutorial: Learn Something New'
+            'Tutorial: Learn Something New',
         ];
 
         return [
@@ -64,10 +64,10 @@ class DownloadSessionFactory extends Factory
     private function generatePlatformUrl(string $platform): string
     {
         return match ($platform) {
-            'youtube' => 'https://www.youtube.com/watch?v=' . Str::random(11),
-            'tiktok' => 'https://www.tiktok.com/@user/video/' . fake()->numerify('####################'),
-            'instagram' => 'https://www.instagram.com/p/' . Str::random(11) . '/',
-            'facebook' => 'https://www.facebook.com/watch/?v=' . fake()->numerify('####################'),
+            'youtube' => 'https://www.youtube.com/watch?v='.Str::random(11),
+            'tiktok' => 'https://www.tiktok.com/@user/video/'.fake()->numerify('####################'),
+            'instagram' => 'https://www.instagram.com/p/'.Str::random(11).'/',
+            'facebook' => 'https://www.facebook.com/watch/?v='.fake()->numerify('####################'),
             default => fake()->url(),
         };
     }

@@ -49,7 +49,7 @@ class TestApiKeyAuthentication extends Command
             $this->cleanup();
         }
 
-        if (!$this->hasOptions()) {
+        if (! $this->hasOptions()) {
             $this->runAllTests();
         }
 
@@ -76,8 +76,8 @@ class TestApiKeyAuthentication extends Command
 
         try {
             $apiKey = $this->createTestApiKey();
-            
-            $this->line("✅ API Key created successfully:");
+
+            $this->line('✅ API Key created successfully:');
             $this->line("   ID: {$apiKey->id}");
             $this->line("   Name: {$apiKey->name}");
             $this->line("   Tier: {$apiKey->tier}");
@@ -100,7 +100,7 @@ class TestApiKeyAuthentication extends Command
         $this->info('🌐 Testing API Endpoints...');
 
         $apiKey = $this->getOrCreateTestApiKey();
-        $testKey = 'test_key_' . $apiKey->id;
+        $testKey = 'test_key_'.$apiKey->id;
 
         // Update the API key hash to match our test key
         $apiKey->update(['key_hash' => hash('sha256', $testKey)]);
@@ -130,7 +130,7 @@ class TestApiKeyAuthentication extends Command
         try {
             // Test caching
             $this->line('Testing cache operations...');
-            
+
             $cacheService->cacheApiKey($keyHash, $apiKey);
             $this->line('✅ API key cached successfully');
 
@@ -150,7 +150,7 @@ class TestApiKeyAuthentication extends Command
 
             // Test invalidation
             $cacheService->invalidateApiKey($keyHash);
-            if (!$cacheService->isCached($keyHash)) {
+            if (! $cacheService->isCached($keyHash)) {
                 $this->line('✅ Cache invalidation successful');
             } else {
                 $this->error('❌ Cache invalidation failed');
@@ -170,7 +170,7 @@ class TestApiKeyAuthentication extends Command
     {
         try {
             $response = Http::get("{$baseUrl}/api/v1/extract/platforms");
-            
+
             if ($response->successful()) {
                 $this->line('✅ Public endpoint accessible without API key');
             } else {
@@ -220,7 +220,7 @@ class TestApiKeyAuthentication extends Command
                 }
             } else {
                 $this->error("❌ Protected endpoint failed with valid API key: {$response->status()}");
-                $this->error("   Response: " . $response->body());
+                $this->error('   Response: '.$response->body());
             }
         } catch (\Exception $e) {
             $this->error("❌ Protected endpoint test with API key failed: {$e->getMessage()}");
@@ -250,8 +250,8 @@ class TestApiKeyAuthentication extends Command
     private function createTestApiKey(): ApiKey
     {
         return ApiKey::create([
-            'name' => 'Test API Key - ' . now()->format('Y-m-d H:i:s'),
-            'key_hash' => hash('sha256', 'test_key_' . Str::random(16)),
+            'name' => 'Test API Key - '.now()->format('Y-m-d H:i:s'),
+            'key_hash' => hash('sha256', 'test_key_'.Str::random(16)),
             'tier' => 'basic',
             'status' => ApiKeyStatus::ACTIVE,
             'daily_limit' => 100,
@@ -273,8 +273,8 @@ class TestApiKeyAuthentication extends Command
     private function getOrCreateTestApiKey(): ApiKey
     {
         $testApiKey = ApiKey::where('name', 'LIKE', 'Test API Key%')->first();
-        
-        if (!$testApiKey) {
+
+        if (! $testApiKey) {
             $testApiKey = $this->createTestApiKey();
         }
 
@@ -309,9 +309,9 @@ class TestApiKeyAuthentication extends Command
      */
     private function hasOptions(): bool
     {
-        return $this->option('create-key') || 
-               $this->option('test-endpoints') || 
-               $this->option('test-cache') || 
+        return $this->option('create-key') ||
+               $this->option('test-endpoints') ||
+               $this->option('test-cache') ||
                $this->option('cleanup');
     }
 }

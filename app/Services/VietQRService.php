@@ -44,6 +44,7 @@ class VietQRService
      * Get Vietnamese bank list from VietQR API.
      *
      * @return array<string, string> Array of bank codes and names
+     *
      * @throws \Exception When API request fails
      */
     public function getBankList(): array
@@ -52,7 +53,7 @@ class VietQRService
             return Cache::remember(
                 self::CACHE_KEY,
                 self::CACHE_DURATION,
-                fn(): array => $this->fetchBankListFromApi()
+                fn (): array => $this->fetchBankListFromApi()
             );
         } catch (\Exception $e) {
             Log::error('Failed to get bank list from VietQR API', [
@@ -69,6 +70,7 @@ class VietQRService
      * Fetch bank list from VietQR API.
      *
      * @return array<string, string>
+     *
      * @throws \Exception
      */
     private function fetchBankListFromApi(): array
@@ -78,7 +80,7 @@ class VietQRService
                 ->retry(3, 1000)
                 ->get(self::API_ENDPOINT);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 throw new RequestException($response);
             }
 
@@ -94,16 +96,15 @@ class VietQRService
             }
 
         } catch (ConnectionException $e) {
-            throw new \Exception('Failed to connect to VietQR API: ' . $e->getMessage());
+            throw new \Exception('Failed to connect to VietQR API: '.$e->getMessage());
         } catch (RequestException $e) {
-            throw new \Exception('VietQR API request failed: ' . $e->getMessage());
+            throw new \Exception('VietQR API request failed: '.$e->getMessage());
         }
     }
 
     /**
      * Format bank list data from API response.
      *
-     * @param array $bankData
      * @return array<string, string>
      */
     private function formatBankList(array $bankData): array
@@ -111,7 +112,7 @@ class VietQRService
         $formattedList = [];
 
         foreach ($bankData as $bank) {
-            if (!isset($bank['code'])) {
+            if (! isset($bank['code'])) {
                 continue;
             }
 
@@ -167,8 +168,6 @@ class VietQRService
 
     /**
      * Clear cached bank list.
-     *
-     * @return bool
      */
     public function clearCache(): bool
     {
@@ -177,8 +176,6 @@ class VietQRService
 
     /**
      * Check if bank list is cached.
-     *
-     * @return bool
      */
     public function isCached(): bool
     {
@@ -187,12 +184,10 @@ class VietQRService
 
     /**
      * Get cache expiration time.
-     *
-     * @return \Carbon\Carbon|null
      */
     public function getCacheExpiration(): ?\Carbon\Carbon
     {
-        if (!$this->isCached()) {
+        if (! $this->isCached()) {
             return null;
         }
 
@@ -208,42 +203,39 @@ class VietQRService
      * Refresh bank list cache.
      *
      * @return array<string, string>
+     *
      * @throws \Exception
      */
     public function refreshCache(): array
     {
         $this->clearCache();
+
         return $this->getBankList();
     }
 
     /**
      * Get bank name by code.
-     *
-     * @param string $bankCode
-     * @return string|null
      */
     public function getBankName(string $bankCode): ?string
     {
         $bankList = $this->getBankList();
+
         return $bankList[$bankCode] ?? null;
     }
 
     /**
      * Validate bank code.
-     *
-     * @param string $bankCode
-     * @return bool
      */
     public function isValidBankCode(string $bankCode): bool
     {
         $bankList = $this->getBankList();
+
         return array_key_exists($bankCode, $bankList);
     }
 
     /**
      * Search banks by name.
      *
-     * @param string $searchTerm
      * @return array<string, string>
      */
     public function searchBanks(string $searchTerm): array
@@ -257,7 +249,7 @@ class VietQRService
 
         return array_filter(
             $bankList,
-            fn(string $bankName): bool => str_contains(strtolower($bankName), $searchTerm)
+            fn (string $bankName): bool => str_contains(strtolower($bankName), $searchTerm)
         );
     }
 }

@@ -14,10 +14,10 @@ enum VideoFormat: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.video_format.' . $this->value);
+        return trans('enums.video_format.'.$this->value);
     }
 
-    public function getColor(): string | array | null
+    public function getColor(): string|array|null
     {
         return match ($this) {
             self::MP4 => 'primary',

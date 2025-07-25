@@ -68,6 +68,7 @@ class ApiRequestsRelationManager extends RelationManager
                     ->limit(30)
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
+
                         return strlen($state) > 30 ? $state : null;
                     }),
 
@@ -82,21 +83,23 @@ class ApiRequestsRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('response_time')
                     ->label('Response Time')
-                    ->formatStateUsing(fn ($state) => $state ? $state . 'ms' : 'N/A')
+                    ->formatStateUsing(fn ($state) => $state ? $state.'ms' : 'N/A')
                     ->alignEnd(),
 
                 Tables\Columns\TextColumn::make('file_size')
                     ->formatStateUsing(function ($state) {
-                        if (!$state) return 'N/A';
-                        
+                        if (! $state) {
+                            return 'N/A';
+                        }
+
                         $bytes = $state;
                         $units = ['B', 'KB', 'MB', 'GB'];
-                        
+
                         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
                             $bytes /= 1024;
                         }
-                        
-                        return round($bytes, 2) . ' ' . $units[$i];
+
+                        return round($bytes, 2).' '.$units[$i];
                     })
                     ->alignEnd(),
 
@@ -159,7 +162,7 @@ class ApiRequestsRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->action(fn ($record) => $record->update(['billed' => true]))
-                    ->visible(fn ($record) => !$record->billed)
+                    ->visible(fn ($record) => ! $record->billed)
                     ->requiresConfirmation(),
                 Tables\Actions\DeleteAction::make(),
             ])

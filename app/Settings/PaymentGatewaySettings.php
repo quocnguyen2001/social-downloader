@@ -163,9 +163,9 @@ class PaymentGatewaySettings extends Settings
     public function isBankTransferConfigured(): bool
     {
         return $this->bank_transfer_enabled &&
-               !empty($this->bank_name) &&
-               !empty($this->bank_account) &&
-               !empty($this->bank_account_number);
+               ! empty($this->bank_name) &&
+               ! empty($this->bank_account) &&
+               ! empty($this->bank_account_number);
     }
 
     /**
@@ -174,8 +174,8 @@ class PaymentGatewaySettings extends Settings
     public function isPayPalConfigured(): bool
     {
         return $this->paypal_enabled &&
-               !empty($this->paypal_client_id) &&
-               !empty($this->paypal_client_secret);
+               ! empty($this->paypal_client_id) &&
+               ! empty($this->paypal_client_secret);
     }
 
     /**
@@ -204,7 +204,7 @@ class PaymentGatewaySettings extends Settings
         $template = $this->money_transfer_content_template ?? 'Payment for invoice #{invoice_id} - {user_name}';
 
         foreach ($placeholders as $key => $value) {
-            $template = str_replace('{' . $key . '}', $value, $template);
+            $template = str_replace('{'.$key.'}', $value, $template);
         }
 
         return $template;

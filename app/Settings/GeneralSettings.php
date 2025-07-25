@@ -39,7 +39,6 @@ class GeneralSettings extends Settings
      */
     public string $site_url;
 
-
     /**
      * Default timezone for the application.
      */

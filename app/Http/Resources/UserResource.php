@@ -17,7 +17,6 @@ class UserResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param Request $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -37,8 +36,8 @@ class UserResource extends JsonResource
             'membership_expires_in_days' => $this->getDaysUntilExpiration(),
             'active_tokens_count' => $this->when(
                 $this->relationLoaded('tokens'),
-                fn() => $this->tokens->count(),
-                fn() => $this->tokens()->count()
+                fn () => $this->tokens->count(),
+                fn () => $this->tokens()->count()
             ),
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),

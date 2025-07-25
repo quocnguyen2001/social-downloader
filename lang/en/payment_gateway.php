@@ -3,12 +3,12 @@
 return [
     'title' => 'Payment Gateway Settings',
     'description' => 'Configure payment methods and gateway settings',
-    
+
     'tabs' => [
         'bank_transfer' => 'Bank Transfer',
         'paypal' => 'PayPal',
     ],
-    
+
     'sections' => [
         'bank_transfer_config' => 'Bank Transfer Configuration',
         'bank_transfer_config_description' => 'Configure bank transfer payment method settings',
@@ -17,7 +17,7 @@ return [
         'general_settings' => 'General Settings',
         'general_settings_description' => 'Enable or disable payment methods',
     ],
-    
+
     'fields' => [
         // Bank Transfer Fields
         'bank_name' => 'Bank Name',
@@ -27,7 +27,7 @@ return [
         'api_transactions_api' => 'Transaction API Endpoint',
         'bank_transfer_enabled' => 'Enable Bank Transfer',
         'bank_transfer_currency' => 'Bank Transfer Currency',
-        
+
         // PayPal Fields
         'paypal_client_id' => 'PayPal Client ID',
         'paypal_client_secret' => 'PayPal Client Secret',
@@ -37,7 +37,7 @@ return [
         'paypal_enabled' => 'Enable PayPal',
         'paypal_currency' => 'PayPal Currency',
     ],
-    
+
     'placeholders' => [
         'bank_name' => 'Select a bank from the list',
         'bank_account' => 'Enter account holder name',
@@ -49,7 +49,7 @@ return [
         'paypal_webhook_id' => 'Enter PayPal Webhook ID (optional)',
         'paypal_webhook_secret' => 'Enter PayPal Webhook Secret (optional)',
     ],
-    
+
     'help' => [
         'bank_name' => 'Select the bank where payments will be received',
         'bank_account' => 'Full name of the account holder as registered with the bank',
@@ -66,7 +66,7 @@ return [
         'paypal_enabled' => 'Enable PayPal as a payment method',
         'paypal_currency' => 'Currency for PayPal payments',
     ],
-    
+
     'options' => [
         'paypal_environment' => [
             'sandbox' => 'Sandbox (Testing)',
@@ -87,14 +87,14 @@ return [
             ],
         ],
     ],
-    
+
     'actions' => [
         'test_connection' => 'Test Connection',
         'refresh_banks' => 'Refresh Bank List',
         'clear_cache' => 'Clear Cache',
         'save' => 'Save Settings',
     ],
-    
+
     'messages' => [
         'success' => [
             'settings_saved' => 'Payment gateway settings saved successfully',
@@ -118,7 +118,7 @@ return [
             'test_mode_warning' => 'PayPal is in test mode. Switch to Live for production',
         ],
     ],
-    
+
     'validation' => [
         'bank_name_required' => 'Bank name is required when bank transfer is enabled',
         'bank_account_required' => 'Account holder name is required when bank transfer is enabled',
@@ -128,7 +128,7 @@ return [
         'invalid_api_url' => 'Invalid API URL format',
         'invalid_currency' => 'Invalid currency code',
     ],
-    
+
     'status' => [
         'enabled' => 'Enabled',
         'disabled' => 'Disabled',

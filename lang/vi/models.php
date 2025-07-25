@@ -27,7 +27,7 @@ return [
             'updated_at' => 'Ngày cập nhật',
         ],
     ],
-    
+
     'api_request' => [
         'singular' => 'Yêu cầu API',
         'plural' => 'Yêu cầu API',
@@ -53,7 +53,7 @@ return [
             'updated_at' => 'Ngày cập nhật',
         ],
     ],
-    
+
     'invoice' => [
         'singular' => 'Hóa đơn',
         'plural' => 'Hóa đơn',
@@ -76,7 +76,7 @@ return [
             'updated_at' => 'Ngày cập nhật',
         ],
     ],
-    
+
     'download_session' => [
         'singular' => 'Phiên tải xuống',
         'plural' => 'Phiên tải xuống',

@@ -2,24 +2,22 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ApiKeyResource\Pages;
-use App\Filament\Resources\ApiKeyResource\RelationManagers;
-use App\Models\ApiKey;
 use App\Enums\ApiKeyStatus;
 use App\Enums\Platform;
-use App\Enums\VideoQuality;
 use App\Enums\VideoFormat;
+use App\Enums\VideoQuality;
+use App\Filament\Resources\ApiKeyResource\Pages;
+use App\Models\ApiKey;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
-use Filament\Notifications\Notification;
 
 class ApiKeyResource extends Resource
 {
@@ -177,7 +175,7 @@ class ApiKeyResource extends Resource
                     ->label(trans('messages.table.columns.daily_usage'))
                     ->getStateUsing(fn (ApiKey $record) => trans('messages.info.usage_display', [
                         'usage' => $record->daily_usage,
-                        'limit' => $record->daily_limit
+                        'limit' => $record->daily_limit,
                     ]))
                     ->badge()
                     ->color(fn (ApiKey $record) => $record->daily_usage_percentage > 80 ? 'danger' : ($record->daily_usage_percentage > 60 ? 'warning' : 'success')),
@@ -186,7 +184,7 @@ class ApiKeyResource extends Resource
                     ->label(trans('messages.table.columns.monthly_usage'))
                     ->getStateUsing(fn (ApiKey $record) => trans('messages.info.usage_display', [
                         'usage' => $record->monthly_usage,
-                        'limit' => $record->monthly_limit
+                        'limit' => $record->monthly_limit,
                     ]))
                     ->badge()
                     ->color(fn (ApiKey $record) => $record->monthly_usage_percentage > 80 ? 'danger' : ($record->monthly_usage_percentage > 60 ? 'warning' : 'success')),

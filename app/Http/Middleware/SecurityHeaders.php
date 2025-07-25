@@ -20,7 +20,7 @@ class SecurityHeaders
         $response = $next($request);
 
         // Only apply security headers if enabled
-        if (!config('api_security.security_headers.enabled', true)) {
+        if (! config('api_security.security_headers.enabled', true)) {
             return $response;
         }
 
@@ -32,9 +32,6 @@ class SecurityHeaders
 
     /**
      * Apply security headers to the response.
-     *
-     * @param Response $response
-     * @return void
      */
     private function applySecurityHeaders(Response $response): void
     {
@@ -50,9 +47,6 @@ class SecurityHeaders
 
     /**
      * Apply dynamic security headers based on request context.
-     *
-     * @param Response $response
-     * @return void
      */
     private function applyDynamicHeaders(Response $response): void
     {
@@ -88,9 +82,6 @@ class SecurityHeaders
 
     /**
      * Apply CORS headers for API endpoints.
-     *
-     * @param Response $response
-     * @return void
      */
     private function applyCorsHeaders(Response $response): void
     {
@@ -124,9 +115,6 @@ class SecurityHeaders
 
     /**
      * Apply API-specific security headers.
-     *
-     * @param Response $response
-     * @return void
      */
     private function applyApiHeaders(Response $response): void
     {
@@ -156,9 +144,6 @@ class SecurityHeaders
 
     /**
      * Apply rate limiting headers if available.
-     *
-     * @param Response $response
-     * @return void
      */
     private function applyRateLimitHeaders(Response $response): void
     {

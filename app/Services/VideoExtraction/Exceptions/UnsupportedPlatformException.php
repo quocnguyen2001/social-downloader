@@ -10,9 +10,9 @@ class UnsupportedPlatformException extends VideoExtractionException
     /**
      * Create a new unsupported platform exception.
      *
-     * @param string $url The unsupported URL
-     * @param string|null $detectedPlatform The detected platform (if any)
-     * @param \Throwable|null $previous The previous exception
+     * @param  string  $url  The unsupported URL
+     * @param  string|null  $detectedPlatform  The detected platform (if any)
+     * @param  \Throwable|null  $previous  The previous exception
      */
     public function __construct(
         string $url,
@@ -20,7 +20,7 @@ class UnsupportedPlatformException extends VideoExtractionException
         ?\Throwable $previous = null
     ) {
         $message = "Unsupported platform for URL: {$url}";
-        
+
         if ($detectedPlatform) {
             $message .= " (detected platform: {$detectedPlatform})";
         }
@@ -38,8 +38,6 @@ class UnsupportedPlatformException extends VideoExtractionException
 
     /**
      * Get the unsupported URL.
-     *
-     * @return string
      */
     public function getUrl(): string
     {
@@ -48,8 +46,6 @@ class UnsupportedPlatformException extends VideoExtractionException
 
     /**
      * Get the detected platform (if any).
-     *
-     * @return string|null
      */
     public function getDetectedPlatform(): ?string
     {

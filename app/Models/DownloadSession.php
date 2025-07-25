@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Enums\Platform;
 use App\Enums\DownloadSessionStatus;
+use App\Enums\Platform;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DownloadSession extends Model
 {
@@ -128,7 +128,7 @@ class DownloadSession extends Model
      */
     public function isReadyForDownload(): bool
     {
-        return $this->status === DownloadSessionStatus::READY_FOR_DOWNLOAD && !$this->isExpired();
+        return $this->status === DownloadSessionStatus::READY_FOR_DOWNLOAD && ! $this->isExpired();
     }
 
     /**
@@ -144,7 +144,7 @@ class DownloadSession extends Model
      */
     public function isFailed(): bool
     {
-        return !empty($this->error_message);
+        return ! empty($this->error_message);
     }
 
     /**
@@ -249,7 +249,7 @@ class DownloadSession extends Model
     public function scopeExpired($query)
     {
         return $query->whereNotNull('expires_at')
-                    ->where('expires_at', '<', now());
+            ->where('expires_at', '<', now());
     }
 
     /**
@@ -274,25 +274,23 @@ class DownloadSession extends Model
     public function scopeActive($query)
     {
         return $query->whereIn('status', [
-                        DownloadSessionStatus::PENDING,
-                        DownloadSessionStatus::FETCHING_METADATA,
-                        DownloadSessionStatus::METADATA_FETCHED,
-                        DownloadSessionStatus::READY_FOR_DOWNLOAD
-                    ])
-                    ->where(function ($query) {
-                        $query->whereNull('expires_at')
-                              ->orWhere('expires_at', '>', now());
-                    });
+            DownloadSessionStatus::PENDING,
+            DownloadSessionStatus::FETCHING_METADATA,
+            DownloadSessionStatus::METADATA_FETCHED,
+            DownloadSessionStatus::READY_FOR_DOWNLOAD,
+        ])
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
-
-
 
     /**
      * Get formatted duration.
      */
     public function getFormattedDurationAttribute(): string
     {
-        if (!$this->duration) {
+        if (! $this->duration) {
             return 'N/A';
         }
 
@@ -340,7 +338,7 @@ class DownloadSession extends Model
      */
     public function getTimeUntilExpirationAttribute(): ?string
     {
-        if (!$this->expires_at) {
+        if (! $this->expires_at) {
             return null;
         }
 

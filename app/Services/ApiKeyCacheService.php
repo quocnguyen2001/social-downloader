@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Service for managing API key caching.
- * 
+ *
  * This service provides methods to cache, retrieve, and invalidate
  * API key data to improve performance and reduce database queries.
  */
@@ -27,19 +27,18 @@ class ApiKeyCacheService
     /**
      * Cache an API key.
      *
-     * @param string $keyHash The hashed API key
-     * @param ApiKey $apiKey The API key model
-     * @return void
+     * @param  string  $keyHash  The hashed API key
+     * @param  ApiKey  $apiKey  The API key model
      */
     public function cacheApiKey(string $keyHash, ApiKey $apiKey): void
     {
         $cacheKey = $this->getCacheKey($keyHash);
-        
+
         // Cache only non-sensitive data
         $cachedData = $apiKey->only([
             'id', 'name', 'tier', 'status', 'daily_limit', 'monthly_limit',
             'daily_usage', 'monthly_usage', 'total_usage', 'allowed_platforms',
-            'allowed_qualities', 'allowed_formats', 'last_reset_daily', 'last_reset_monthly'
+            'allowed_qualities', 'allowed_formats', 'last_reset_daily', 'last_reset_monthly',
         ]);
 
         Cache::put($cacheKey, $cachedData, self::CACHE_TTL);
@@ -54,7 +53,7 @@ class ApiKeyCacheService
     /**
      * Get an API key from cache.
      *
-     * @param string $keyHash The hashed API key
+     * @param  string  $keyHash  The hashed API key
      * @return ApiKey|null|false The API key model, null if not found, false if cached as invalid
      */
     public function getCachedApiKey(string $keyHash): ApiKey|null|false
@@ -85,13 +84,12 @@ class ApiKeyCacheService
     /**
      * Cache a negative result (invalid API key).
      *
-     * @param string $keyHash The hashed API key
-     * @return void
+     * @param  string  $keyHash  The hashed API key
      */
     public function cacheInvalidApiKey(string $keyHash): void
     {
         $cacheKey = $this->getCacheKey($keyHash);
-        
+
         // Cache negative result for a shorter time
         Cache::put($cacheKey, false, 60); // 1 minute
 
@@ -104,8 +102,7 @@ class ApiKeyCacheService
     /**
      * Invalidate cached API key data.
      *
-     * @param string|ApiKey $keyHashOrModel The hashed API key or API key model
-     * @return void
+     * @param  string|ApiKey  $keyHashOrModel  The hashed API key or API key model
      */
     public function invalidateApiKey(string|ApiKey $keyHashOrModel): void
     {
@@ -117,6 +114,7 @@ class ApiKeyCacheService
                 'api_key_id' => $keyHashOrModel->id,
                 'note' => 'Manual cache invalidation may be needed',
             ]);
+
             return;
         }
 
@@ -130,14 +128,12 @@ class ApiKeyCacheService
 
     /**
      * Clear all API key cache entries.
-     *
-     * @return void
      */
     public function clearAllApiKeyCache(): void
     {
         // This is a brute force approach - in production you might want to use cache tags
-        $pattern = self::CACHE_PREFIX . '*';
-        
+        $pattern = self::CACHE_PREFIX.'*';
+
         // Note: This method depends on your cache driver
         // For Redis, you could use SCAN with pattern matching
         // For now, we'll just log the request
@@ -150,9 +146,8 @@ class ApiKeyCacheService
     /**
      * Update cached API key usage statistics.
      *
-     * @param string $keyHash The hashed API key
-     * @param array $usageData Updated usage data
-     * @return void
+     * @param  string  $keyHash  The hashed API key
+     * @param  array  $usageData  Updated usage data
      */
     public function updateCachedUsage(string $keyHash, array $usageData): void
     {
@@ -190,14 +185,13 @@ class ApiKeyCacheService
     /**
      * Warm up the cache for frequently used API keys.
      *
-     * @param array $apiKeyHashes Array of API key hashes to warm up
-     * @return void
+     * @param  array  $apiKeyHashes  Array of API key hashes to warm up
      */
     public function warmUpCache(array $apiKeyHashes): void
     {
         foreach ($apiKeyHashes as $keyHash) {
             $cachedKey = $this->getCachedApiKey($keyHash);
-            
+
             if ($cachedKey === null) {
                 // Not in cache, load from database
                 $apiKey = ApiKey::where('key_hash', $keyHash)
@@ -220,36 +214,37 @@ class ApiKeyCacheService
     /**
      * Get the cache key for an API key hash.
      *
-     * @param string $keyHash The hashed API key
+     * @param  string  $keyHash  The hashed API key
      * @return string The cache key
      */
     private function getCacheKey(string $keyHash): string
     {
-        return self::CACHE_PREFIX . $keyHash;
+        return self::CACHE_PREFIX.$keyHash;
     }
 
     /**
      * Check if an API key is cached.
      *
-     * @param string $keyHash The hashed API key
+     * @param  string  $keyHash  The hashed API key
      * @return bool True if the key is cached
      */
     public function isCached(string $keyHash): bool
     {
         $cacheKey = $this->getCacheKey($keyHash);
+
         return Cache::has($cacheKey);
     }
 
     /**
      * Get the remaining TTL for a cached API key.
      *
-     * @param string $keyHash The hashed API key
+     * @param  string  $keyHash  The hashed API key
      * @return int|null The remaining TTL in seconds, or null if not cached
      */
     public function getCacheTtl(string $keyHash): ?int
     {
         $cacheKey = $this->getCacheKey($keyHash);
-        
+
         // Note: TTL retrieval depends on cache driver
         // This is a simplified implementation
         if (Cache::has($cacheKey)) {
