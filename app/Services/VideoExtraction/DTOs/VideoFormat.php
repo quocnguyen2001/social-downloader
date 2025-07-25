@@ -31,16 +31,11 @@ class VideoFormat
     /**
      * Convert to array for database storage.
      * Maps yt-dlp data to existing database columns.
-     *
-     * @return array
      */
     public function toArray(): array
     {
-        // Determine the type based on video/audio content
-        $type = $this->getDownloadOptionType();
-
-        // Use quality label or resolution for quality field
-        $quality = $this->qualityLabel ?: $this->resolution;
+        // Standardize quality value according to new requirements
+        $quality = $this->getStandardizedQuality();
 
         // Create a descriptive mime type based on extension and codecs
         $mimeType = $this->getMimeType();
@@ -48,7 +43,6 @@ class VideoFormat
         return [
             'cdn_id' => $this->formatId,
             'quality' => $quality,
-            'type' => $type->value, // Store as string value for database
             'mime_type' => $mimeType,
             'file_size' => $this->filesize, // This might be null if not available from yt-dlp
             'status' => DownloadOptionStatus::CDN->value, // Store as string value for database
@@ -56,19 +50,37 @@ class VideoFormat
     }
 
     /**
-     * Get the appropriate DownloadOptionType enum value.
+     * Get standardized quality value according to new requirements.
      */
-    private function getDownloadOptionType(): \App\Enums\DownloadOptionType
+    private function getStandardizedQuality(): string
     {
-        if ($this->isAudioOnly) {
-            return \App\Enums\DownloadOptionType::ONLY_AUDIO;
+        // Handle audio-only formats
+        if ($this->isAudioOnly || $this->resolution === 'audio only') {
+            return 'audio';
         }
 
-        if ($this->isVideoOnly) {
-            return \App\Enums\DownloadOptionType::ONLY_VIDEO;
+        // Extract height from resolution like "1920x1080"
+        if (preg_match('/(\d+)x(\d+)/', $this->resolution, $matches)) {
+            return $matches[2]; // Return height as string
         }
 
-        return \App\Enums\DownloadOptionType::FULL;
+        // Handle direct quality labels like "720p"
+        if (preg_match('/(\d+)p/', $this->resolution, $matches)) {
+            return $matches[1];
+        }
+
+        // Use qualityLabel if available and extract number
+        if ($this->qualityLabel && preg_match('/(\d+)p/', $this->qualityLabel, $matches)) {
+            return $matches[1];
+        }
+
+        // Extract any number from resolution as fallback
+        if (preg_match('/(\d+)/', $this->resolution, $matches)) {
+            return $matches[1];
+        }
+
+        // Final fallback to original resolution
+        return $this->resolution;
     }
 
     /**
@@ -99,8 +111,8 @@ class VideoFormat
             $codecInfo[] = $this->acodec;
         }
 
-        if (!empty($codecInfo)) {
-            $baseMimeType .= '; codecs="' . implode(', ', $codecInfo) . '"';
+        if (! empty($codecInfo)) {
+            $baseMimeType .= '; codecs="'.implode(', ', $codecInfo).'"';
         }
 
         return $baseMimeType;
@@ -108,12 +120,10 @@ class VideoFormat
 
     /**
      * Get formatted file size.
-     *
-     * @return string
      */
     public function getFormattedFileSize(): string
     {
-        if (!$this->filesize) {
+        if (! $this->filesize) {
             return __('messages.labels.unknown');
         }
 
@@ -124,13 +134,11 @@ class VideoFormat
             $bytes /= 1024;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 
     /**
      * Get format type description.
-     *
-     * @return string
      */
     public function getTypeDescription(): string
     {
@@ -147,8 +155,6 @@ class VideoFormat
 
     /**
      * Get codec information.
-     *
-     * @return string
      */
     public function getCodecInfo(): string
     {
@@ -167,8 +173,6 @@ class VideoFormat
 
     /**
      * Check if this format is suitable for download.
-     *
-     * @return bool
      */
     public function isSuitableForDownload(): bool
     {

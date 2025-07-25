@@ -13,7 +13,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -46,7 +45,7 @@ class ProcessVideoDownload implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param string $downloadOptionId The download option ID to process
+     * @param  string  $downloadOptionId  The download option ID to process
      */
     public function __construct(
         private string $downloadOptionId
@@ -66,21 +65,21 @@ class ProcessVideoDownload implements ShouldQueue
 
         try {
             $downloadOption = $this->getDownloadOption();
-            
+
             // Mark as processing
             $downloadOption->markAsProcessing();
 
             // Get the download session to extract origin_url
             $downloadSession = $downloadOption->downloadSession;
-            if (!$downloadSession) {
-                throw new Exception('Download session not found for option: ' . $this->downloadOptionId);
+            if (! $downloadSession) {
+                throw new Exception('Download session not found for option: '.$this->downloadOptionId);
             }
 
             $originUrl = $downloadSession->original_url;
             $cdnId = $downloadOption->cdn_id;
 
-            if (!$cdnId) {
-                throw new Exception('CDN ID not found for download option: ' . $this->downloadOptionId);
+            if (! $cdnId) {
+                throw new Exception('CDN ID not found for download option: '.$this->downloadOptionId);
             }
 
             Log::info('Processing video download', [
@@ -90,7 +89,7 @@ class ProcessVideoDownload implements ShouldQueue
             ]);
 
             // Download video using yt-dlp
-            $downloadResult = $ytDlpService->downloadVideo($originUrl, $cdnId);
+            $downloadResult = $ytDlpService->downloadVideo($originUrl, $cdnId, downloadSessionId: $downloadOption->download_session_id);
 
             Log::info('Video downloaded successfully', [
                 'download_option_id' => $this->downloadOptionId,
@@ -152,11 +151,11 @@ class ProcessVideoDownload implements ShouldQueue
 
         try {
             $downloadOption = $this->getDownloadOption();
-            
+
             // Mark as failed if this is the last attempt
             if ($this->attempts() >= $this->tries) {
                 $downloadOption->markAsFailed();
-                
+
                 Log::error('Video download job permanently failed', [
                     'download_option_id' => $this->downloadOptionId,
                     'total_attempts' => $this->attempts(),
@@ -180,9 +179,9 @@ class ProcessVideoDownload implements ShouldQueue
     private function getDownloadOption(): DownloadOption
     {
         $downloadOption = DownloadOption::with('downloadSession')->find($this->downloadOptionId);
-        
-        if (!$downloadOption) {
-            throw new Exception('Download option not found: ' . $this->downloadOptionId);
+
+        if (! $downloadOption) {
+            throw new Exception('Download option not found: '.$this->downloadOptionId);
         }
 
         return $downloadOption;

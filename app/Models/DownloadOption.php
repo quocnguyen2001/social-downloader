@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use App\Enums\DownloadOptionStatus;
-use App\Enums\DownloadOptionType;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,13 +23,11 @@ class DownloadOption extends Model
         'storage_disk',
         'storage_file_path',
         'quality',
-        'type',
         'download_cdn_url',
         'status',
     ];
 
     protected $casts = [
-        'type' => DownloadOptionType::class,
         'status' => DownloadOptionStatus::class,
         'file_size' => 'integer',
         'estimated_download_time' => 'integer',
@@ -46,7 +43,7 @@ class DownloadOption extends Model
 
     /**
      * Get the appropriate download URL based on storage location.
-     * 
+     *
      * If content is downloaded locally, generate URL from storage.
      * If content is on CDN, return the CDN URL.
      */
@@ -68,7 +65,7 @@ class DownloadOption extends Model
      */
     public function getFormattedFileSizeAttribute(): string
     {
-        if (!$this->file_size) {
+        if (! $this->file_size) {
             return __('messages.labels.unknown');
         }
 
@@ -79,7 +76,7 @@ class DownloadOption extends Model
             $bytes /= 1024;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 
     /**
@@ -87,25 +84,25 @@ class DownloadOption extends Model
      */
     public function getFormattedEstimatedTimeAttribute(): string
     {
-        if (!$this->estimated_download_time) {
+        if (! $this->estimated_download_time) {
             return __('messages.labels.unknown');
         }
 
         $seconds = $this->estimated_download_time;
-        
+
         if ($seconds < 60) {
-            return $seconds . 's';
+            return $seconds.'s';
         }
-        
+
         if ($seconds < 3600) {
-            return floor($seconds / 60) . 'm ' . ($seconds % 60) . 's';
+            return floor($seconds / 60).'m '.($seconds % 60).'s';
         }
-        
+
         $hours = floor($seconds / 3600);
         $minutes = floor(($seconds % 3600) / 60);
         $remainingSeconds = $seconds % 60;
-        
-        return $hours . 'h ' . $minutes . 'm ' . $remainingSeconds . 's';
+
+        return $hours.'h '.$minutes.'m '.$remainingSeconds.'s';
     }
 
     /**

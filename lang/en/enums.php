@@ -6,27 +6,27 @@ return [
         'inactive' => 'Inactive',
         'suspended' => 'Suspended',
     ],
-    
+
     'platform' => [
         'youtube' => 'YouTube',
         'tiktok' => 'TikTok',
         'instagram' => 'Instagram',
         'facebook' => 'Facebook',
     ],
-    
+
     'video_quality' => [
         '144p' => '144p',
         '360p' => '360p',
         '720p' => '720p',
         '1080p' => '1080p',
     ],
-    
+
     'video_format' => [
         'mp4' => 'MP4',
         'mp3' => 'MP3',
         'webm' => 'WebM',
     ],
-    
+
     'download_session_status' => [
         'pending' => 'Pending',
         'fetching_metadata' => 'Fetching Metadata',
@@ -41,19 +41,13 @@ return [
         'failed' => 'Failed',
     ],
 
-    'download_option_type' => [
-        'only_audio' => 'Audio Only',
-        'only_video' => 'Video Only',
-        'full' => 'Full Video',
-    ],
-    
     'payment_method' => [
         'bank_transfer' => 'Bank Transfer',
         'credit_card' => 'Credit Card',
         'paypal' => 'PayPal',
         'crypto' => 'Cryptocurrency',
     ],
-    
+
     'http_method' => [
         'GET' => 'GET',
         'POST' => 'POST',

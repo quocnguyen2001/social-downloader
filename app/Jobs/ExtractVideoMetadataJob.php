@@ -2,11 +2,10 @@
 
 namespace App\Jobs;
 
-use App\Enums\DownloadSessionStatus;
 use App\Models\DownloadOption;
 use App\Models\DownloadSession;
-use App\Services\VideoExtraction\YtDlpService;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
+use App\Services\VideoExtraction\YtDlpService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -71,6 +70,9 @@ class ExtractVideoMetadataJob implements ShouldQueue
                 'format_count' => count($formats),
             ]);
 
+            // Extract and populate video metadata
+            $this->populateVideoMetadata($downloadSession, $ytDlpService);
+
             // Create DownloadOption records for each format
             $this->createDownloadOptions($downloadSession, $formats);
 
@@ -105,7 +107,7 @@ class ExtractVideoMetadataJob implements ShouldQueue
 
         try {
             $downloadSession = $this->getDownloadSession();
-            $downloadSession->markAsFailed('Metadata extraction failed: ' . $exception->getMessage());
+            $downloadSession->markAsFailed('Metadata extraction failed: '.$exception->getMessage());
         } catch (\Exception $e) {
             Log::error('Failed to update session after job failure', [
                 'download_session_id' => $this->downloadSessionId,
@@ -121,7 +123,7 @@ class ExtractVideoMetadataJob implements ShouldQueue
     {
         $session = DownloadSession::find($this->downloadSessionId);
 
-        if (!$session) {
+        if (! $session) {
             throw new \RuntimeException("Download session not found: {$this->downloadSessionId}");
         }
 
@@ -129,7 +131,55 @@ class ExtractVideoMetadataJob implements ShouldQueue
     }
 
     /**
-     * Create DownloadOption records for each format.
+     * Populate DownloadSession with video metadata.
+     */
+    private function populateVideoMetadata(DownloadSession $downloadSession, YtDlpService $ytDlpService): void
+    {
+        try {
+            Log::info('Extracting video metadata', [
+                'download_session_id' => $downloadSession->id,
+                'url' => $downloadSession->original_url,
+            ]);
+
+            $metadata = $ytDlpService->getVideoMetadata($downloadSession->original_url);
+
+            if (! empty($metadata)) {
+                // Filter out null values to avoid overwriting existing data with nulls
+                $updateData = array_filter($metadata, fn ($value) => $value !== null);
+
+                if (! empty($updateData)) {
+                    $downloadSession->update($updateData);
+
+                    Log::info('Video metadata populated successfully', [
+                        'download_session_id' => $downloadSession->id,
+                        'updated_fields' => array_keys($updateData),
+                        'video_id' => $metadata['video_id'] ?? 'not extracted',
+                        'title' => isset($metadata['title']) ? substr($metadata['title'], 0, 50).'...' : 'not extracted',
+                    ]);
+                } else {
+                    Log::warning('No valid metadata extracted', [
+                        'download_session_id' => $downloadSession->id,
+                    ]);
+                }
+            } else {
+                Log::warning('Failed to extract video metadata', [
+                    'download_session_id' => $downloadSession->id,
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error populating video metadata', [
+                'download_session_id' => $downloadSession->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't fail the job if metadata extraction fails
+        }
+    }
+
+    /**
+     * Create DownloadOption records for each format with deduplication.
+     * Implements unique constraint on (download_session_id, quality) and selects
+     * the format with the smallest filesize for each quality.
      */
     private function createDownloadOptions(DownloadSession $downloadSession, array $formats): void
     {
@@ -137,38 +187,159 @@ class ExtractVideoMetadataJob implements ShouldQueue
             // Clear any existing download options for this session
             $downloadSession->downloadOptions()->delete();
 
-            foreach ($formats as $format) {
-                // Skip formats that are not suitable for download
-                if (!$format->isSuitableForDownload()) {
+            // Filter suitable formats and apply quality filtering
+            $suitableFormats = collect($formats)
+                ->filter(fn ($format) => $format->isSuitableForDownload());
+
+            // Apply quality filtering to only allow standard qualities
+            $filteredFormats = $this->filterAllowedQualities($suitableFormats);
+
+            // Group formats by their standardized quality value
+            $formatsByQuality = $filteredFormats->groupBy(function ($format) {
+                return $this->getStandardizedQuality($format);
+            });
+
+            Log::info('Filtered and grouped formats by quality', [
+                'download_session_id' => $downloadSession->id,
+                'total_formats' => $suitableFormats->count(),
+                'filtered_formats' => $filteredFormats->count(),
+                'quality_groups' => $formatsByQuality->keys()->toArray(),
+                'group_counts' => $formatsByQuality->map->count()->toArray(),
+            ]);
+
+            // For each quality group, select the best format (smallest filesize)
+            foreach ($formatsByQuality as $quality => $qualityFormats) {
+                $bestFormat = $this->selectBestFormat($qualityFormats);
+
+                if (! $bestFormat) {
+                    Log::warning('No suitable format found for quality', [
+                        'download_session_id' => $downloadSession->id,
+                        'quality' => $quality,
+                    ]);
+
                     continue;
                 }
 
                 // Get the base data from format mapping
-                $downloadOptionData = $format->toArray();
+                $downloadOptionData = $bestFormat->toArray();
 
                 // Add required fields
                 $downloadOptionData['download_session_id'] = $downloadSession->id;
 
                 // Set estimated download time based on file size
-                $downloadOptionData['estimated_download_time'] = $this->estimateDownloadTime($format->filesize);
+                $downloadOptionData['estimated_download_time'] = $this->estimateDownloadTime($bestFormat->filesize);
 
                 Log::debug('Creating download option', [
                     'download_session_id' => $downloadSession->id,
-                    'format_id' => $format->formatId,
-                    'filesize_from_format' => $format->filesize,
-                    'file_size_in_data' => $downloadOptionData['file_size'] ?? 'not set',
-                    'estimated_download_time' => $downloadOptionData['estimated_download_time'],
-                    'all_data' => $downloadOptionData,
+                    'quality' => $quality,
+                    'format_id' => $bestFormat->formatId,
+                    'filesize' => $bestFormat->filesize,
+                    'selected_from_count' => $qualityFormats->count(),
                 ]);
 
                 DownloadOption::query()->create($downloadOptionData);
             }
         });
 
-        Log::info('Created download options', [
+        Log::info('Created deduplicated download options', [
             'download_session_id' => $downloadSession->id,
             'options_created' => $downloadSession->downloadOptions()->count(),
         ]);
+    }
+
+    /**
+     * Get standardized quality value from VideoFormat.
+     * This mirrors the logic in VideoFormat::getStandardizedQuality().
+     */
+    private function getStandardizedQuality($format): string
+    {
+        // Handle audio-only formats
+        if ($format->isAudioOnly || $format->resolution === 'audio only') {
+            return 'audio';
+        }
+
+        // Extract height from resolution like "1920x1080"
+        if (preg_match('/(\d+)x(\d+)/', $format->resolution, $matches)) {
+            return $matches[2]; // Return height as string
+        }
+
+        // Handle direct quality labels like "720p"
+        if (preg_match('/(\d+)p/', $format->resolution, $matches)) {
+            return $matches[1];
+        }
+
+        // Use qualityLabel if available and extract number
+        if ($format->qualityLabel && preg_match('/(\d+)p/', $format->qualityLabel, $matches)) {
+            return $matches[1];
+        }
+
+        // Extract any number from resolution as fallback
+        if (preg_match('/(\d+)/', $format->resolution, $matches)) {
+            return $matches[1];
+        }
+
+        // Final fallback to original resolution
+        return $format->resolution;
+    }
+
+    /**
+     * Filter formats to only include allowed quality values.
+     *
+     * @param  \Illuminate\Support\Collection  $formats
+     * @return \Illuminate\Support\Collection
+     */
+    private function filterAllowedQualities($formats)
+    {
+        $allowedQualities = ['audio', '144', '360', '720', '1080'];
+
+        $originalCount = $formats->count();
+
+        $filteredFormats = $formats->filter(function ($format) use ($allowedQualities) {
+            $quality = $this->getStandardizedQuality($format);
+
+            return in_array($quality, $allowedQualities);
+        });
+
+        $filteredCount = $filteredFormats->count();
+        $removedCount = $originalCount - $filteredCount;
+
+        if ($removedCount > 0) {
+            Log::info('Quality filtering applied', [
+                'original_count' => $originalCount,
+                'filtered_count' => $filteredCount,
+                'removed_count' => $removedCount,
+                'allowed_qualities' => $allowedQualities,
+            ]);
+        }
+
+        // Ensure we have at least some formats remaining
+        if ($filteredFormats->isEmpty()) {
+            Log::warning('Quality filtering removed all formats, falling back to original formats', [
+                'original_count' => $originalCount,
+                'allowed_qualities' => $allowedQualities,
+            ]);
+
+            return $formats; // Fallback to original formats to avoid empty result
+        }
+
+        return $filteredFormats;
+    }
+
+    /**
+     * Select the best format from a collection of formats with the same quality.
+     * Prioritizes formats with the smallest filesize.
+     */
+    private function selectBestFormat($qualityFormats)
+    {
+        // First, try to find formats with valid filesize and select the smallest
+        $formatsWithSize = $qualityFormats->filter(fn ($format) => $format->filesize !== null && $format->filesize > 0);
+
+        if ($formatsWithSize->isNotEmpty()) {
+            return $formatsWithSize->sortBy('filesize')->first();
+        }
+
+        // If no formats have filesize, just return the first one
+        return $qualityFormats->first();
     }
 
     /**
@@ -176,7 +347,7 @@ class ExtractVideoMetadataJob implements ShouldQueue
      */
     private function estimateDownloadTime(?int $fileSize): ?int
     {
-        if (!$fileSize) {
+        if (! $fileSize) {
             return null;
         }
 
@@ -231,7 +402,7 @@ class ExtractVideoMetadataJob implements ShouldQueue
 
         try {
             $downloadSession = $this->getDownloadSession();
-            $downloadSession->markAsFailed('Extraction failed: ' . $e->getMessage());
+            $downloadSession->markAsFailed('Extraction failed: '.$e->getMessage());
         } catch (\Exception $updateException) {
             Log::error('Failed to update session after general error', [
                 'download_session_id' => $this->downloadSessionId,

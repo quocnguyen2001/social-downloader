@@ -6,27 +6,27 @@ return [
         'inactive' => 'Không hoạt động',
         'suspended' => 'Tạm ngưng',
     ],
-    
+
     'platform' => [
         'youtube' => 'YouTube',
         'tiktok' => 'TikTok',
         'instagram' => 'Instagram',
         'facebook' => 'Facebook',
     ],
-    
+
     'video_quality' => [
         '144p' => '144p',
         '360p' => '360p',
         '720p' => '720p',
         '1080p' => '1080p',
     ],
-    
+
     'video_format' => [
         'mp4' => 'MP4',
         'mp3' => 'MP3',
         'webm' => 'WebM',
     ],
-    
+
     'download_session_status' => [
         'pending' => 'Đang chờ',
         'fetching_metadata' => 'Đang lấy thông tin',
@@ -41,19 +41,13 @@ return [
         'failed' => 'Thất bại',
     ],
 
-    'download_option_type' => [
-        'only_audio' => 'Chỉ âm thanh',
-        'only_video' => 'Chỉ video',
-        'full' => 'Video đầy đủ',
-    ],
-    
     'payment_method' => [
         'bank_transfer' => 'Chuyển khoản ngân hàng',
         'credit_card' => 'Thẻ tín dụng',
         'paypal' => 'PayPal',
         'crypto' => 'Tiền điện tử',
     ],
-    
+
     'http_method' => [
         'GET' => 'GET',
         'POST' => 'POST',
