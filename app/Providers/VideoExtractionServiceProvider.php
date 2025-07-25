@@ -10,7 +10,6 @@ use App\Listeners\UpdateExtractionStatistics;
 use App\Services\VideoExtraction\Factory\DriverFactory;
 use App\Services\VideoExtraction\Registry\DriverRegistry;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 /**
  * Service provider for video extraction functionality.
@@ -120,6 +119,7 @@ class VideoExtractionServiceProvider extends ServiceProvider
                 \App\Console\Commands\TestVideoExtraction::class,
                 \App\Console\Commands\TestApiKeyAuthentication::class,
                 \App\Console\Commands\TestAuthenticatedApiKeySingleton::class,
+                \App\Console\Commands\ProcessScheduledFileDeletions::class,
             ]);
         }
     }
