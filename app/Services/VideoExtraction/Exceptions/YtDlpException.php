@@ -57,7 +57,22 @@ class YtDlpException extends Exception
         return str_contains($this->getMessage(), 'Private video') ||
                str_contains($this->getMessage(), 'Video unavailable') ||
                str_contains($this->getMessage(), 'This video is not available') ||
+               str_contains($this->getMessage(), 'Login required') ||
+               str_contains($this->getMessage(), 'Sign up to see') ||
+               str_contains($this->getMessage(), 'Content not available') ||
                $this->exitCode === 3;
+    }
+
+    /**
+     * Check if the error is due to Instagram-specific blocking.
+     */
+    public function isInstagramBlocked(): bool
+    {
+        return str_contains($this->getMessage(), 'instagram') &&
+               (str_contains($this->getMessage(), 'blocked') ||
+                str_contains($this->getMessage(), 'rate limit') ||
+                str_contains($this->getMessage(), '429') ||
+                str_contains($this->getMessage(), 'Too Many Requests'));
     }
 
     /**

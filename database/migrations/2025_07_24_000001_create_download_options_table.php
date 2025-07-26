@@ -29,23 +29,23 @@ return new class extends Migration
 
             // Content specifications
             $table->string('quality'); // 144p, 360p, 720p, 1080p, etc.
-            $table->enum('type', ['only_audio', 'only_video', 'full']);
 
             // Download URL (for CDN content)
             $table->text('download_cdn_url')->nullable();
 
-            // Status
-            $table->enum('status', ['downloaded', 'cdn'])->default('cdn');
+            // Status - includes processing and failed states
+            $table->enum('status', ['downloaded', 'cdn', 'processing', 'failed'])->default('cdn');
 
             $table->timestamps();
 
             // Indexes for performance
             $table->index(['download_session_id', 'status']);
-            $table->index(['download_session_id', 'type']);
             $table->index(['download_session_id', 'quality']);
             $table->index(['status', 'created_at']);
             $table->index('quality');
-            $table->index('type');
+
+            // Unique constraint on download_session_id and quality
+            $table->unique(['download_session_id', 'quality'], 'download_options_session_quality_unique');
         });
     }
 

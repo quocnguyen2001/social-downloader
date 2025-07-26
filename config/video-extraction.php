@@ -117,12 +117,14 @@ return [
         'instagram' => [
             'enabled' => env('INSTAGRAM_DRIVER_ENABLED', true),
             'priority' => 80,
-            'supported_qualities' => ['360p', '720p', '1080p'],
+            'supported_qualities' => ['144p', '360p', '720p', '1080p'],
             'supported_formats' => ['mp4', 'mp3'],
             'yt_dlp_options' => [
-                '--format' => 'best',
                 '--extract-flat' => false,
                 '--write-info-json' => true,
+                '--write-thumbnail' => false,
+                '--no-check-certificate' => true,
+                '--user-agent' => 'Mozilla/5.0 (compatible; VideoDownloader/1.0)',
             ],
         ],
 

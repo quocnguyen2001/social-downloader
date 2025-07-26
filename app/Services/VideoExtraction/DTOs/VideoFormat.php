@@ -3,6 +3,7 @@
 namespace App\Services\VideoExtraction\DTOs;
 
 use App\Enums\DownloadOptionStatus;
+use App\Enums\DownloadOptionType;
 
 /**
  * Data Transfer Object for video format information from yt-dlp.
@@ -59,9 +60,11 @@ class VideoFormat
             return 'audio';
         }
 
-        // Extract height from resolution like "1920x1080"
+        // Extract height from resolution like "1920x1080" and map to standard qualities
         if (preg_match('/(\d+)x(\d+)/', $this->resolution, $matches)) {
-            return $matches[2]; // Return height as string
+            $height = (int) $matches[2];
+
+            return $this->mapInstagramHeightToStandardQuality($height);
         }
 
         // Handle direct quality labels like "720p"
@@ -77,6 +80,12 @@ class VideoFormat
         // Extract any number from resolution as fallback
         if (preg_match('/(\d+)/', $this->resolution, $matches)) {
             return $matches[1];
+        }
+
+        // For Instagram video formats without clear quality indicators,
+        // default to highest quality (1080) as requested
+        if (! $this->isAudioOnly && $this->extension === 'mp4') {
+            return '1080';
         }
 
         // Final fallback to original resolution
@@ -193,5 +202,37 @@ class VideoFormat
         }
 
         return true; // Default to allowing the format
+    }
+
+    /**
+     * Get the appropriate DownloadOptionType for this format.
+     */
+    public function getDownloadOptionType(): DownloadOptionType
+    {
+        if ($this->isAudioOnly) {
+            return DownloadOptionType::ONLY_AUDIO;
+        }
+
+        if ($this->isVideoOnly) {
+            return DownloadOptionType::ONLY_VIDEO;
+        }
+
+        // If it has both video and audio, it's a full format
+        return DownloadOptionType::FULL;
+    }
+
+    /**
+     * Map Instagram's portrait resolution heights to standard quality values.
+     * Instagram uses portrait orientation (e.g., 720x1280, 1080x1920).
+     */
+    private function mapInstagramHeightToStandardQuality(int $height): string
+    {
+        return match (true) {
+            $height >= 1920 => '1080', // 1080x1920 → 1080p
+            $height >= 1280 => '720',  // 720x1280 → 720p
+            $height >= 640 => '360',   // 360x640 → 360p
+            $height >= 480 => '360',   // Fallback for lower resolutions
+            default => '144',          // Very low quality fallback
+        };
     }
 }

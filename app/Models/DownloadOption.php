@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DownloadOptionStatus;
+use App\Enums\DownloadOptionType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -175,5 +176,41 @@ class DownloadOption extends Model
         $this->update([
             'status' => DownloadOptionStatus::FAILED,
         ]);
+    }
+
+    /**
+     * Get the download option type based on quality field.
+     */
+    public function getType(): DownloadOptionType
+    {
+        return match ($this->quality) {
+            'audio' => DownloadOptionType::ONLY_AUDIO,
+            '144', '360', '720', '1080' => DownloadOptionType::ONLY_VIDEO,
+            default => DownloadOptionType::FULL,
+        };
+    }
+
+    /**
+     * Check if this is an audio-only option.
+     */
+    public function isAudioOnly(): bool
+    {
+        return $this->quality === 'audio';
+    }
+
+    /**
+     * Check if this is a video-only option.
+     */
+    public function isVideoOnly(): bool
+    {
+        return in_array($this->quality, ['144', '360', '720', '1080']);
+    }
+
+    /**
+     * Check if this is a full video option (with audio).
+     */
+    public function isFull(): bool
+    {
+        return ! $this->isAudioOnly() && ! $this->isVideoOnly();
     }
 }

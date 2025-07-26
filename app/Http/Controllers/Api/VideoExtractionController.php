@@ -110,11 +110,11 @@ class VideoExtractionController extends Controller
 
                 $data['total_options'] = count($data['download_options']);
 
-                // Group options by type for easier frontend handling
+                // Group options by type for easier frontend handling (based on quality field)
                 $data['options_by_type'] = [
-                    'full_video' => $downloadOptions->where('type', \App\Enums\DownloadOptionType::FULL)->values(),
-                    'video_only' => $downloadOptions->where('type', \App\Enums\DownloadOptionType::ONLY_VIDEO)->values(),
-                    'audio_only' => $downloadOptions->where('type', \App\Enums\DownloadOptionType::ONLY_AUDIO)->values(),
+                    'full_video' => $downloadOptions->filter(fn ($option) => $option->isFull())->values(),
+                    'video_only' => $downloadOptions->filter(fn ($option) => $option->isVideoOnly())->values(),
+                    'audio_only' => $downloadOptions->filter(fn ($option) => $option->isAudioOnly())->values(),
                 ];
             }
 

@@ -88,8 +88,10 @@ class ProcessVideoDownload implements ShouldQueue
                 'cdn_id' => $cdnId,
             ]);
 
+            $downloadSessionId = $downloadOption->quality === 'audio' ? null : $downloadOption->download_session_id;
+
             // Download video using yt-dlp
-            $downloadResult = $ytDlpService->downloadVideo($originUrl, $cdnId, downloadSessionId: $downloadOption->download_session_id);
+            $downloadResult = $ytDlpService->downloadVideo($originUrl, $cdnId, downloadSessionId: $downloadSessionId);
 
             Log::info('Video downloaded successfully', [
                 'download_option_id' => $this->downloadOptionId,

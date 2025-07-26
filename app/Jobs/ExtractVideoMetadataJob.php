@@ -184,8 +184,8 @@ class ExtractVideoMetadataJob implements ShouldQueue
     private function createDownloadOptions(DownloadSession $downloadSession, array $formats): void
     {
         DB::transaction(function () use ($downloadSession, $formats) {
-            // Clear any existing download options for this session
-            $downloadSession->downloadOptions()->delete();
+            // Note: Using updateOrCreate instead of delete+create to handle duplicate key constraints
+            // This makes the operation idempotent and safe for job retries
 
             // Filter suitable formats and apply quality filtering
             $suitableFormats = collect($formats)
@@ -229,7 +229,7 @@ class ExtractVideoMetadataJob implements ShouldQueue
                 // Set estimated download time based on file size
                 $downloadOptionData['estimated_download_time'] = $this->estimateDownloadTime($bestFormat->filesize);
 
-                Log::debug('Creating download option', [
+                Log::debug('Creating/updating download option', [
                     'download_session_id' => $downloadSession->id,
                     'quality' => $quality,
                     'format_id' => $bestFormat->formatId,
@@ -237,13 +237,25 @@ class ExtractVideoMetadataJob implements ShouldQueue
                     'selected_from_count' => $qualityFormats->count(),
                 ]);
 
-                DownloadOption::query()->create($downloadOptionData);
+                // Use updateOrCreate to handle duplicate key constraints gracefully
+                // This makes the operation idempotent and safe for job retries
+                // Remove the identifying fields from the update data to avoid conflicts
+                $updateData = $downloadOptionData;
+                unset($updateData['download_session_id'], $updateData['quality']);
+
+                DownloadOption::query()->updateOrCreate(
+                    [
+                        'download_session_id' => $downloadSession->id,
+                        'quality' => $quality,
+                    ],
+                    $updateData
+                );
             }
         });
 
-        Log::info('Created deduplicated download options', [
+        Log::info('Created/updated deduplicated download options', [
             'download_session_id' => $downloadSession->id,
-            'options_created' => $downloadSession->downloadOptions()->count(),
+            'options_count' => $downloadSession->downloadOptions()->count(),
         ]);
     }
 
@@ -294,10 +306,16 @@ class ExtractVideoMetadataJob implements ShouldQueue
 
         $originalCount = $formats->count();
 
-        $filteredFormats = $formats->filter(function ($format) use ($allowedQualities) {
+        $filteredFormats = $formats->filter(function ($format) {
             $quality = $this->getStandardizedQuality($format);
 
-            return in_array($quality, $allowedQualities);
+            if ($quality === 'audio') {
+                return true;
+            }
+
+            $quality = (int) $quality;
+
+            return $quality > 100 && $quality < 2000;
         });
 
         $filteredCount = $filteredFormats->count();
@@ -369,6 +387,7 @@ class ExtractVideoMetadataJob implements ShouldQueue
             'is_unsupported_url' => $e->isUnsupportedUrl(),
             'is_network_error' => $e->isNetworkError(),
             'is_video_unavailable' => $e->isVideoUnavailable(),
+            'is_instagram_blocked' => method_exists($e, 'isInstagramBlocked') ? $e->isInstagramBlocked() : false,
         ]);
 
         try {

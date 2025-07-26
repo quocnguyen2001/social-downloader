@@ -16,13 +16,14 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Abstract base driver for video extraction.
- * 
+ *
  * This class provides common functionality for all platform drivers
  * using yt-dlp as the underlying extraction tool.
  */
 abstract class AbstractDriver implements DriverInterface
 {
     protected YtDlpService $ytDlpService;
+
     protected array $config;
 
     public function __construct(array $config = [])
@@ -36,7 +37,7 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function extractMetadata(string $url, array $options = []): ExtractionResult
     {
-        if (!$this->validateUrl($url)) {
+        if (! $this->validateUrl($url)) {
             throw new InvalidUrlException("Invalid URL for {$this->getPlatform()->value}: {$url}");
         }
 
@@ -59,7 +60,7 @@ abstract class AbstractDriver implements DriverInterface
 
             $result = new ExtractionResult(
                 title: $metadata['title'] ?? null,
-                thumbnailUrl: $metadata['thumbnail'] ?? null,
+                thumbnailUrl: $metadata['thumbnail_url'] ?? $metadata['thumbnail'] ?? null,
                 duration: $metadata['duration'] ?? null,
                 videoId: $this->extractVideoId($url),
                 platform: $this->getPlatform(),
@@ -105,17 +106,17 @@ abstract class AbstractDriver implements DriverInterface
      */
     public function getDownloadUrl(string $url, VideoQuality $quality, VideoFormatEnum $format): string
     {
-        if (!$this->validateUrl($url)) {
+        if (! $this->validateUrl($url)) {
             throw new InvalidUrlException("Invalid URL for {$this->getPlatform()->value}: {$url}");
         }
 
         try {
             $formats = $this->ytDlpService->getAvailableFormats($url);
-            
+
             // Find the best matching format
             $selectedFormat = $this->selectBestFormat($formats, $quality, $format);
-            
-            if (!$selectedFormat) {
+
+            if (! $selectedFormat) {
                 throw new ExtractionFailedException('No suitable format found for the requested quality and format');
             }
 
@@ -135,13 +136,13 @@ abstract class AbstractDriver implements DriverInterface
     public function supports(string $url): bool
     {
         $patterns = $this->getUrlPatterns();
-        
+
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $url)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -160,8 +161,8 @@ abstract class AbstractDriver implements DriverInterface
     {
         $platformConfig = config("video-extraction.drivers.{$this->getPlatform()->value}");
         $qualityStrings = $platformConfig['supported_qualities'] ?? [];
-        
-        return array_map(fn($quality) => VideoQuality::tryFrom($quality), $qualityStrings);
+
+        return array_map(fn ($quality) => VideoQuality::tryFrom($quality), $qualityStrings);
     }
 
     /**
@@ -171,8 +172,8 @@ abstract class AbstractDriver implements DriverInterface
     {
         $platformConfig = config("video-extraction.drivers.{$this->getPlatform()->value}");
         $formatStrings = $platformConfig['supported_formats'] ?? [];
-        
-        return array_map(fn($format) => VideoFormatEnum::tryFrom($format), $formatStrings);
+
+        return array_map(fn ($format) => VideoFormatEnum::tryFrom($format), $formatStrings);
     }
 
     /**
@@ -192,7 +193,7 @@ abstract class AbstractDriver implements DriverInterface
                 return $availableFormat;
             }
         }
-        
+
         // Fallback to first available format
         return $formats[0] ?? null;
     }

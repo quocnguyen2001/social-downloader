@@ -5,7 +5,6 @@ namespace App\Services\VideoExtraction;
 use App\Models\DownloadOption;
 use App\Services\VideoExtraction\DTOs\VideoFormat;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
-use App\Services\VideoExtraction\FilenameService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 
@@ -19,7 +18,129 @@ class YtDlpService
     public function __construct(FilenameService $filenameService)
     {
         $this->filenameService = $filenameService;
+        $this->validateBinary();
     }
+
+    /**
+     * Validate that yt-dlp binary is available.
+     */
+    private function validateBinary(): void
+    {
+        $binaryPath = config('video-extraction.yt_dlp.binary_path', 'yt-dlp');
+
+        try {
+            // Try to get version to validate binary works
+            $result = Process::timeout(10)->run([$binaryPath, '--version']);
+
+            if ($result->successful()) {
+                Log::info('yt-dlp binary validated successfully', [
+                    'binary_path' => $binaryPath,
+                    'version' => trim($result->output()),
+                ]);
+            } else {
+                Log::warning('yt-dlp binary validation failed', [
+                    'binary_path' => $binaryPath,
+                    'error' => $result->errorOutput(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to validate yt-dlp binary', [
+                'binary_path' => $binaryPath,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Build yt-dlp command with proper configuration and platform-specific options.
+     *
+     * @param  string  $url  The video URL
+     * @param  array  $additionalOptions  Additional yt-dlp options
+     * @return array Command array for Process::run()
+     */
+    private function buildYtDlpCommand(string $url, array $additionalOptions = []): array
+    {
+        // Get binary path from configuration
+        $binaryPath = config('video-extraction.yt_dlp.binary_path', 'yt-dlp');
+
+        // Validate binary exists
+        if ($binaryPath !== 'yt-dlp' && ! file_exists($binaryPath)) {
+            Log::warning('yt-dlp binary not found at configured path', [
+                'configured_path' => $binaryPath,
+                'falling_back_to' => 'yt-dlp',
+            ]);
+            $binaryPath = 'yt-dlp';
+        }
+
+        // Start building command
+        $command = [$binaryPath];
+
+        // Add additional options first
+        $command = array_merge($command, $additionalOptions);
+
+        // Add standard options
+        if (config('video-extraction.yt_dlp.no_warnings', true)) {
+            $command[] = '--no-warnings';
+        }
+
+        $command[] = '--no-playlist';
+
+        // Add platform-specific options (includes user-agent for Instagram)
+        $platformOptions = $this->getPlatformSpecificOptions($url);
+        if (! empty($platformOptions)) {
+            $command = array_merge($command, $platformOptions);
+        }
+
+        // Add Instagram-specific options to avoid blocking (only if not already added)
+        if ($this->isInstagramUrl($url)) {
+            // Check if sleep intervals are not already in platform options
+            if (! in_array('--sleep-interval', $platformOptions)) {
+                $command[] = '--sleep-interval';
+                $command[] = '1';
+                $command[] = '--max-sleep-interval';
+                $command[] = '3';
+            }
+        }
+
+        // Add URL last
+        $command[] = $url;
+
+        return $command;
+    }
+
+    /**
+     * Check if URL is from Instagram.
+     */
+    private function isInstagramUrl(string $url): bool
+    {
+        return str_contains($url, 'instagram.com') || str_contains($url, 'instagr.am');
+    }
+
+    /**
+     * Get platform-specific yt-dlp options based on URL.
+     */
+    private function getPlatformSpecificOptions(string $url): array
+    {
+        $options = [];
+
+        if ($this->isInstagramUrl($url)) {
+            // Add Instagram-specific options from config
+            $instagramConfig = config('video-extraction.drivers.instagram.yt_dlp_options', []);
+            foreach ($instagramConfig as $key => $value) {
+                if (is_bool($value)) {
+                    if ($value) {
+                        $options[] = $key;
+                    }
+                } else {
+                    $options[] = $key;
+                    $options[] = $value;
+                }
+            }
+        }
+
+        return $options;
+    }
+
     /**
      * Execute yt-dlp command to get available formats for a video URL.
      *
@@ -33,16 +154,27 @@ class YtDlpService
         try {
             Log::info('Executing yt-dlp command for URL', ['url' => $url]);
 
-            // Execute yt-dlp -F command to list formats
-            $result = Process::timeout(60)->run([
-                'yt-dlp',
-                '-F',
-                '--no-warnings',
-                '--no-playlist',
-                $url,
+            // Build command with proper configuration
+            $command = $this->buildYtDlpCommand($url, ['-F']);
+
+            Log::info('Executing yt-dlp command', [
+                'command' => implode(' ', $command),
+                'binary_path' => config('video-extraction.yt_dlp.binary_path'),
+                'timeout' => config('video-extraction.yt_dlp.timeout'),
             ]);
 
+            // Execute yt-dlp -F command to list formats
+            $result = Process::timeout(config('video-extraction.yt_dlp.timeout', 300))->run($command);
+
             if (! $result->successful()) {
+                Log::error('yt-dlp command failed', [
+                    'url' => $url,
+                    'command' => implode(' ', $command),
+                    'exit_code' => $result->exitCode(),
+                    'error_output' => $result->errorOutput(),
+                    'output' => $result->output(),
+                ]);
+
                 throw new YtDlpException(
                     'yt-dlp command failed: '.$result->errorOutput(),
                     $result->exitCode()
@@ -196,12 +328,8 @@ class YtDlpService
                     $fps = (int) str_replace('fps', '', $part);
                 }
 
-                // File size detection (various formats)
-                elseif (preg_match('/^(\d+(?:\.\d+)?)(B|KB|MB|GB|TB|KiB|MiB|GiB|TiB)$/i', $part, $matches)) {
-                    $filesize = $this->convertToBytes($matches[1], $matches[2]);
-                }
-                // Also check for formats like "~123.45MB" or "123.45MiB"
-                elseif (preg_match('/^~?(\d+(?:\.\d+)?)(B|KB|MB|GB|TB|KiB|MiB|GiB|TiB)$/i', $part, $matches)) {
+                // File size detection (various formats including Instagram's approximate sizes)
+                elseif (preg_match('/^[≈~]?(\d+(?:\.\d+)?)(B|KB|MB|GB|TB|KiB|MiB|GiB|TiB)$/i', $part, $matches)) {
                     $filesize = $this->convertToBytes($matches[1], $matches[2]);
                 }
 
@@ -218,10 +346,10 @@ class YtDlpService
                     $protocol = $part;
                 }
 
-                // Codec detection
-                elseif (preg_match('/^(h264|h265|vp9|vp8|av01|avc1)/', $part)) {
+                // Codec detection (enhanced for Instagram DASH formats)
+                elseif (preg_match('/^(h264|h265|vp9|vp8|av01|avc1|vp09\.\d+\.\d+\.\d+)/', $part)) {
                     $vcodec = $part;
-                } elseif (preg_match('/^(aac|mp3|opus|vorbis)/', $part)) {
+                } elseif (preg_match('/^(aac|mp3|opus|vorbis|mp4a\.\d+\.\d+)/', $part)) {
                     $acodec = $part;
                 }
 
@@ -233,9 +361,17 @@ class YtDlpService
 
             $formatNote = trim($formatNote);
 
-            // Determine if it's video-only, audio-only, or combined
-            $isVideoOnly = $resolution !== 'audio only' && ($acodec === null || $acodec === 'none');
-            $isAudioOnly = $resolution === 'audio only' || str_contains($formatNote, 'audio only');
+            // Determine if it's video-only, audio-only, or combined (enhanced for Instagram DASH)
+            $isAudioOnly = $resolution === 'audio only' ||
+                          str_contains($formatNote, 'audio only') ||
+                          str_contains($formatNote, 'DASH audio') ||
+                          ($extension === 'm4a' && str_contains($formatNote, 'audio'));
+
+            $isVideoOnly = ! $isAudioOnly &&
+                          ($resolution !== 'audio only') &&
+                          (str_contains($formatNote, 'video only') ||
+                           str_contains($formatNote, 'DASH video') ||
+                           ($vcodec && $vcodec !== 'none' && (! $acodec || $acodec === 'none')));
 
             // Extract quality label from resolution
             $qualityLabel = $this->extractQualityLabel($resolution);
@@ -284,12 +420,14 @@ class YtDlpService
     /**
      * Convert file size to bytes.
      *
-     * @param  string  $size  Size value
+     * @param  string  $size  Size value (may include approximate symbol ≈)
      * @param  string  $unit  Size unit (B, KB, MB, GB, TB, KiB, MiB, GiB, TiB)
      * @return int Size in bytes
      */
     private function convertToBytes(string $size, string $unit): int
     {
+        // Remove approximate symbol if present (Instagram uses ≈ for file sizes)
+        $size = str_replace(['≈', '~'], '', $size);
         $size = (float) $size;
 
         return match (strtoupper($unit)) {
@@ -345,18 +483,16 @@ class YtDlpService
         try {
             Log::info('Getting detailed format info via JSON', ['url' => $url]);
 
+            // Build command with proper configuration
+            $command = $this->buildYtDlpCommand($url, ['--dump-json']);
+
             // Execute yt-dlp with JSON output to get detailed format information
-            $result = Process::timeout(60)->run([
-                'yt-dlp',
-                '--dump-json',
-                '--no-warnings',
-                '--no-playlist',
-                $url,
-            ]);
+            $result = Process::timeout(config('video-extraction.yt_dlp.timeout', 300))->run($command);
 
             if (! $result->successful()) {
                 Log::warning('Failed to get detailed format info', [
                     'url' => $url,
+                    'command' => implode(' ', $command),
                     'error' => $result->errorOutput(),
                 ]);
 
@@ -429,9 +565,24 @@ class YtDlpService
                 $metadata['title'] = (string) $data['title'];
             }
 
-            // Extract thumbnail URL
-            if (isset($data['thumbnail']) && ! empty($data['thumbnail'])) {
-                $metadata['thumbnail_url'] = (string) $data['thumbnail'];
+            // Extract thumbnail URL with Instagram-specific fallbacks
+            $metadata['thumbnail_url'] = $this->extractThumbnailUrl($data);
+
+            // Additional metadata for Instagram
+            if (isset($data['uploader']) && ! empty($data['uploader'])) {
+                $metadata['uploader'] = (string) $data['uploader'];
+            }
+
+            if (isset($data['description']) && ! empty($data['description'])) {
+                $metadata['description'] = (string) $data['description'];
+            }
+
+            if (isset($data['upload_date']) && ! empty($data['upload_date'])) {
+                $metadata['upload_date'] = (string) $data['upload_date'];
+            }
+
+            if (isset($data['view_count']) && is_numeric($data['view_count'])) {
+                $metadata['view_count'] = (int) $data['view_count'];
             }
 
             // Extract duration (in seconds)
@@ -454,6 +605,127 @@ class YtDlpService
         }
 
         return $metadata;
+    }
+
+    /**
+     * Extract thumbnail URL with Instagram-specific fallbacks.
+     */
+    private function extractThumbnailUrl(array $data): ?string
+    {
+        // Primary thumbnail field
+        if (isset($data['thumbnail']) && ! empty($data['thumbnail'])) {
+            $thumbnail = (string) $data['thumbnail'];
+            if ($this->isValidThumbnailUrl($thumbnail)) {
+                Log::debug('Found primary thumbnail', ['url' => $thumbnail]);
+
+                return $thumbnail;
+            }
+        }
+
+        // Instagram-specific thumbnail fields
+        $instagramThumbnailFields = [
+            'thumbnails',
+            'thumbnail_url',
+            'display_url',
+            'thumbnail_src',
+        ];
+
+        foreach ($instagramThumbnailFields as $field) {
+            if (isset($data[$field])) {
+                $thumbnailData = $data[$field];
+
+                // Handle array of thumbnails (common in Instagram)
+                if (is_array($thumbnailData)) {
+                    $thumbnail = $this->selectBestThumbnail($thumbnailData);
+                    if ($thumbnail && $this->isValidThumbnailUrl($thumbnail)) {
+                        Log::debug('Found thumbnail from array', ['field' => $field, 'url' => $thumbnail]);
+
+                        return $thumbnail;
+                    }
+                } elseif (is_string($thumbnailData) && ! empty($thumbnailData)) {
+                    if ($this->isValidThumbnailUrl($thumbnailData)) {
+                        Log::debug('Found thumbnail from field', ['field' => $field, 'url' => $thumbnailData]);
+
+                        return $thumbnailData;
+                    }
+                }
+            }
+        }
+
+        Log::warning('No valid thumbnail URL found', [
+            'available_fields' => array_keys($data),
+            'thumbnail_fields_checked' => array_merge(['thumbnail'], $instagramThumbnailFields),
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Select the best thumbnail from an array of thumbnail options.
+     */
+    private function selectBestThumbnail(array $thumbnails): ?string
+    {
+        if (empty($thumbnails)) {
+            return null;
+        }
+
+        // If it's a simple array of URLs
+        if (isset($thumbnails[0]) && is_string($thumbnails[0])) {
+            return $thumbnails[0]; // Return first URL
+        }
+
+        // If it's an array of thumbnail objects with metadata
+        $bestThumbnail = null;
+        $bestScore = 0;
+
+        foreach ($thumbnails as $thumbnail) {
+            if (! is_array($thumbnail)) {
+                continue;
+            }
+
+            $url = $thumbnail['url'] ?? null;
+            if (! $url || ! $this->isValidThumbnailUrl($url)) {
+                continue;
+            }
+
+            // Score based on resolution (prefer higher resolution)
+            $score = 0;
+            if (isset($thumbnail['width']) && isset($thumbnail['height'])) {
+                $score = (int) $thumbnail['width'] * (int) $thumbnail['height'];
+            } elseif (isset($thumbnail['preference'])) {
+                $score = (int) $thumbnail['preference'] * 1000000; // Preference is usually small numbers
+            }
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestThumbnail = $url;
+            }
+        }
+
+        return $bestThumbnail ?: ($thumbnails[0]['url'] ?? null);
+    }
+
+    /**
+     * Validate if a thumbnail URL is valid and accessible.
+     */
+    private function isValidThumbnailUrl(string $url): bool
+    {
+        // Basic URL validation
+        if (! filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        // Check if it's an image URL (common extensions)
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $urlPath = parse_url($url, PHP_URL_PATH);
+        $extension = strtolower(pathinfo($urlPath, PATHINFO_EXTENSION));
+
+        // Allow URLs without extensions (Instagram often uses parameterized URLs)
+        if (empty($extension)) {
+            return true;
+        }
+
+        return in_array($extension, $imageExtensions);
     }
 
     /**
@@ -493,7 +765,7 @@ class YtDlpService
             }
 
             // Determine format string - try to merge video+audio if possible
-            $formatString = $this->buildFormatString($cdnId, $downloadSessionId);
+            $formatString = $this->buildFormatString($cdnId, $downloadSessionId, $originUrl);
 
             // Generate stable filename using hash
             $stableFilename = $this->filenameService->generateStableFilename($originUrl, $cdnId, $downloadSessionId);
@@ -507,21 +779,36 @@ class YtDlpService
                 'download_session_id' => $downloadSessionId,
             ]);
 
-            // Execute yt-dlp download command with stable filename
-            $result = Process::timeout(config('video-extraction.yt_dlp.download_timeout', 600))->run([
-                'yt-dlp',
+            // Build download command with proper configuration
+            $downloadOptions = [
                 '-f', $formatString,
                 '-P', $outputDirectory,
                 '-o', $stableFilename,
-                '--no-warnings',
-                '--no-playlist',
                 '--print', 'after_move:filepath',
                 '--print', 'filesize',
                 '--print', 'title',
-                $originUrl,
+            ];
+
+            $command = $this->buildYtDlpCommand($originUrl, $downloadOptions);
+
+            Log::info('Executing yt-dlp download command', [
+                'command' => implode(' ', $command),
+                'format_string' => $formatString,
+                'output_directory' => $outputDirectory,
             ]);
 
+            // Execute yt-dlp download command with stable filename
+            $result = Process::timeout(config('video-extraction.yt_dlp.download_timeout', 600))->run($command);
+
             if (! $result->successful()) {
+                Log::error('yt-dlp download command failed', [
+                    'url' => $originUrl,
+                    'command' => implode(' ', $command),
+                    'exit_code' => $result->exitCode(),
+                    'error_output' => $result->errorOutput(),
+                    'output' => $result->output(),
+                ]);
+
                 throw new YtDlpException(
                     'yt-dlp download failed: '.$result->errorOutput(),
                     $result->exitCode()
@@ -582,17 +869,22 @@ class YtDlpService
         }
     }
 
-
-
     /**
      * Build format string for yt-dlp, attempting video+audio merging when possible.
+     * For Instagram, uses quality-based selectors instead of specific format IDs.
      *
      * @param  string  $cdnId  The primary format ID to download
      * @param  string|null  $downloadSessionId  Optional session ID to find audio format
+     * @param  string|null  $originUrl  The original video URL for platform detection
      * @return string Format string for yt-dlp command
      */
-    private function buildFormatString(string $cdnId, ?string $downloadSessionId = null): string
+    private function buildFormatString(string $cdnId, ?string $downloadSessionId = null, ?string $originUrl = null): string
     {
+        // Check if this is an Instagram URL and handle specially
+        if ($originUrl && $this->isInstagramUrl($originUrl)) {
+            return $this->buildInstagramFormatString($cdnId, $downloadSessionId);
+        }
+
         // If no session ID provided or this is an audio format, use single format
         if (! $downloadSessionId || $this->isAudioFormat($cdnId)) {
             return $cdnId;
@@ -623,6 +915,99 @@ class YtDlpService
 
         // Fallback to single format
         return $cdnId;
+    }
+
+    /**
+     * Build Instagram-specific format string using quality-based selectors.
+     * Instagram DASH format IDs can be temporary, so we use quality selectors instead.
+     */
+    private function buildInstagramFormatString(string $cdnId, ?string $downloadSessionId = null): string
+    {
+        // Get the download option to determine the quality
+        if ($downloadSessionId) {
+            $downloadOption = DownloadOption::query()
+                ->where('download_session_id', $downloadSessionId)
+                ->where('cdn_id', $cdnId)
+                ->first();
+
+            if ($downloadOption) {
+                $quality = $downloadOption->quality;
+
+                Log::info('Building Instagram format string', [
+                    'cdn_id' => $cdnId,
+                    'quality' => $quality,
+                    'download_session_id' => $downloadSessionId,
+                ]);
+
+                // Use quality-based format selectors for Instagram
+                return $this->getInstagramFormatSelector($quality, $downloadSessionId);
+            }
+        }
+
+        // Fallback to original format ID if we can't determine quality
+        Log::warning('Could not determine quality for Instagram download, using original format ID', [
+            'cdn_id' => $cdnId,
+            'download_session_id' => $downloadSessionId,
+        ]);
+
+        return $cdnId;
+    }
+
+    /**
+     * Get Instagram format selector based on quality.
+     */
+    private function getInstagramFormatSelector(string $quality, ?string $downloadSessionId = null): string
+    {
+        return match ($quality) {
+            'audio' => 'bestaudio[ext=m4a]/bestaudio',
+            '1080' => $this->buildInstagramVideoSelector('1080', $downloadSessionId),
+            '720' => $this->buildInstagramVideoSelector('720', $downloadSessionId),
+            '360' => $this->buildInstagramVideoSelector('360', $downloadSessionId),
+            '144' => $this->buildInstagramVideoSelector('144', $downloadSessionId),
+            default => 'best', // Fallback to simple 'best' for unknown qualities
+        };
+    }
+
+    /**
+     * Build Instagram video format selector with optional audio merging.
+     */
+    private function buildInstagramVideoSelector(string $quality, ?string $downloadSessionId = null): string
+    {
+        $heightLimit = match ($quality) {
+            '1080' => '1920', // Instagram 1080p is actually 1080x1920
+            '720' => '1280',  // Instagram 720p is actually 720x1280
+            '360' => '640',   // Instagram 360p is actually 360x640
+            '144' => '480',   // Instagram 144p fallback
+            default => '1920',
+        };
+
+        // Try to merge with audio if available
+        if ($downloadSessionId) {
+            $audioOption = DownloadOption::query()
+                ->where('download_session_id', $downloadSessionId)
+                ->where('quality', 'audio')
+                ->first();
+
+            if ($audioOption) {
+                Log::info('Instagram video+audio merge available', [
+                    'video_quality' => $quality,
+                    'height_limit' => $heightLimit,
+                ]);
+
+                // Use format selector that will merge video and audio
+                // Remove the optional ? syntax that causes issues with Instagram
+                return "best[height<={$heightLimit}][vcodec!=none]+bestaudio[ext=m4a]/best[height<={$heightLimit}]";
+            }
+        }
+
+        // Video-only format - use simpler selectors that work with Instagram
+        Log::info('Instagram video-only format', [
+            'video_quality' => $quality,
+            'height_limit' => $heightLimit,
+        ]);
+
+        // Use multiple fallback options for better compatibility
+        return "best[height<={$heightLimit}][vcodec!=none]/best[height<={$heightLimit}]/best";
     }
 
     /**
