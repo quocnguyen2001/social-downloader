@@ -35,6 +35,7 @@ class PlatformDetector
             '/facebook\.com\/.*\/videos\//',
             '/fb\.watch\//',
             '/facebook\.com\/watch\//',
+            '/facebook\.com\/share\/v\//',
         ],
     ];
 

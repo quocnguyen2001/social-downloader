@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\VideoExtraction\FilenameService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,12 @@ use Illuminate\Support\Facades\Storage;
  */
 class FileUploadService
 {
+    protected FilenameService $filenameService;
+
+    public function __construct(FilenameService $filenameService)
+    {
+        $this->filenameService = $filenameService;
+    }
     /**
      * Upload a file to cloud storage.
      *
@@ -145,11 +152,17 @@ class FileUploadService
     private function generateStoragePath(string $fileName): string
     {
         $date = now()->format('Y/m/d');
-        $uniqueId = uniqid();
 
-        // Sanitize filename
+        // Sanitize filename - preserve hash-based names from yt-dlp
         $sanitizedFileName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $fileName);
 
+        // If filename is hash-based from our FilenameService, don't add unique ID
+        if ($this->filenameService->isHashBasedFilename($sanitizedFileName)) {
+            return "downloads/{$date}/{$sanitizedFileName}";
+        }
+
+        // For non-hash filenames, add unique ID for safety
+        $uniqueId = uniqid();
         return "downloads/{$date}/{$uniqueId}_{$sanitizedFileName}";
     }
 

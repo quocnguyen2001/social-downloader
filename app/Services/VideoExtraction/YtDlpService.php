@@ -5,6 +5,7 @@ namespace App\Services\VideoExtraction;
 use App\Models\DownloadOption;
 use App\Services\VideoExtraction\DTOs\VideoFormat;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
+use App\Services\VideoExtraction\FilenameService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 
@@ -13,6 +14,12 @@ use Illuminate\Support\Facades\Process;
  */
 class YtDlpService
 {
+    protected FilenameService $filenameService;
+
+    public function __construct(FilenameService $filenameService)
+    {
+        $this->filenameService = $filenameService;
+    }
     /**
      * Execute yt-dlp command to get available formats for a video URL.
      *
@@ -469,6 +476,7 @@ class YtDlpService
      * @param  string  $cdnId  The CDN format ID to download
      * @param  string|null  $outputDirectory  Optional output directory (defaults to temp directory)
      * @param  string|null  $downloadSessionId  Optional download session ID for video+audio merging
+     * @param  string|null  $audioCdnId  Optional audio CDN ID for merging
      * @return array Download result with file path, size, and metadata
      *
      * @throws YtDlpException
@@ -487,20 +495,24 @@ class YtDlpService
             // Determine format string - try to merge video+audio if possible
             $formatString = $this->buildFormatString($cdnId, $downloadSessionId);
 
+            // Generate stable filename using hash
+            $stableFilename = $this->filenameService->generateStableFilename($originUrl, $cdnId, $downloadSessionId);
+
             Log::info('Starting video download with yt-dlp', [
                 'url' => $originUrl,
                 'cdn_id' => $cdnId,
                 'format_string' => $formatString,
                 'output_directory' => $outputDirectory,
+                'stable_filename' => $stableFilename,
                 'download_session_id' => $downloadSessionId,
             ]);
 
-            // Execute yt-dlp download command
+            // Execute yt-dlp download command with stable filename
             $result = Process::timeout(config('video-extraction.yt_dlp.download_timeout', 600))->run([
                 'yt-dlp',
                 '-f', $formatString,
                 '-P', $outputDirectory,
-                '-o', '%(title)s.%(ext)s',
+                '-o', $stableFilename,
                 '--no-warnings',
                 '--no-playlist',
                 '--print', 'after_move:filepath',
@@ -569,6 +581,8 @@ class YtDlpService
             );
         }
     }
+
+
 
     /**
      * Build format string for yt-dlp, attempting video+audio merging when possible.

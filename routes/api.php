@@ -77,7 +77,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('download')->group(function () {
             Route::post('/trigger', [VideoDownloadController::class, 'triggerDownload'])
                 ->name('api.download.trigger');
-            Route::post('/status', [VideoDownloadController::class, 'checkStatus'])
+            Route::get('/status', [VideoDownloadController::class, 'checkStatus'])
                 ->name('api.download.status');
         });
     });
