@@ -166,7 +166,6 @@ class DownloadOptionsRelationManager extends RelationManager
                     ->label(__('messages.actions.create_download_option')),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
 
                 Tables\Actions\Action::make('download')
