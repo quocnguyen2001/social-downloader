@@ -3,6 +3,7 @@
 namespace App\Services\VideoExtraction;
 
 use App\Models\DownloadOption;
+use App\Services\ThumbnailService;
 use App\Services\VideoExtraction\DTOs\VideoFormat;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
 use Illuminate\Support\Facades\Log;
@@ -15,9 +16,12 @@ class YtDlpService
 {
     protected FilenameService $filenameService;
 
-    public function __construct(FilenameService $filenameService)
+    protected ThumbnailService $thumbnailService;
+
+    public function __construct(FilenameService $filenameService, ThumbnailService $thumbnailService)
     {
         $this->filenameService = $filenameService;
+        $this->thumbnailService = $thumbnailService;
         $this->validateBinary();
     }
 
@@ -114,6 +118,31 @@ class YtDlpService
     private function isInstagramUrl(string $url): bool
     {
         return str_contains($url, 'instagram.com') || str_contains($url, 'instagr.am');
+    }
+
+    /**
+     * Determine platform from URL.
+     */
+    private function determinePlatformFromUrl(string $url): string
+    {
+        if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) {
+            return 'youtube';
+        }
+
+        if (str_contains($url, 'tiktok.com')) {
+            return 'tiktok';
+        }
+
+        if (str_contains($url, 'instagram.com') || str_contains($url, 'instagr.am')) {
+            return 'instagram';
+        }
+
+        if (str_contains($url, 'facebook.com') || str_contains($url, 'fb.watch')) {
+            return 'facebook';
+        }
+
+        // Default fallback
+        return 'unknown';
     }
 
     /**
@@ -517,7 +546,7 @@ class YtDlpService
             }
 
             // Extract video metadata
-            $metadata = $this->extractVideoMetadata($data);
+            $metadata = $this->extractVideoMetadata($data, $url);
 
             Log::info('Retrieved format file sizes and metadata', [
                 'url' => $url,
@@ -546,9 +575,10 @@ class YtDlpService
      * Extract video metadata from yt-dlp JSON output.
      *
      * @param  array  $data  The decoded JSON data from yt-dlp
+     * @param  string  $url  The original video URL for platform detection
      * @return array Array with video metadata fields
      */
-    private function extractVideoMetadata(array $data): array
+    private function extractVideoMetadata(array $data, string $url): array
     {
         $metadata = [];
 
@@ -566,7 +596,26 @@ class YtDlpService
             }
 
             // Extract thumbnail URL with Instagram-specific fallbacks
-            $metadata['thumbnail_url'] = $this->extractThumbnailUrl($data);
+            $thumbnailUrl = $this->extractThumbnailUrl($data);
+            $metadata['thumbnail_url'] = $thumbnailUrl;
+
+            // Download and store thumbnail if URL is available
+            if ($thumbnailUrl && isset($metadata['video_id'])) {
+                $platform = $this->determinePlatformFromUrl($url);
+                $thumbnailInfo = $this->thumbnailService->downloadAndStore($thumbnailUrl, $metadata['video_id'], $platform);
+
+                if ($thumbnailInfo) {
+                    $metadata['thumbnail_disk'] = $thumbnailInfo['disk'];
+                    $metadata['thumbnail_path'] = $thumbnailInfo['path'];
+
+                    Log::info('Thumbnail downloaded and stored in YtDlpService', [
+                        'video_id' => $metadata['video_id'],
+                        'platform' => $platform,
+                        'disk' => $thumbnailInfo['disk'],
+                        'path' => $thumbnailInfo['path'],
+                    ]);
+                }
+            }
 
             // Additional metadata for Instagram
             if (isset($data['uploader']) && ! empty($data['uploader'])) {
@@ -725,7 +774,95 @@ class YtDlpService
             return true;
         }
 
+        // For Instagram URLs, validate that essential parameters are present
+        if (str_contains($url, 'instagram.') || str_contains($url, 'fbcdn.net')) {
+            return $this->validateInstagramThumbnailUrl($url);
+        }
+
         return in_array($extension, $imageExtensions);
+    }
+
+    /**
+     * Validate Instagram thumbnail URL has required parameters.
+     */
+    private function validateInstagramThumbnailUrl(string $url): bool
+    {
+        $parsedUrl = parse_url($url);
+
+        if (! isset($parsedUrl['query'])) {
+            Log::warning('Instagram thumbnail URL missing query parameters', ['url' => $url]);
+
+            return false;
+        }
+
+        parse_str($parsedUrl['query'], $queryParams);
+
+        // Check for essential Instagram parameters
+        $requiredParams = ['_nc_ht', '_nc_cat', 'oh', 'oe'];
+        $missingParams = [];
+
+        foreach ($requiredParams as $param) {
+            if (! isset($queryParams[$param])) {
+                $missingParams[] = $param;
+            }
+        }
+
+        if (! empty($missingParams)) {
+            Log::warning('Instagram thumbnail URL missing required parameters', [
+                'url' => substr($url, 0, 100).'...',
+                'missing_params' => $missingParams,
+            ]);
+
+            return false;
+        }
+
+        // Check if URL might be expired (oe parameter is expiration timestamp)
+        if (isset($queryParams['oe'])) {
+            $expirationTimestamp = hexdec($queryParams['oe']);
+            if ($expirationTimestamp > 0 && $expirationTimestamp < time()) {
+                Log::warning('Instagram thumbnail URL appears to be expired', [
+                    'url' => substr($url, 0, 100).'...',
+                    'expiration_timestamp' => $expirationTimestamp,
+                    'current_timestamp' => time(),
+                ]);
+                // Still return true as the URL might work despite appearing expired
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Refresh Instagram thumbnail URL if expired or invalid.
+     */
+    public function refreshInstagramThumbnail(string $videoUrl): ?string
+    {
+        try {
+            Log::info('Refreshing Instagram thumbnail', ['video_url' => $videoUrl]);
+
+            $metadata = $this->getVideoMetadata($videoUrl);
+
+            if (isset($metadata['thumbnail_url'])) {
+                Log::info('Instagram thumbnail refreshed successfully', [
+                    'video_url' => $videoUrl,
+                    'new_thumbnail' => substr($metadata['thumbnail_url'], 0, 100).'...',
+                ]);
+
+                return $metadata['thumbnail_url'];
+            }
+
+            Log::warning('Failed to refresh Instagram thumbnail', ['video_url' => $videoUrl]);
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('Error refreshing Instagram thumbnail', [
+                'video_url' => $videoUrl,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

@@ -49,7 +49,8 @@ class DownloadSessionFactory extends Factory
             'platform' => $platform,
             'video_id' => $this->generateVideoId($platform),
             'title' => fake()->randomElement($videoTitles),
-            'thumbnail_url' => fake()->imageUrl(640, 480, 'video'),
+            'thumbnail_path' => 'thumbnails/' . Str::uuid() . '.jpg',
+            'thumbnail_disk' => fake()->randomElement(['s3', 'r2']), 480, 'video'),
             'duration' => fake()->numberBetween(30, 3600), // 30 seconds to 1 hour
             'status' => $status,
             'error_message' => $status === 'failed' ? fake()->sentence() : null,

@@ -83,6 +83,7 @@ class VideoExtractionController extends Controller
                 $data['video_info'] = [
                     'title' => $downloadSession->title,
                     'thumbnail_url' => $downloadSession->thumbnail_url,
+                    'thumbnail_valid' => $downloadSession->isThumbnailValid(),
                     'duration' => $downloadSession->duration,
                 ];
             }
@@ -123,6 +124,7 @@ class VideoExtractionController extends Controller
                 $data['result'] = [
                     'title' => $downloadSession->title,
                     'thumbnail_url' => $downloadSession->thumbnail_url,
+                    'thumbnail_valid' => $downloadSession->isThumbnailValid(),
                     'duration' => $downloadSession->duration,
                     'expires_at' => $downloadSession->expires_at?->toISOString(),
                 ];

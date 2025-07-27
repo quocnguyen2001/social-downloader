@@ -77,7 +77,7 @@ class DownloadSessionResource extends Resource
                             ->label(trans('messages.labels.title'))
                             ->placeholder(trans('messages.placeholders.enter_video_title')),
 
-                        Forms\Components\TextInput::make('thumbnail_url')
+                        Forms\Components\TextInput::make('thumbnail_path')
                             ->url()
                             ->maxLength(1000)
                             ->label(trans('messages.labels.thumbnail_url')),

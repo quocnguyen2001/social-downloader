@@ -12,6 +12,9 @@ use App\Jobs\ProcessVideoDownload;
 use App\Models\DownloadOption;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Controller for video download API endpoints.
@@ -181,6 +184,77 @@ class VideoDownloadController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to check download status', [
                 'download_option_id' => $request->input('download_option_id'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => __('messages.error.internal_server_error'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Download file for a specific download option.
+     * Public endpoint that serves files directly when all conditions are met.
+     */
+    public function downloadFile(string $downloadOptionId)
+    {
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
+
+        try {
+            // Validate UUID format
+            if (! Str::isUuid($downloadOptionId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('validation.uuid', [
+                        'attribute' => __('models.download_option.fields.id'),
+                    ]),
+                ], 400);
+            }
+
+            // Find the download option
+            $downloadOption = DownloadOption::find($downloadOptionId);
+
+            if (! $downloadOption) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('messages.error.not_found', [
+                        'resource' => __('models.download_option.singular'),
+                    ]),
+                ], 404);
+            }
+
+            // Check business logic conditions:
+            // 1. storage_disk must be present and not null
+            // 2. storage_file_path must be present and not null
+            // 3. status must equal exactly "downloaded"
+            if (! $downloadOption->storage_disk ||
+                ! $downloadOption->storage_file_path ||
+                $downloadOption->status !== DownloadOptionStatus::DOWNLOADED) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => __('errors.download_not_available'),
+                ], 422);
+            }
+
+            // Check if file exists on storage disk
+            if (! Storage::disk($downloadOption->storage_disk)->exists($downloadOption->storage_file_path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('errors.file_not_found'),
+                ], 404);
+            }
+
+            // Return file download using Laravel's response()->download() method
+            return Storage::disk($downloadOption->storage_disk)->download($downloadOption->storage_file_path);
+
+        } catch (\Exception $e) {
+            Log::error('File download failed', [
+                'download_option_id' => $downloadOptionId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

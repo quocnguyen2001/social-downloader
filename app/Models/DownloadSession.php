@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class DownloadSession extends Model
 {
@@ -22,7 +23,8 @@ class DownloadSession extends Model
         'platform',
         'video_id',
         'title',
-        'thumbnail_url',
+        'thumbnail_path',
+        'thumbnail_disk',
         'duration',
         'status',
         'error_message',
@@ -57,6 +59,30 @@ class DownloadSession extends Model
     public function downloadOptions(): HasMany
     {
         return $this->hasMany(DownloadOption::class);
+    }
+
+    /**
+     * Get the thumbnail URL from stored path and disk.
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        if (! $this->thumbnail_path || ! $this->thumbnail_disk) {
+            return null;
+        }
+
+        try {
+            return Storage::disk($this->thumbnail_disk)->url($this->thumbnail_path);
+        } catch (\Exception $e) {
+            // Log the error and return null if storage disk is not configured properly
+            \Log::warning('Failed to generate thumbnail URL', [
+                'download_session_id' => $this->id,
+                'thumbnail_path' => $this->thumbnail_path,
+                'thumbnail_disk' => $this->thumbnail_disk,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**
@@ -347,5 +373,43 @@ class DownloadSession extends Model
         }
 
         return $this->expires_at->diffForHumans();
+    }
+
+    /**
+     * Check if the thumbnail is available and valid.
+     */
+    public function isThumbnailValid(): bool
+    {
+        if (! $this->thumbnail_path || ! $this->thumbnail_disk) {
+            return false;
+        }
+
+        try {
+            // Check if the file exists on the storage disk
+            return Storage::disk($this->thumbnail_disk)->exists($this->thumbnail_path);
+        } catch (\Exception $e) {
+            // If there's an error accessing the storage disk, consider thumbnail invalid
+            \Log::warning('Failed to check thumbnail validity', [
+                'download_session_id' => $this->id,
+                'thumbnail_path' => $this->thumbnail_path,
+                'thumbnail_disk' => $this->thumbnail_disk,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Check if Instagram thumbnail URL is valid and not expired.
+     *
+     * @deprecated This method is kept for backward compatibility but may not be needed
+     * with the new S3 storage system. Consider removing in future versions.
+     */
+    private function isInstagramThumbnailValid(): bool
+    {
+        // This method is deprecated as we now store thumbnails on S3
+        // instead of relying on Instagram's URLs
+        return $this->isThumbnailValid();
     }
 }

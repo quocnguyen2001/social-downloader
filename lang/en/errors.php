@@ -25,6 +25,7 @@ return [
     'validation_failed' => 'Validation failed.',
     'database_error' => 'Database error occurred.',
     'file_not_found' => 'File not found.',
+    'download_not_available' => 'Download is not available. File must be downloaded and stored locally.',
     'permission_denied' => 'Permission denied.',
     'resource_conflict' => 'Resource conflict.',
     'resource_gone' => 'Resource no longer available.',

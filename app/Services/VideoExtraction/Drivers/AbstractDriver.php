@@ -7,6 +7,7 @@ namespace App\Services\VideoExtraction\Drivers;
 use App\Enums\Platform;
 use App\Enums\VideoFormat as VideoFormatEnum;
 use App\Enums\VideoQuality;
+use App\Services\ThumbnailService;
 use App\Services\VideoExtraction\Contracts\DriverInterface;
 use App\Services\VideoExtraction\DTOs\ExtractionResult;
 use App\Services\VideoExtraction\Exceptions\ExtractionFailedException;
@@ -24,12 +25,15 @@ abstract class AbstractDriver implements DriverInterface
 {
     protected YtDlpService $ytDlpService;
 
+    protected ThumbnailService $thumbnailService;
+
     protected array $config;
 
     public function __construct(array $config = [])
     {
         $this->config = $config;
         $this->ytDlpService = app(YtDlpService::class);
+        $this->thumbnailService = app(ThumbnailService::class);
     }
 
     /**
@@ -58,9 +62,34 @@ abstract class AbstractDriver implements DriverInterface
                 throw new ExtractionFailedException('No formats available for this video');
             }
 
+            // Handle thumbnail download and storage
+            $thumbnailDisk = null;
+            $thumbnailPath = null;
+            $thumbnailUrl = $metadata['thumbnail_url'] ?? $metadata['thumbnail'] ?? null;
+
+            if ($thumbnailUrl) {
+                $videoId = $this->extractVideoId($url);
+                $platform = $this->getPlatform()->value;
+
+                $thumbnailInfo = $this->thumbnailService->downloadAndStore($thumbnailUrl, $videoId, $platform);
+                if ($thumbnailInfo) {
+                    $thumbnailDisk = $thumbnailInfo['disk'];
+                    $thumbnailPath = $thumbnailInfo['path'];
+
+                    Log::info('Thumbnail downloaded and stored', [
+                        'video_id' => $videoId,
+                        'platform' => $platform,
+                        'disk' => $thumbnailDisk,
+                        'path' => $thumbnailPath,
+                    ]);
+                }
+            }
+
             $result = new ExtractionResult(
                 title: $metadata['title'] ?? null,
-                thumbnailUrl: $metadata['thumbnail_url'] ?? $metadata['thumbnail'] ?? null,
+                thumbnailUrl: $thumbnailUrl, // Keep for backward compatibility
+                thumbnailDisk: $thumbnailDisk,
+                thumbnailPath: $thumbnailPath,
                 duration: $metadata['duration'] ?? null,
                 videoId: $this->extractVideoId($url),
                 platform: $this->getPlatform(),

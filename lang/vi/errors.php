@@ -25,6 +25,7 @@ return [
     'validation_failed' => 'Xác thực thất bại.',
     'database_error' => 'Đã xảy ra lỗi cơ sở dữ liệu.',
     'file_not_found' => 'Không tìm thấy tệp.',
+    'download_not_available' => 'Tải xuống không khả dụng. Tệp phải được tải xuống và lưu trữ cục bộ.',
     'permission_denied' => 'Quyền truy cập bị từ chối.',
     'resource_conflict' => 'Xung đột tài nguyên.',
     'resource_gone' => 'Tài nguyên không còn khả dụng.',

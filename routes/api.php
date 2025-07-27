@@ -56,6 +56,10 @@ Route::prefix('v1')->group(function () {
             ->name('api.extract.platforms');
     });
 
+    // Public file download endpoint
+    Route::get('/download-media/{download_option_id}', [VideoDownloadController::class, 'downloadFile'])
+        ->name('api.download.file');
+
     // Protected endpoints (require API key authentication)
     Route::middleware('api.auth')->group(function () {
         // Guest endpoints (no authentication, with rate limiting)

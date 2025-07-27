@@ -95,7 +95,7 @@ class ProcessVideoExtraction implements ShouldQueue
             $this->logApiRequest($downloadSession, $startTime);
 
             // Update status to completed
-            $this->updateSessionStatus($downloadSession, DownloadSessionStatus::COMPLETED);
+            $this->updateSessionStatus($downloadSession, DownloadSessionStatus::METADATA_FETCHED);
 
             $processingTime = microtime(true) - $startTime;
 

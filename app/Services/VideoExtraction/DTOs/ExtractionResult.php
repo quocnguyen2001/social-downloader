@@ -18,6 +18,8 @@ class ExtractionResult implements MetadataInterface
     public function __construct(
         private ?string $title = null,
         private ?string $thumbnailUrl = null,
+        private ?string $thumbnailDisk = null,
+        private ?string $thumbnailPath = null,
         private ?int $duration = null,
         private ?string $videoId = null,
         private ?int $fileSize = null,
@@ -42,6 +44,8 @@ class ExtractionResult implements MetadataInterface
         return new self(
             title: $data['title'] ?? null,
             thumbnailUrl: $data['thumbnail_url'] ?? null,
+            thumbnailDisk: $data['thumbnail_disk'] ?? null,
+            thumbnailPath: $data['thumbnail_path'] ?? null,
             duration: $data['duration'] ?? null,
             videoId: $data['video_id'] ?? null,
             fileSize: $data['file_size'] ?? null,
@@ -67,6 +71,8 @@ class ExtractionResult implements MetadataInterface
         return [
             'title' => $this->title,
             'thumbnail_url' => $this->thumbnailUrl,
+            'thumbnail_disk' => $this->thumbnailDisk,
+            'thumbnail_path' => $this->thumbnailPath,
             'duration' => $this->duration,
             'video_id' => $this->videoId,
             'file_size' => $this->fileSize,
@@ -88,9 +94,32 @@ class ExtractionResult implements MetadataInterface
         return $this->title;
     }
 
+    /**
+     * Get thumbnail URL (backward compatibility).
+     *
+     * @deprecated Use getThumbnailDisk() and getThumbnailPath() instead
+     */
     public function getThumbnail(): ?string
     {
-        return $this->thumbnailUrl;
+        // If thumbnailUrl is set, return it
+        if ($this->thumbnailUrl) {
+            return $this->thumbnailUrl;
+        }
+
+        // If disk and path are set, generate URL
+        if ($this->thumbnailDisk && $this->thumbnailPath) {
+            try {
+                return \Storage::disk($this->thumbnailDisk)->url($this->thumbnailPath);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to generate thumbnail URL from disk/path', [
+                    'disk' => $this->thumbnailDisk,
+                    'path' => $this->thumbnailPath,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return null;
     }
 
     public function getDuration(): ?int
@@ -140,9 +169,50 @@ class ExtractionResult implements MetadataInterface
         return $this;
     }
 
+    /**
+     * Set thumbnail URL (backward compatibility).
+     *
+     * @deprecated Use setThumbnailDisk() and setThumbnailPath() instead
+     */
     public function setThumbnail(?string $thumbnail): self
     {
         $this->thumbnailUrl = $thumbnail;
+
+        return $this;
+    }
+
+    /**
+     * Get thumbnail storage disk.
+     */
+    public function getThumbnailDisk(): ?string
+    {
+        return $this->thumbnailDisk;
+    }
+
+    /**
+     * Get thumbnail storage path.
+     */
+    public function getThumbnailPath(): ?string
+    {
+        return $this->thumbnailPath;
+    }
+
+    /**
+     * Set thumbnail storage disk.
+     */
+    public function setThumbnailDisk(?string $disk): self
+    {
+        $this->thumbnailDisk = $disk;
+
+        return $this;
+    }
+
+    /**
+     * Set thumbnail storage path.
+     */
+    public function setThumbnailPath(?string $path): self
+    {
+        $this->thumbnailPath = $path;
 
         return $this;
     }
