@@ -79,8 +79,27 @@ class YtDlpService
         // Start building command
         $command = [$binaryPath];
 
-        // Add additional options first
-        $command = array_merge($command, $additionalOptions);
+        // Add cookie support first (authentication must come before format selection)
+        if (config('video-extraction.yt_dlp.using_cookies', false)) {
+            $cookieFilePath = config('video-extraction.yt_dlp.cookies_file_path', 'app/cookie.txt');
+            $resolvedCookiePath = base_path($cookieFilePath);
+
+            if (file_exists($resolvedCookiePath)) {
+                $command[] = '--cookies';
+                $command[] = $resolvedCookiePath;
+
+                Log::info('Using cookies for yt-dlp command', [
+                    'cookie_file' => $resolvedCookiePath,
+                    'url' => $url,
+                ]);
+            } else {
+                Log::warning('Cookie file not found, proceeding without cookies', [
+                    'configured_path' => $cookieFilePath,
+                    'resolved_path' => $resolvedCookiePath,
+                    'url' => $url,
+                ]);
+            }
+        }
 
         // Add standard options
         if (config('video-extraction.yt_dlp.no_warnings', true)) {
@@ -88,6 +107,9 @@ class YtDlpService
         }
 
         $command[] = '--no-playlist';
+
+        // Add additional options (including format selection) after authentication
+        $command = array_merge($command, $additionalOptions);
 
         // Add platform-specific options (includes user-agent for Instagram)
         $platformOptions = $this->getPlatformSpecificOptions($url);
@@ -118,6 +140,14 @@ class YtDlpService
     private function isInstagramUrl(string $url): bool
     {
         return str_contains($url, 'instagram.com') || str_contains($url, 'instagr.am');
+    }
+
+    /**
+     * Check if URL is from YouTube.
+     */
+    private function isYouTubeUrl(string $url): bool
+    {
+        return str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be');
     }
 
     /**
@@ -156,6 +186,19 @@ class YtDlpService
             // Add Instagram-specific options from config
             $instagramConfig = config('video-extraction.drivers.instagram.yt_dlp_options', []);
             foreach ($instagramConfig as $key => $value) {
+                if (is_bool($value)) {
+                    if ($value) {
+                        $options[] = $key;
+                    }
+                } else {
+                    $options[] = $key;
+                    $options[] = $value;
+                }
+            }
+        } elseif ($this->isYouTubeUrl($url)) {
+            // Add YouTube-specific options from config
+            $youtubeConfig = config('video-extraction.drivers.youtube.yt_dlp_options', []);
+            foreach ($youtubeConfig as $key => $value) {
                 if (is_bool($value)) {
                     if ($value) {
                         $options[] = $key;
@@ -215,33 +258,58 @@ class YtDlpService
 
             $formats = $this->parseFormatsOutput($output);
 
+            $formats = array_filter($formats, function ($format) use ($url) {
+                if (str_contains($url, 'youtube')) {
+                    $ruleVideo = str_contains($format->vcodec, 'avc1') && $format->isVideoOnly;
+                    $ruleAudio = str_contains($format->extension, 'm4a') && $format->isAudioOnly;
+
+                    return $ruleVideo || $ruleAudio;
+                }
+
+                if (str_contains($url, 'facebook')) {
+                    $ruleVideo = in_array($format->formatId, ['sd', 'hd']);
+                    $ruleAudio = str_contains($format->extension, 'm4a') && $format->isAudioOnly;
+
+                    return $ruleVideo || $ruleAudio;
+                }
+
+                return true;
+            });
+
+            $formats = array_map(function ($format) {
+                if ($format->formatId === 'sd') {
+                    $format->quality = 360;
+                } elseif ($format->formatId === 'hd') {
+                    $format->quality = 720;
+                }
+
+                return $format;
+            }, $formats);
+
             // Get detailed format info to fill in missing file sizes
             $detailedInfo = $this->getDetailedFormatInfo($url);
             $formatSizes = $detailedInfo['format_sizes'] ?? [];
 
             // Update formats with file size information from detailed info
             foreach ($formats as $index => $format) {
-                if (! $format->filesize && isset($formatSizes[$format->formatId])) {
-                    // Create a new VideoFormat with the updated file size
-                    $formats[$index] = new VideoFormat(
-                        formatId: $format->formatId,
-                        extension: $format->extension,
-                        resolution: $format->resolution,
-                        fps: $format->fps,
-                        filesize: $formatSizes[$format->formatId],
-                        tbr: $format->tbr,
-                        protocol: $format->protocol,
-                        vcodec: $format->vcodec,
-                        vbr: $format->vbr,
-                        acodec: $format->acodec,
-                        abr: $format->abr,
-                        formatNote: $format->formatNote,
-                        isVideoOnly: $format->isVideoOnly,
-                        isAudioOnly: $format->isAudioOnly,
-                        qualityLabel: $format->qualityLabel,
-                        language: $format->language
-                    );
-                }
+                $formats[$index] = new VideoFormat(
+                    formatId: $format->formatId,
+                    extension: $format->extension,
+                    resolution: $format->resolution,
+                    fps: $format->fps,
+                    filesize: $formatSizes[$format->formatId] ?? $format->filesize,
+                    tbr: $format->tbr,
+                    protocol: $format->protocol,
+                    vcodec: $format->vcodec,
+                    vbr: $format->vbr,
+                    acodec: $format->acodec,
+                    abr: $format->abr,
+                    formatNote: $format->formatNote,
+                    isVideoOnly: $format->isVideoOnly,
+                    isAudioOnly: $format->isAudioOnly,
+                    qualityLabel: $format->qualityLabel,
+                    language: $format->language
+                );
             }
 
             return $formats;
@@ -982,12 +1050,29 @@ class YtDlpService
                 'title' => $title,
             ]);
 
+            // Convert to MP4 if necessary
+            $conversionResult = $this->convertToMp4($filePath);
+
+            // Update file path and size if conversion occurred
+            if ($conversionResult['converted']) {
+                $filePath = $conversionResult['output_path'];
+                $actualFileSize = $conversionResult['converted_size'];
+
+                Log::info('Video converted to MP4 format', [
+                    'original_path' => $conversionResult['original_path'],
+                    'converted_path' => $filePath,
+                    'original_size' => $conversionResult['original_size'],
+                    'converted_size' => $actualFileSize,
+                ]);
+            }
+
             return [
                 'file_path' => $filePath,
                 'file_size' => $actualFileSize,
                 'title' => $title,
                 'cdn_id' => $cdnId,
                 'original_url' => $originUrl,
+                'converted_to_mp4' => $conversionResult['converted'],
             ];
 
         } catch (\Exception $e) {
@@ -1007,21 +1092,267 @@ class YtDlpService
     }
 
     /**
-     * Build format string for yt-dlp, attempting video+audio merging when possible.
-     * For Instagram, uses quality-based selectors instead of specific format IDs.
+     * Convert video file to MP4 format using FFmpeg.
      *
-     * @param  string  $cdnId  The primary format ID to download
-     * @param  string|null  $downloadSessionId  Optional session ID to find audio format
-     * @param  string|null  $originUrl  The original video URL for platform detection
+     * @param  string  $inputPath  Path to the input video file
+     * @return array Result with converted file path and metadata
+     *
+     * @throws YtDlpException
+     */
+    private function convertToMp4(string $inputPath): array
+    {
+        try {
+            $inputInfo = pathinfo($inputPath);
+            $outputPath = $inputInfo['dirname'].'/'.$inputInfo['filename'].'.mp4';
+
+            // Skip conversion if already MP4
+            if (strtolower($inputInfo['extension'] ?? '') === 'mp4') {
+                Log::info('File is already MP4, skipping conversion', [
+                    'file_path' => $inputPath,
+                ]);
+
+                return [
+                    'converted' => false,
+                    'output_path' => $inputPath,
+                    'original_path' => $inputPath,
+                ];
+            }
+
+            Log::info('Starting FFmpeg conversion to MP4 with Apple compatibility', [
+                'input_path' => $inputPath,
+                'output_path' => $outputPath,
+                'input_extension' => $inputInfo['extension'] ?? 'unknown',
+                'apple_compatibility' => $appleCompatibility ?? false,
+                'video_profile' => $videoProfile ?? 'not_set',
+                'pixel_format' => $pixelFormat ?? 'not_set',
+            ]);
+
+            // Check if FFmpeg conversion is enabled
+            if (! config('video-extraction.ffmpeg.enabled', true)) {
+                Log::info('FFmpeg conversion is disabled, returning original file', [
+                    'file_path' => $inputPath,
+                ]);
+
+                return [
+                    'converted' => false,
+                    'output_path' => $inputPath,
+                    'original_path' => $inputPath,
+                ];
+            }
+
+            // Build FFmpeg command for Apple-compatible conversion using config values
+            $ffmpegBinary = config('video-extraction.ffmpeg.binary_path', 'ffmpeg');
+            $crf = config('video-extraction.ffmpeg.quality.crf', 23);
+            $preset = config('video-extraction.ffmpeg.quality.preset', 'medium');
+            $audioBitrate = config('video-extraction.ffmpeg.quality.audio_bitrate', '128k');
+            $audioSampleRate = config('video-extraction.ffmpeg.quality.audio_sample_rate', '44100');
+
+            // Apple compatibility settings
+            $appleCompatibility = config('video-extraction.ffmpeg.apple_compatibility.enabled', true);
+            $videoProfile = config('video-extraction.ffmpeg.apple_compatibility.video_profile', 'high');
+            $videoLevel = config('video-extraction.ffmpeg.apple_compatibility.video_level', '4.0');
+            $pixelFormat = config('video-extraction.ffmpeg.apple_compatibility.pixel_format', 'yuv420p');
+            $maxWidth = config('video-extraction.ffmpeg.apple_compatibility.max_width', 1920);
+            $maxHeight = config('video-extraction.ffmpeg.apple_compatibility.max_height', 1080);
+            $maxBitrate = config('video-extraction.ffmpeg.apple_compatibility.max_bitrate', '5000k');
+
+            // Build comprehensive FFmpeg command for Apple compatibility
+            $ffmpegCommand = [
+                $ffmpegBinary,
+                '-i', $inputPath,
+            ];
+
+            // Add Apple compatibility settings if enabled
+            if ($appleCompatibility) {
+                // Video encoding with explicit Apple-compatible settings
+                $ffmpegCommand = array_merge($ffmpegCommand, [
+                    // Video codec and quality settings
+                    '-c:v', 'libx264',
+                    '-profile:v', $videoProfile,
+                    '-level:v', $videoLevel,
+                    '-pix_fmt', $pixelFormat,
+                    '-crf', (string) $crf,
+                    '-preset', $preset,
+
+                    // Video constraints for Apple devices
+                    '-vf', "scale='min({$maxWidth},iw)':'min({$maxHeight},ih)':force_original_aspect_ratio=decrease:flags=lanczos",
+                    '-maxrate', $maxBitrate,
+                    '-bufsize', '10000k',
+
+                    // Audio encoding
+                    '-c:a', 'aac',
+                    '-b:a', $audioBitrate,
+                    '-ar', $audioSampleRate,
+                    '-ac', '2', // Stereo audio
+
+                    // Stream mapping to ensure both video and audio are included
+                    '-map', '0:v:0', // Map first video stream
+                    '-map', '0:a:0', // Map first audio stream
+
+                    // MP4 container optimization for Apple devices
+                    '-movflags', '+faststart+use_metadata_tags',
+                    '-f', 'mp4',
+
+                    // Overwrite output file
+                    '-y',
+                    $outputPath,
+                ]);
+            } else {
+                // Fallback to basic conversion
+                $ffmpegCommand = array_merge($ffmpegCommand, [
+                    '-c:v', 'libx264',
+                    '-crf', (string) $crf,
+                    '-preset', $preset,
+                    '-c:a', 'aac',
+                    '-b:a', $audioBitrate,
+                    '-ar', $audioSampleRate,
+                    '-movflags', '+faststart',
+                    '-f', 'mp4',
+                    '-y',
+                    $outputPath,
+                ]);
+            }
+
+            Log::info('Executing FFmpeg conversion command', [
+                'command' => implode(' ', $ffmpegCommand),
+                'input_path' => $inputPath,
+                'output_path' => $outputPath,
+                'apple_compatibility' => $appleCompatibility,
+            ]);
+
+            // Execute FFmpeg conversion
+            $result = Process::timeout(config('video-extraction.yt_dlp.download_timeout', 600))
+                ->run($ffmpegCommand);
+
+            // If Apple compatibility mode failed, try fallback conversion
+            if (! $result->successful() && $appleCompatibility) {
+                Log::warning('Apple compatibility conversion failed, trying fallback', [
+                    'input_path' => $inputPath,
+                    'error_output' => $result->errorOutput(),
+                ]);
+
+                // Build fallback command without explicit stream mapping
+                $fallbackCommand = [
+                    $ffmpegBinary,
+                    '-i', $inputPath,
+                    '-c:v', 'libx264',
+                    '-profile:v', 'high',
+                    '-level:v', '4.0',
+                    '-pix_fmt', 'yuv420p',
+                    '-crf', '23',
+                    '-preset', 'medium',
+                    '-c:a', 'aac',
+                    '-b:a', '128k',
+                    '-ar', '44100',
+                    '-movflags', '+faststart',
+                    '-f', 'mp4',
+                    '-y',
+                    $outputPath,
+                ];
+
+                Log::info('Executing fallback FFmpeg conversion', [
+                    'command' => implode(' ', $fallbackCommand),
+                ]);
+
+                $result = Process::timeout(config('video-extraction.yt_dlp.download_timeout', 600))
+                    ->run($fallbackCommand);
+            }
+
+            if (! $result->successful()) {
+                Log::error('FFmpeg conversion failed (including fallback)', [
+                    'input_path' => $inputPath,
+                    'output_path' => $outputPath,
+                    'command' => implode(' ', $ffmpegCommand),
+                    'exit_code' => $result->exitCode(),
+                    'error_output' => $result->errorOutput(),
+                    'stdout' => $result->output(),
+                ]);
+
+                throw new YtDlpException(
+                    'FFmpeg conversion failed: '.$result->errorOutput(),
+                    $result->exitCode()
+                );
+            }
+
+            // Verify converted file exists and has reasonable size
+            if (! file_exists($outputPath)) {
+                throw new YtDlpException('Converted MP4 file not found: '.$outputPath);
+            }
+
+            $originalSize = filesize($inputPath);
+            $convertedSize = filesize($outputPath);
+
+            // Sanity check: converted file should not be too small (less than 10% of original)
+            if ($convertedSize < ($originalSize * 0.1)) {
+                Log::warning('Converted file seems too small, may be corrupted', [
+                    'original_size' => $originalSize,
+                    'converted_size' => $convertedSize,
+                    'input_path' => $inputPath,
+                    'output_path' => $outputPath,
+                ]);
+            }
+
+            // Validate Apple compatibility if enabled
+            if ($appleCompatibility) {
+                $this->validateAppleCompatibility($outputPath);
+            }
+
+            // Remove original file to save space
+            if (unlink($inputPath)) {
+                Log::info('Original file removed after successful conversion', [
+                    'removed_file' => $inputPath,
+                ]);
+            } else {
+                Log::warning('Failed to remove original file after conversion', [
+                    'file_path' => $inputPath,
+                ]);
+            }
+
+            Log::info('FFmpeg conversion completed successfully', [
+                'input_path' => $inputPath,
+                'output_path' => $outputPath,
+                'original_size' => $originalSize,
+                'converted_size' => $convertedSize,
+                'size_ratio' => round($convertedSize / $originalSize, 2),
+            ]);
+
+            return [
+                'converted' => true,
+                'output_path' => $outputPath,
+                'original_path' => $inputPath,
+                'original_size' => $originalSize,
+                'converted_size' => $convertedSize,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Video conversion failed', [
+                'input_path' => $inputPath,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            if ($e instanceof YtDlpException) {
+                throw $e;
+            }
+
+            throw new YtDlpException(
+                'Failed to convert video to MP4: '.$e->getMessage(),
+                $e->getCode(),
+                $e
+            );
+        }
+    }
+
+    /**
+     * Build format string for yt-dlp, attempting video+audio merging when possible.
+     *
+     * @param  string  $cdnId  The CDN format ID to download
+     * @param  string|null  $downloadSessionId  Optional download session ID for video+audio merging
+     * @param  string|null  $audioCdnId  Optional audio CDN ID for merging
      * @return string Format string for yt-dlp command
      */
     private function buildFormatString(string $cdnId, ?string $downloadSessionId = null, ?string $originUrl = null): string
     {
-        // Check if this is an Instagram URL and handle specially
-        if ($originUrl && $this->isInstagramUrl($originUrl)) {
-            return $this->buildInstagramFormatString($cdnId, $downloadSessionId);
-        }
-
         // If no session ID provided or this is an audio format, use single format
         if (! $downloadSessionId || $this->isAudioFormat($cdnId)) {
             return $cdnId;
@@ -1055,99 +1386,6 @@ class YtDlpService
     }
 
     /**
-     * Build Instagram-specific format string using quality-based selectors.
-     * Instagram DASH format IDs can be temporary, so we use quality selectors instead.
-     */
-    private function buildInstagramFormatString(string $cdnId, ?string $downloadSessionId = null): string
-    {
-        // Get the download option to determine the quality
-        if ($downloadSessionId) {
-            $downloadOption = DownloadOption::query()
-                ->where('download_session_id', $downloadSessionId)
-                ->where('cdn_id', $cdnId)
-                ->first();
-
-            if ($downloadOption) {
-                $quality = $downloadOption->quality;
-
-                Log::info('Building Instagram format string', [
-                    'cdn_id' => $cdnId,
-                    'quality' => $quality,
-                    'download_session_id' => $downloadSessionId,
-                ]);
-
-                // Use quality-based format selectors for Instagram
-                return $this->getInstagramFormatSelector($quality, $downloadSessionId);
-            }
-        }
-
-        // Fallback to original format ID if we can't determine quality
-        Log::warning('Could not determine quality for Instagram download, using original format ID', [
-            'cdn_id' => $cdnId,
-            'download_session_id' => $downloadSessionId,
-        ]);
-
-        return $cdnId;
-    }
-
-    /**
-     * Get Instagram format selector based on quality.
-     */
-    private function getInstagramFormatSelector(string $quality, ?string $downloadSessionId = null): string
-    {
-        return match ($quality) {
-            'audio' => 'bestaudio[ext=m4a]/bestaudio',
-            '1080' => $this->buildInstagramVideoSelector('1080', $downloadSessionId),
-            '720' => $this->buildInstagramVideoSelector('720', $downloadSessionId),
-            '360' => $this->buildInstagramVideoSelector('360', $downloadSessionId),
-            '144' => $this->buildInstagramVideoSelector('144', $downloadSessionId),
-            default => 'best', // Fallback to simple 'best' for unknown qualities
-        };
-    }
-
-    /**
-     * Build Instagram video format selector with optional audio merging.
-     */
-    private function buildInstagramVideoSelector(string $quality, ?string $downloadSessionId = null): string
-    {
-        $heightLimit = match ($quality) {
-            '1080' => '1920', // Instagram 1080p is actually 1080x1920
-            '720' => '1280',  // Instagram 720p is actually 720x1280
-            '360' => '640',   // Instagram 360p is actually 360x640
-            '144' => '480',   // Instagram 144p fallback
-            default => '1920',
-        };
-
-        // Try to merge with audio if available
-        if ($downloadSessionId) {
-            $audioOption = DownloadOption::query()
-                ->where('download_session_id', $downloadSessionId)
-                ->where('quality', 'audio')
-                ->first();
-
-            if ($audioOption) {
-                Log::info('Instagram video+audio merge available', [
-                    'video_quality' => $quality,
-                    'height_limit' => $heightLimit,
-                ]);
-
-                // Use format selector that will merge video and audio
-                // Remove the optional ? syntax that causes issues with Instagram
-                return "best[height<={$heightLimit}][vcodec!=none]+bestaudio[ext=m4a]/best[height<={$heightLimit}]";
-            }
-        }
-
-        // Video-only format - use simpler selectors that work with Instagram
-        Log::info('Instagram video-only format', [
-            'video_quality' => $quality,
-            'height_limit' => $heightLimit,
-        ]);
-
-        // Use multiple fallback options for better compatibility
-        return "best[height<={$heightLimit}][vcodec!=none]/best[height<={$heightLimit}]/best";
-    }
-
-    /**
      * Check if the given format ID represents a video format.
      *
      * @param  string  $cdnId  Format ID to check
@@ -1176,5 +1414,149 @@ class YtDlpService
     private function isAudioFormat(string $cdnId): bool
     {
         return ! $this->isVideoFormat($cdnId);
+    }
+
+    /**
+     * Validate that the converted video meets Apple device compatibility requirements.
+     *
+     * @param  string  $filePath  Path to the converted video file
+     *
+     * @throws YtDlpException If validation fails
+     */
+    private function validateAppleCompatibility(string $filePath): void
+    {
+        try {
+            // Use ffprobe to check video properties
+            $ffprobeBinary = str_replace('ffmpeg', 'ffprobe', config('video-extraction.ffmpeg.binary_path', 'ffmpeg'));
+
+            $ffprobeCommand = [
+                $ffprobeBinary,
+                '-v', 'quiet',
+                '-print_format', 'json',
+                '-show_format',
+                '-show_streams',
+                $filePath,
+            ];
+
+            $result = Process::timeout(30)->run($ffprobeCommand);
+
+            if (! $result->successful()) {
+                Log::warning('Failed to validate Apple compatibility - ffprobe failed', [
+                    'file_path' => $filePath,
+                    'error' => $result->errorOutput(),
+                ]);
+
+                return; // Don't fail the conversion, just log the warning
+            }
+
+            $videoInfo = json_decode($result->output(), true);
+
+            if (! $videoInfo || ! isset($videoInfo['streams'])) {
+                Log::warning('Failed to parse video information for Apple compatibility check', [
+                    'file_path' => $filePath,
+                ]);
+
+                return;
+            }
+
+            // Check both video and audio stream properties
+            $hasVideo = false;
+            $hasAudio = false;
+
+            foreach ($videoInfo['streams'] as $stream) {
+                if ($stream['codec_type'] === 'video') {
+                    $hasVideo = true;
+                    $codecName = $stream['codec_name'] ?? 'unknown';
+                    $profile = $stream['profile'] ?? 'unknown';
+                    $pixelFormat = $stream['pix_fmt'] ?? 'unknown';
+                    $width = $stream['width'] ?? 0;
+                    $height = $stream['height'] ?? 0;
+                    $bitRate = $stream['bit_rate'] ?? 'unknown';
+
+                    Log::info('Video stream properties for Apple compatibility check', [
+                        'file_path' => $filePath,
+                        'codec' => $codecName,
+                        'profile' => $profile,
+                        'pixel_format' => $pixelFormat,
+                        'resolution' => "{$width}x{$height}",
+                        'bit_rate' => $bitRate,
+                    ]);
+
+                    // Validate codec
+                    if ($codecName !== 'h264') {
+                        Log::error('CRITICAL: Video codec is not H.264, will not play on Apple devices', [
+                            'file_path' => $filePath,
+                            'codec' => $codecName,
+                            'expected' => 'h264',
+                        ]);
+                    }
+
+                    // Validate pixel format
+                    if ($pixelFormat !== 'yuv420p') {
+                        Log::error('CRITICAL: Pixel format is not yuv420p, will not play on Apple devices', [
+                            'file_path' => $filePath,
+                            'pixel_format' => $pixelFormat,
+                            'expected' => 'yuv420p',
+                        ]);
+                    }
+
+                    // Validate profile
+                    if (! in_array(strtolower($profile), ['high', 'main'])) {
+                        Log::warning('Video profile may not be optimal for Apple devices', [
+                            'file_path' => $filePath,
+                            'profile' => $profile,
+                            'recommended' => 'High or Main',
+                        ]);
+                    }
+                }
+
+                if ($stream['codec_type'] === 'audio') {
+                    $hasAudio = true;
+                    $audioCodec = $stream['codec_name'] ?? 'unknown';
+                    $sampleRate = $stream['sample_rate'] ?? 'unknown';
+                    $channels = $stream['channels'] ?? 'unknown';
+
+                    Log::info('Audio stream properties for Apple compatibility check', [
+                        'file_path' => $filePath,
+                        'codec' => $audioCodec,
+                        'sample_rate' => $sampleRate,
+                        'channels' => $channels,
+                    ]);
+
+                    if ($audioCodec !== 'aac') {
+                        Log::warning('Audio codec is not AAC, may have compatibility issues', [
+                            'file_path' => $filePath,
+                            'codec' => $audioCodec,
+                            'expected' => 'aac',
+                        ]);
+                    }
+                }
+            }
+
+            // Check if both streams are present
+            if (! $hasVideo) {
+                Log::error('CRITICAL: No video stream found in converted file', [
+                    'file_path' => $filePath,
+                ]);
+            }
+
+            if (! $hasAudio) {
+                Log::warning('No audio stream found in converted file', [
+                    'file_path' => $filePath,
+                ]);
+            }
+
+            Log::info('Apple compatibility validation completed', [
+                'file_path' => $filePath,
+                'container_format' => $videoInfo['format']['format_name'] ?? 'unknown',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::warning('Apple compatibility validation failed', [
+                'file_path' => $filePath,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't throw exception - validation failure shouldn't stop the conversion
+        }
     }
 }

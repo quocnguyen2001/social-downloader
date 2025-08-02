@@ -265,6 +265,14 @@ class ExtractVideoMetadataJob implements ShouldQueue
      */
     private function getStandardizedQuality($format): string
     {
+        if ($format->formatId === 'sd') {
+            return '360';
+        }
+
+        if ($format->formatId === 'hd') {
+            return '720';
+        }
+
         // Handle audio-only formats
         if ($format->isAudioOnly || $format->resolution === 'audio only') {
             return 'audio';
@@ -307,6 +315,10 @@ class ExtractVideoMetadataJob implements ShouldQueue
         $originalCount = $formats->count();
 
         $filteredFormats = $formats->filter(function ($format) {
+            if (in_array($format->formatId, ['sd', 'hd'])) {
+                return true;
+            }
+
             $quality = $this->getStandardizedQuality($format);
 
             if ($quality === 'audio') {
@@ -345,10 +357,44 @@ class ExtractVideoMetadataJob implements ShouldQueue
 
     /**
      * Select the best format from a collection of formats with the same quality.
-     * Prioritizes formats with the smallest filesize.
+     * For YouTube, prioritizes MP4 format over WebM, then smallest filesize.
      */
     private function selectBestFormat($qualityFormats)
     {
+        $downloadSession = $this->getDownloadSession();
+        $isYouTube = $this->isYouTubeUrl($downloadSession->original_url);
+
+        // For YouTube, prioritize MP4 format
+        if ($isYouTube) {
+            // First, try to find MP4 formats
+            $mp4Formats = $qualityFormats->filter(fn ($format) => $format->extension === 'mp4');
+
+            if ($mp4Formats->isNotEmpty()) {
+                // Among MP4 formats, prefer those with valid filesize and select the smallest
+                $mp4FormatsWithSize = $mp4Formats->filter(fn ($format) => $format->filesize !== null && $format->filesize > 0);
+
+                if ($mp4FormatsWithSize->isNotEmpty()) {
+                    Log::debug('Selected MP4 format with filesize for YouTube', [
+                        'format_id' => $mp4FormatsWithSize->sortBy('filesize')->first()->formatId,
+                        'extension' => 'mp4',
+                    ]);
+
+                    return $mp4FormatsWithSize->sortBy('filesize')->first();
+                }
+
+                // If no MP4 formats have filesize, just return the first MP4
+                Log::debug('Selected MP4 format without filesize for YouTube', [
+                    'format_id' => $mp4Formats->first()->formatId,
+                    'extension' => 'mp4',
+                ]);
+
+                return $mp4Formats->first();
+            }
+
+            Log::debug('No MP4 formats found for YouTube, falling back to other formats');
+        }
+
+        // For non-YouTube or when no MP4 formats are available, use original logic
         // First, try to find formats with valid filesize and select the smallest
         $formatsWithSize = $qualityFormats->filter(fn ($format) => $format->filesize !== null && $format->filesize > 0);
 
@@ -361,6 +407,14 @@ class ExtractVideoMetadataJob implements ShouldQueue
     }
 
     /**
+     * Check if URL is from YouTube.
+     */
+    private function isYouTubeUrl(string $url): bool
+    {
+        return str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be');
+    }
+
+    /**
      * Estimate download time based on file size.
      */
     private function estimateDownloadTime(?int $fileSize): ?int
@@ -369,8 +423,9 @@ class ExtractVideoMetadataJob implements ShouldQueue
             return null;
         }
 
-        // Assume average download speed of 1 MB/s (conservative estimate)
-        $averageSpeedBytesPerSecond = 1024 * 1024; // 1 MB/s
+        // Get configurable download speed from config (default 1 MB/s)
+        $downloadSpeedMbps = config('video-extraction.performance.download_speed_mbps', 1);
+        $averageSpeedBytesPerSecond = $downloadSpeedMbps * 1024 * 1024;
 
         return (int) ceil($fileSize / $averageSpeedBytesPerSecond);
     }

@@ -34,7 +34,7 @@ class PlatformDetector
         Platform::FACEBOOK->value => [
             '/facebook\.com\/.*\/videos\//',
             '/fb\.watch\//',
-            '/facebook\.com\/watch\//',
+            '/facebook\.com\/watch[\/?]/',
             '/facebook\.com\/share\/v\//',
         ],
     ];

@@ -45,6 +45,37 @@ return [
         'extract_flat' => env('YT_DLP_EXTRACT_FLAT', false),
         'no_warnings' => env('YT_DLP_NO_WARNINGS', true),
         'ignore_errors' => env('YT_DLP_IGNORE_ERRORS', false),
+        'using_cookies' => env('YT_DLP_USING_COOKIES', false),
+        'cookies_file_path' => env('YT_DLP_COOKIES_FILE_PATH', 'app/cookie.txt'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | FFmpeg Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration options for FFmpeg video conversion to ensure MP4 output.
+    |
+    */
+
+    'ffmpeg' => [
+        'binary_path' => env('FFMPEG_BINARY_PATH', 'ffmpeg'),
+        'enabled' => env('FFMPEG_CONVERSION_ENABLED', true),
+        'quality' => [
+            'crf' => env('FFMPEG_CRF', 23), // Constant Rate Factor (23 for better Apple compatibility)
+            'preset' => env('FFMPEG_PRESET', 'medium'), // Encoding speed preset (medium for better compatibility)
+            'audio_bitrate' => env('FFMPEG_AUDIO_BITRATE', '128k'),
+            'audio_sample_rate' => env('FFMPEG_AUDIO_SAMPLE_RATE', '44100'), // Standard audio sample rate
+        ],
+        'apple_compatibility' => [
+            'enabled' => env('FFMPEG_APPLE_COMPATIBILITY', true),
+            'video_profile' => env('FFMPEG_VIDEO_PROFILE', 'high'), // H.264 profile for Apple devices
+            'video_level' => env('FFMPEG_VIDEO_LEVEL', '4.0'), // H.264 level constraint
+            'pixel_format' => env('FFMPEG_PIXEL_FORMAT', 'yuv420p'), // Universal pixel format
+            'max_width' => env('FFMPEG_MAX_WIDTH', 1920), // Maximum width for compatibility
+            'max_height' => env('FFMPEG_MAX_HEIGHT', 1080), // Maximum height for compatibility
+            'max_bitrate' => env('FFMPEG_MAX_BITRATE', '5000k'), // Maximum video bitrate
+        ],
     ],
 
     /*
@@ -95,7 +126,6 @@ return [
             'supported_qualities' => ['144p', '360p', '720p', '1080p'],
             'supported_formats' => ['mp4', 'webm', 'mp3'],
             'yt_dlp_options' => [
-                '--format' => 'best[height<=?1080]',
                 '--extract-flat' => false,
                 '--write-info-json' => true,
                 '--write-thumbnail' => false,
@@ -153,12 +183,7 @@ return [
     'quality' => [
         'default' => env('VIDEO_EXTRACTION_DEFAULT_QUALITY', '720p'),
         'fallback' => env('VIDEO_EXTRACTION_FALLBACK_QUALITY', '360p'),
-        'mappings' => [
-            '144p' => 'worst[height>=144]',
-            '360p' => 'best[height<=360]',
-            '720p' => 'best[height<=720]',
-            '1080p' => 'best[height<=1080]',
-        ],
+        // Mappings removed - use specific format IDs instead of generic selectors
     ],
 
     /*
@@ -172,11 +197,7 @@ return [
 
     'format' => [
         'default' => env('VIDEO_EXTRACTION_DEFAULT_FORMAT', 'mp4'),
-        'mappings' => [
-            'mp4' => 'mp4',
-            'webm' => 'webm',
-            'mp3' => 'bestaudio[ext=m4a]/bestaudio/best',
-        ],
+        // Mappings removed - use specific format IDs instead of generic selectors
     ],
 
     /*
@@ -286,6 +307,7 @@ return [
         'concurrent_extractions' => env('VIDEO_EXTRACTION_CONCURRENT_EXTRACTIONS', 5),
         'memory_limit' => env('VIDEO_EXTRACTION_MEMORY_LIMIT', '512M'),
         'max_execution_time' => env('VIDEO_EXTRACTION_MAX_EXECUTION_TIME', 300), // 5 minutes
+        'download_speed_mbps' => env('VIDEO_EXTRACTION_DOWNLOAD_SPEED_MBPS', 1), // 1 MB/s for download time estimation
     ],
 
 ];
