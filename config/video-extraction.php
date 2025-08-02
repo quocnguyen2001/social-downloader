@@ -307,7 +307,17 @@ return [
         'concurrent_extractions' => env('VIDEO_EXTRACTION_CONCURRENT_EXTRACTIONS', 5),
         'memory_limit' => env('VIDEO_EXTRACTION_MEMORY_LIMIT', '512M'),
         'max_execution_time' => env('VIDEO_EXTRACTION_MAX_EXECUTION_TIME', 300), // 5 minutes
+
+        // Legacy download speed configuration (maintained for backward compatibility)
         'download_speed_mbps' => env('VIDEO_EXTRACTION_DOWNLOAD_SPEED_MBPS', 1), // 1 MB/s for download time estimation
+
+        // Enhanced granular speed control configuration
+        'download_speed_control' => [
+            'enabled' => env('VIDEO_EXTRACTION_GRANULAR_SPEED_ENABLED', false),
+            'data_amount_mb' => env('VIDEO_EXTRACTION_SPEED_DATA_AMOUNT_MB', 100), // Data amount in MB
+            'time_duration_seconds' => env('VIDEO_EXTRACTION_SPEED_TIME_DURATION', 30), // Time duration in seconds
+            'calculation_method' => env('VIDEO_EXTRACTION_SPEED_CALCULATION_METHOD', 'granular'), // 'granular' or 'legacy'
+        ],
     ],
 
 ];

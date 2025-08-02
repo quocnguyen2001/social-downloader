@@ -415,7 +415,8 @@ class ExtractVideoMetadataJob implements ShouldQueue
     }
 
     /**
-     * Estimate download time based on file size.
+     * Estimate download time based on file size using enhanced speed control.
+     * Supports both granular speed control (data amount + time duration) and legacy MBPS configuration.
      */
     private function estimateDownloadTime(?int $fileSize): ?int
     {
@@ -423,11 +424,42 @@ class ExtractVideoMetadataJob implements ShouldQueue
             return null;
         }
 
-        // Get configurable download speed from config (default 1 MB/s)
-        $downloadSpeedMbps = config('video-extraction.performance.download_speed_mbps', 1);
-        $averageSpeedBytesPerSecond = $downloadSpeedMbps * 1024 * 1024;
+        $speedConfig = config('video-extraction.performance.download_speed_control');
 
-        return (int) ceil($fileSize / $averageSpeedBytesPerSecond);
+        // Check if granular speed control is enabled and properly configured
+        if ($speedConfig['enabled'] &&
+            $speedConfig['calculation_method'] === 'granular' &&
+            $speedConfig['data_amount_mb'] > 0 &&
+            $speedConfig['time_duration_seconds'] > 0) {
+
+            // Granular calculation: "X MB in Y seconds"
+            $dataAmountBytes = $speedConfig['data_amount_mb'] * 1024 * 1024;
+            $timeDurationSeconds = $speedConfig['time_duration_seconds'];
+
+            // Calculate bytes per second from the granular configuration
+            $averageSpeedBytesPerSecond = $dataAmountBytes / $timeDurationSeconds;
+
+            Log::debug('Using granular speed calculation', [
+                'data_amount_mb' => $speedConfig['data_amount_mb'],
+                'time_duration_seconds' => $timeDurationSeconds,
+                'calculated_speed_bps' => $averageSpeedBytesPerSecond,
+                'file_size' => $fileSize,
+            ]);
+
+            return (int) ceil($fileSize / $averageSpeedBytesPerSecond);
+        } else {
+            // Legacy calculation (backward compatibility)
+            $downloadSpeedMbps = config('video-extraction.performance.download_speed_mbps', 1);
+            $averageSpeedBytesPerSecond = $downloadSpeedMbps * 1024 * 1024;
+
+            Log::debug('Using legacy speed calculation', [
+                'download_speed_mbps' => $downloadSpeedMbps,
+                'calculated_speed_bps' => $averageSpeedBytesPerSecond,
+                'file_size' => $fileSize,
+            ]);
+
+            return (int) ceil($fileSize / $averageSpeedBytesPerSecond);
+        }
     }
 
     /**
