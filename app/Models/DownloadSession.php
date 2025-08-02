@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\DownloadSessionStatus;
 use App\Enums\Platform;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -127,6 +128,7 @@ class DownloadSession extends Model
     {
         $this->update([
             'status' => DownloadSessionStatus::METADATA_FETCHED,
+            'expires_at' => Carbon::now()->addHours(24),
             'error_message' => null,
         ]);
     }

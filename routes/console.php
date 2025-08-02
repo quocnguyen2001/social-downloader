@@ -14,3 +14,10 @@ Schedule::command('scheduled-deletions:process')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/scheduled-deletions.log'));
+
+// Schedule the expired downloads cleanup to run every hour
+Schedule::command('downloads:cleanup-expired')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/cleanup-expired-downloads.log'));
