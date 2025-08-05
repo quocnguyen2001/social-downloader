@@ -52,7 +52,7 @@ php artisan optimize:clear
 
 # Restart queue workers
 print_info "Restarting Queue Workers (Supervisor)..."
-sudo supervisorctl restart laravel-worker:*
+sudo supervisorctl restart all
 
 # Disable maintenance mode
 print_info "Disabling maintenance mode. Application is back online!"
