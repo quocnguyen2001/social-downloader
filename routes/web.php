@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\TokenController;
+use App\Settings\CookieSettings;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
