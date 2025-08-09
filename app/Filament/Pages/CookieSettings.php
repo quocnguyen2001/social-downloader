@@ -71,7 +71,7 @@ class CookieSettings extends SettingsPage
                             ->disk('local')
                             ->label('Cookie File')
                             ->directory('cookies')
-                            ->maxSize(1024) // 1MB max
+                            ->maxSize(10240) // 10MB max
                             ->helperText('Upload a .txt file containing cookies for authenticated video extraction. This enables downloading from platforms that require login credentials.')
                             ->placeholder('No cookie file uploaded')
                             ->downloadable()
