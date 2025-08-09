@@ -9,6 +9,7 @@ use App\Services\VideoExtraction\Exceptions\YtDlpException;
 use App\Settings\CookieSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Service for executing yt-dlp commands and parsing video format information.
@@ -89,7 +90,7 @@ class YtDlpService
                     'path' => $settingsPath,
                     'source' => 'settings'
                 ]);
-                return $settingsPath;
+                return  Storage::disk('local')->path($settingsPath);
             }
 
             Log::info('No cookie file path configured in settings');
