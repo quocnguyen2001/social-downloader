@@ -7,6 +7,7 @@ use App\Services\ThumbnailService;
 use App\Services\VideoExtraction\DTOs\VideoFormat;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
 use App\Settings\CookieSettings;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -90,7 +91,7 @@ class YtDlpService
                     'path' => $settingsPath,
                     'source' => 'settings'
                 ]);
-                return  Storage::disk('local')->path($settingsPath);
+                return  $settingsPath;
             }
 
             Log::info('No cookie file path configured in settings');
@@ -133,7 +134,8 @@ class YtDlpService
             $cookieFilePath = $this->resolveCookieFilePath();
 
             if ($cookieFilePath) {
-                $resolvedCookiePath = base_path($cookieFilePath);
+                $resolvedCookiePath =
+                    (File::exists(base_path($cookieFilePath)) ? base_path($cookieFilePath) : Storage::disk('local')->exists($cookieFilePath)) ? Storage::disk('local')->path($cookieFilePath) : null;
 
                 if (file_exists($resolvedCookiePath)) {
                     $command[] = '--cookies';
