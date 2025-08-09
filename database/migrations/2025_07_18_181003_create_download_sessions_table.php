@@ -22,7 +22,8 @@ return new class extends Migration
             $table->enum('platform', ['youtube', 'facebook', 'instagram', 'tiktok']);
             $table->string('video_id', 255)->nullable();
             $table->string('title', 500)->nullable();
-            $table->text('thumbnail_url', 1000)->nullable();
+            $table->text('thumbnail_path', 1000)->nullable();
+            $table->string('thumbnail_disk')->nullable();
             $table->integer('duration')->nullable(); // seconds
             $table->string('status')->default('pending');
             $table->text('error_message')->nullable();
