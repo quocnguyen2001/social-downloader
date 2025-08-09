@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array|null $allowed_qualities
  * @property array|null $allowed_formats
  * @property bool $priority_processing
- * @property int $max_file_size_mb
  * @property bool $is_active
  * @property bool $is_featured
  * @property int $sort_order
@@ -53,7 +52,6 @@ class MembershipPlan extends Model
         'allowed_qualities',
         'allowed_formats',
         'priority_processing',
-        'max_file_size_mb',
         'is_active',
         'is_featured',
         'sort_order',
@@ -72,7 +70,6 @@ class MembershipPlan extends Model
         'allowed_qualities' => 'array',
         'allowed_formats' => 'array',
         'priority_processing' => 'boolean',
-        'max_file_size_mb' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'sort_order' => 'integer',

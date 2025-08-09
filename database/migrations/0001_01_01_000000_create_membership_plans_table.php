@@ -33,7 +33,6 @@ return new class extends Migration
 
             // Additional features (final schema after optimization)
             $table->boolean('priority_processing')->default(false);
-            $table->integer('max_file_size_mb')->default(100); // in MB
 
             // Plan status and ordering
             $table->boolean('is_active')->default(true);

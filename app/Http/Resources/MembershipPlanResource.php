@@ -35,7 +35,6 @@ class MembershipPlanResource extends JsonResource
             'allowed_qualities' => $this->allowed_qualities,
             'allowed_formats' => $this->allowed_formats,
             'priority_processing' => $this->priority_processing,
-            'max_file_size_mb' => $this->max_file_size_mb,
             'is_active' => $this->is_active,
             'is_featured' => $this->is_featured,
         ];

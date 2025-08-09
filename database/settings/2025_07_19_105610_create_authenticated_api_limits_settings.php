@@ -22,7 +22,6 @@ return new class extends SettingsMigration
         $this->migrator->add('authenticated_api_limits.allowed_platforms', ['youtube', 'tiktok', 'instagram']);
         $this->migrator->add('authenticated_api_limits.allowed_qualities', ['360p', '480p', '720p']);
         $this->migrator->add('authenticated_api_limits.allowed_formats', ['mp4', 'mp3']);
-        $this->migrator->add('authenticated_api_limits.max_file_size_mb', 200);
         $this->migrator->add('authenticated_api_limits.rate_limit_per_minute', 10);
     }
 
@@ -36,7 +35,6 @@ return new class extends SettingsMigration
         $this->migrator->delete('authenticated_api_limits.allowed_platforms');
         $this->migrator->delete('authenticated_api_limits.allowed_qualities');
         $this->migrator->delete('authenticated_api_limits.allowed_formats');
-        $this->migrator->delete('authenticated_api_limits.max_file_size_mb');
         $this->migrator->delete('authenticated_api_limits.rate_limit_per_minute');
     }
 };

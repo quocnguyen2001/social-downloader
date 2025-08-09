@@ -56,7 +56,6 @@ class MembershipPlanFactory extends Factory
 
             // Additional features
             'priority_processing' => fake()->boolean(30),
-            'max_file_size_mb' => fake()->randomElement([50, 100, 250, 500, 1000]),
 
             // Plan status and ordering
             'is_active' => fake()->boolean(80),
@@ -77,7 +76,6 @@ class MembershipPlanFactory extends Factory
             'daily_request_limit' => 100,
             'total_request_download' => 3000,
             'priority_processing' => false,
-            'max_file_size_mb' => 50,
             'is_active' => true,
             'is_featured' => false,
         ]);
@@ -95,7 +93,6 @@ class MembershipPlanFactory extends Factory
             'daily_request_limit' => 500,
             'total_request_download' => 15000,
             'priority_processing' => false,
-            'max_file_size_mb' => 100,
             'is_active' => true,
             'is_featured' => false,
         ]);
@@ -113,7 +110,6 @@ class MembershipPlanFactory extends Factory
             'daily_request_limit' => 1000,
             'total_request_download' => 30000,
             'priority_processing' => true,
-            'max_file_size_mb' => 250,
             'is_active' => true,
             'is_featured' => true,
         ]);
@@ -131,7 +127,6 @@ class MembershipPlanFactory extends Factory
             'daily_request_limit' => 0, // unlimited
             'total_request_download' => 0, // unlimited
             'priority_processing' => true,
-            'max_file_size_mb' => 1000,
             'is_active' => true,
             'is_featured' => true,
         ]);

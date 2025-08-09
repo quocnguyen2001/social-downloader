@@ -43,11 +43,6 @@ class AuthenticatedApiLimitsSettings extends Settings
     public array $allowed_formats;
 
     /**
-     * Maximum file size in MB that authenticated users without packages can download.
-     */
-    public int $max_file_size_mb;
-
-    /**
      * Rate limit per minute for authenticated users without packages.
      */
     public int $rate_limit_per_minute;
@@ -71,7 +66,6 @@ class AuthenticatedApiLimitsSettings extends Settings
             'allowed_platforms' => ['youtube', 'tiktok', 'instagram'],
             'allowed_qualities' => ['360p', '480p', '720p'],
             'allowed_formats' => ['mp4', 'mp3'],
-            'max_file_size_mb' => 200,
             'rate_limit_per_minute' => 10,
         ];
     }

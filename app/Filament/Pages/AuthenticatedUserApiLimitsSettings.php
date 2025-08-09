@@ -123,20 +123,6 @@ class AuthenticatedUserApiLimitsSettings extends SettingsPage
                             ->helperText('Select which file formats authenticated users can download'),
                     ])
                     ->columns(2),
-
-                Forms\Components\Section::make('File & Download Limits')
-                    ->description('File size and download restrictions')
-                    ->schema([
-                        Forms\Components\TextInput::make('max_file_size_mb')
-                            ->label('Maximum File Size')
-                            ->required()
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(5000)
-                            ->suffix('MB')
-                            ->helperText('Maximum file size that authenticated users can download'),
-                    ])
-                    ->columns(2),
             ]);
     }
 }

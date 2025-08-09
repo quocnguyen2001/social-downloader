@@ -135,13 +135,6 @@ class MembershipPlanResource extends Resource
                         Forms\Components\Toggle::make('priority_processing')
                             ->label('Priority Processing')
                             ->helperText('Process requests with higher priority'),
-
-                        Forms\Components\TextInput::make('max_file_size_mb')
-                            ->required()
-                            ->numeric()
-                            ->default(100)
-                            ->minValue(1)
-                            ->suffix('MB'),
                     ])
                     ->columns(2),
 
@@ -345,12 +338,6 @@ class MembershipPlanResource extends Resource
                             ->falseIcon('heroicon-o-x-circle')
                             ->trueColor('success')
                             ->falseColor('danger'),
-
-                        Infolists\Components\TextEntry::make('max_file_size_mb')
-                            ->label('Max File Size')
-                            ->suffix(' MB')
-                            ->badge()
-                            ->color('info'),
 
                         Infolists\Components\IconEntry::make('is_active')
                             ->label('Active')

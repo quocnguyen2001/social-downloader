@@ -63,7 +63,6 @@ class MembershipPlanController extends Controller
                     'allowed_qualities' => $plan->allowed_qualities,
                     'allowed_formats' => $plan->allowed_formats,
                     'priority_processing' => $plan->priority_processing,
-                    'max_file_size_mb' => $plan->max_file_size_mb,
                     'is_active' => $plan->is_active,
                     'is_featured' => $plan->is_featured,
                     'sort_order' => $plan->sort_order,

@@ -43,11 +43,6 @@ class GuestApiLimitsSettings extends Settings
     public array $allowed_formats;
 
     /**
-     * Maximum file size in MB that guests can download.
-     */
-    public int $max_file_size_mb;
-
-    /**
      * Rate limit per minute for guest users.
      */
     public int $rate_limit_per_minute;
@@ -71,7 +66,6 @@ class GuestApiLimitsSettings extends Settings
             'allowed_platforms' => ['youtube', 'tiktok'],
             'allowed_qualities' => ['360p', '480p'],
             'allowed_formats' => ['mp4'],
-            'max_file_size_mb' => 50,
             'rate_limit_per_minute' => 2,
             'max_concurrent_downloads' => 1,
         ];
