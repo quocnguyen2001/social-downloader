@@ -6,6 +6,7 @@ use App\Models\DownloadOption;
 use App\Services\ThumbnailService;
 use App\Services\VideoExtraction\DTOs\VideoFormat;
 use App\Services\VideoExtraction\Exceptions\YtDlpException;
+use App\Settings\CookieSettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 
@@ -56,6 +57,53 @@ class YtDlpService
     }
 
     /**
+     * Resolve cookie file path with fallback mechanism.
+     *
+     * Priority:
+     * 1. Environment variable YT_DLP_COOKIES_FILE_PATH (if set and not empty)
+     * 2. Settings form data (CookieSettings::cookie_file_path)
+     *
+     * @return string|null The resolved cookie file path or null if none available
+     */
+    private function resolveCookieFilePath(): ?string
+    {
+        // Check raw environment variable (without default)
+        $envPath = config('video-extraction.yt_dlp.cookies_file_path');
+
+        // If environment variable is explicitly set and not empty, use it
+        if ($envPath !== null && trim($envPath) !== '') {
+            Log::info('Using cookie file path from environment variable', [
+                'path' => $envPath,
+                'source' => 'environment'
+            ]);
+            return $envPath;
+        }
+
+        // Fall back to settings
+        try {
+            $cookieSettings = app(CookieSettings::class);
+            $settingsPath = $cookieSettings->cookie_file_path;
+
+            if ($settingsPath !== null && trim($settingsPath) !== '') {
+                Log::info('Using cookie file path from settings', [
+                    'path' => $settingsPath,
+                    'source' => 'settings'
+                ]);
+                return $settingsPath;
+            }
+
+            Log::info('No cookie file path configured in settings');
+            return null;
+
+        } catch (\Exception $e) {
+            Log::warning('Failed to load cookie settings, no fallback available', [
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
      * Build yt-dlp command with proper configuration and platform-specific options.
      *
      * @param  string  $url  The video URL
@@ -81,21 +129,28 @@ class YtDlpService
 
         // Add cookie support first (authentication must come before format selection)
         if (config('video-extraction.yt_dlp.using_cookies', false)) {
-            $cookieFilePath = config('video-extraction.yt_dlp.cookies_file_path', 'app/cookie.txt');
-            $resolvedCookiePath = base_path($cookieFilePath);
+            $cookieFilePath = $this->resolveCookieFilePath();
 
-            if (file_exists($resolvedCookiePath)) {
-                $command[] = '--cookies';
-                $command[] = $resolvedCookiePath;
+            if ($cookieFilePath) {
+                $resolvedCookiePath = base_path($cookieFilePath);
 
-                Log::info('Using cookies for yt-dlp command', [
-                    'cookie_file' => $resolvedCookiePath,
-                    'url' => $url,
-                ]);
+                if (file_exists($resolvedCookiePath)) {
+                    $command[] = '--cookies';
+                    $command[] = $resolvedCookiePath;
+
+                    Log::info('Using cookies for yt-dlp command', [
+                        'cookie_file' => $resolvedCookiePath,
+                        'url' => $url,
+                    ]);
+                } else {
+                    Log::warning('Cookie file not found, proceeding without cookies', [
+                        'configured_path' => $cookieFilePath,
+                        'resolved_path' => $resolvedCookiePath,
+                        'url' => $url,
+                    ]);
+                }
             } else {
-                Log::warning('Cookie file not found, proceeding without cookies', [
-                    'configured_path' => $cookieFilePath,
-                    'resolved_path' => $resolvedCookiePath,
+                Log::info('No cookie file path configured, proceeding without cookies', [
                     'url' => $url,
                 ]);
             }

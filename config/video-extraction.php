@@ -46,7 +46,7 @@ return [
         'no_warnings' => env('YT_DLP_NO_WARNINGS', true),
         'ignore_errors' => env('YT_DLP_IGNORE_ERRORS', false),
         'using_cookies' => env('YT_DLP_USING_COOKIES', false),
-        'cookies_file_path' => env('YT_DLP_COOKIES_FILE_PATH', 'app/cookie.txt'),
+        'cookies_file_path' => env('YT_DLP_COOKIES_FILE_PATH'),
     ],
 
     /*
