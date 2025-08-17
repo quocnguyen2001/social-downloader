@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
-use App\Models\ApiKey;
+use App\Enums\OrderStatus;
 use App\Models\MembershipPlan;
 use App\Models\Order;
 use Filament\Forms;
@@ -41,65 +41,53 @@ class OrderResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Order Information')
                     ->schema([
-                        Forms\Components\Select::make('api_key_id')
-                            ->label(trans('messages.table.columns.api_key'))
-                            ->options(ApiKey::pluck('name', 'id'))
-                            ->required()
-                            ->searchable(),
-
                         Forms\Components\Select::make('membership_plan_id')
                             ->label('Membership Plan')
                             ->options(MembershipPlan::pluck('name', 'id'))
                             ->searchable()
                             ->nullable(),
 
-                        Forms\Components\DatePicker::make('billing_month')
+                        Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(OrderStatus::getOptions())
                             ->required()
-                            ->label(trans('messages.labels.billing_month'))
-                            ->displayFormat('Y-m-d'),
+                            ->default(OrderStatus::PENDING->value),
+                    ])->columns(2),
 
-                        Forms\Components\TextInput::make('total_requests')
-                            ->label(trans('messages.labels.total_requests'))
-                            ->numeric()
-                            ->default(0)
-                            ->required(),
-
-                        Forms\Components\TextInput::make('total_cost')
-                            ->label(trans('messages.labels.total_cost'))
+                Forms\Components\Section::make('Pricing Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('subtotal')
+                            ->label('Subtotal')
                             ->numeric()
                             ->step(0.01)
                             ->default(0.00)
-                            ->required(),
-                    ])->columns(2),
+                            ->required()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Forms\Set $set, ?float $state, Forms\Get $get) {
+                                $discount = $get('discount') ?? 0;
+                                $set('total', $state - $discount);
+                            }),
 
-                Forms\Components\Section::make('Payment Information')
-                    ->schema([
-                        Forms\Components\Toggle::make('invoice_sent')
-                            ->label('Invoice Sent')
-                            ->default(false),
+                        Forms\Components\TextInput::make('discount')
+                            ->label('Discount')
+                            ->numeric()
+                            ->step(0.01)
+                            ->default(0.00)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Forms\Set $set, ?float $state, Forms\Get $get) {
+                                $subtotal = $get('subtotal') ?? 0;
+                                $set('total', $subtotal - $state);
+                            }),
 
-                        Forms\Components\DateTimePicker::make('invoice_sent_at')
-                            ->label('Invoice Sent At')
-                            ->nullable(),
-
-                        Forms\Components\Toggle::make('paid')
-                            ->label('Paid')
-                            ->default(false),
-
-                        Forms\Components\DateTimePicker::make('paid_at')
-                            ->label('Paid At')
-                            ->nullable(),
-
-                        Forms\Components\Select::make('payment_method')
-                            ->label('Payment Method')
-                            ->options([
-                                'bank_transfer' => 'Bank Transfer',
-                                'credit_card' => 'Credit Card',
-                                'paypal' => 'PayPal',
-                                'crypto' => 'Cryptocurrency',
-                            ])
-                            ->nullable(),
-                    ])->columns(2),
+                        Forms\Components\TextInput::make('total')
+                            ->label('Total')
+                            ->numeric()
+                            ->step(0.01)
+                            ->default(0.00)
+                            ->required()
+                            ->disabled()
+                            ->dehydrated(),
+                    ])->columns(3),
             ]);
     }
 
@@ -107,179 +95,145 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('apiKey.name')
-                    ->label(trans('messages.table.columns.api_key'))
-                    ->searchable()
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('membershipPlan.name')
                     ->label('Membership Plan')
                     ->searchable()
                     ->sortable()
                     ->placeholder('N/A'),
 
-                Tables\Columns\TextColumn::make('billing_month')
-                    ->label(trans('messages.labels.billing_month'))
-                    ->date('F Y')
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('total_requests')
-                    ->label(trans('messages.labels.total_requests'))
-                    ->numeric()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('total_cost')
-                    ->label(trans('messages.labels.total_cost'))
+                Tables\Columns\TextColumn::make('subtotal')
+                    ->label('Subtotal')
                     ->money('VND')
                     ->sortable(),
 
-                Tables\Columns\BadgeColumn::make('paid')
-                    ->label('Payment Status')
-                    ->colors([
-                        'danger' => false,
-                        'success' => true,
-                    ])
-                    ->icons([
-                        'heroicon-o-x-circle' => false,
-                        'heroicon-o-check-circle' => true,
-                    ])
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'Paid' : 'Unpaid'),
+                Tables\Columns\TextColumn::make('discount')
+                    ->label('Discount')
+                    ->money('VND')
+                    ->sortable(),
 
-                Tables\Columns\BadgeColumn::make('invoice_sent')
-                    ->label('Invoice Status')
+                Tables\Columns\TextColumn::make('total')
+                    ->label('Total')
+                    ->money('VND')
+                    ->sortable(),
+
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Status')
                     ->colors([
-                        'warning' => false,
-                        'success' => true,
+                        'warning' => OrderStatus::PENDING->value,
+                        'info' => OrderStatus::PROCESSING->value,
+                        'success' => OrderStatus::COMPLETED->value,
                     ])
                     ->icons([
-                        'heroicon-o-clock' => false,
-                        'heroicon-o-paper-airplane' => true,
+                        'heroicon-o-clock' => OrderStatus::PENDING->value,
+                        'heroicon-o-arrow-path' => OrderStatus::PROCESSING->value,
+                        'heroicon-o-check-circle' => OrderStatus::COMPLETED->value,
                     ])
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'Sent' : 'Not Sent'),
+                    ->formatStateUsing(fn (OrderStatus $state): string => $state->getLabel()),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('api_key_id')
-                    ->label('API Key')
-                    ->options(ApiKey::pluck('name', 'id'))
-                    ->searchable(),
-
                 SelectFilter::make('membership_plan_id')
                     ->label('Membership Plan')
                     ->options(MembershipPlan::pluck('name', 'id'))
                     ->searchable(),
 
-                SelectFilter::make('paid')
-                    ->options([
-                        '1' => 'Paid',
-                        '0' => 'Unpaid',
-                    ]),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(OrderStatus::getOptions()),
 
-                SelectFilter::make('invoice_sent')
-                    ->options([
-                        '1' => 'Sent',
-                        '0' => 'Not Sent',
-                    ]),
-
-                Filter::make('billing_month')
+                Filter::make('total_range')
                     ->form([
-                        DatePicker::make('billing_from')
-                            ->label('Billing From'),
-                        DatePicker::make('billing_until')
-                            ->label('Billing Until'),
+                        Forms\Components\TextInput::make('total_from')
+                            ->label('Total From')
+                            ->numeric(),
+                        Forms\Components\TextInput::make('total_to')
+                            ->label('Total To')
+                            ->numeric(),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data['billing_from'], fn ($q) => $q->whereDate('billing_month', '>=', $data['billing_from']))
-                            ->when($data['billing_until'], fn ($q) => $q->whereDate('billing_month', '<=', $data['billing_until']));
+                            ->when($data['total_from'], fn ($q) => $q->where('total', '>=', $data['total_from']))
+                            ->when($data['total_to'], fn ($q) => $q->where('total', '<=', $data['total_to']));
                     }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
 
-                Tables\Actions\Action::make('send_order')
-                    ->icon('heroicon-o-paper-airplane')
+                Tables\Actions\Action::make('mark_as_processing')
+                    ->icon('heroicon-o-arrow-path')
                     ->color('info')
                     ->action(function (Order $record) {
-                        $record->sendOrder();
+                        $record->markAsProcessing();
                         Notification::make()
-                            ->title('Order sent successfully')
+                            ->title('Order marked as processing')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Order $record): bool => ! $record->invoice_sent),
+                    ->visible(fn (Order $record): bool => $record->status === OrderStatus::PENDING),
 
-                Tables\Actions\Action::make('mark_as_paid')
+                Tables\Actions\Action::make('mark_as_completed')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->form([
-                        Forms\Components\Select::make('payment_method')
-                            ->options([
-                                'bank_transfer' => 'Bank Transfer',
-                                'credit_card' => 'Credit Card',
-                                'paypal' => 'PayPal',
-                                'crypto' => 'Cryptocurrency',
-                            ])
-                            ->required(),
-                    ])
-                    ->action(function (Order $record, array $data) {
-                        $record->markAsPaid($data['payment_method']);
+                    ->action(function (Order $record) {
+                        $record->markAsCompleted();
                         Notification::make()
-                            ->title('Order marked as paid')
+                            ->title('Order marked as completed')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Order $record): bool => ! $record->paid),
+                    ->visible(fn (Order $record): bool => $record->status === OrderStatus::PROCESSING),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
 
-                    Tables\Actions\BulkAction::make('send_orders')
-                        ->icon('heroicon-o-paper-airplane')
+                    Tables\Actions\BulkAction::make('mark_as_processing')
+                        ->icon('heroicon-o-arrow-path')
                         ->color('info')
                         ->action(function ($records) {
-                            $sentCount = 0;
+                            $processedCount = 0;
                             foreach ($records as $record) {
-                                if (! $record->invoice_sent) {
-                                    $record->sendOrder();
-                                    $sentCount++;
+                                if ($record->status === OrderStatus::PENDING) {
+                                    $record->markAsProcessing();
+                                    $processedCount++;
                                 }
                             }
                             Notification::make()
-                                ->title("Sent {$sentCount} orders")
+                                ->title("Marked {$processedCount} orders as processing")
                                 ->success()
                                 ->send();
                         }),
 
-                    Tables\Actions\BulkAction::make('mark_as_paid')
+                    Tables\Actions\BulkAction::make('mark_as_completed')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
-                        ->form([
-                            Forms\Components\Select::make('payment_method')
-                                ->options([
-                                    'bank_transfer' => 'Bank Transfer',
-                                    'credit_card' => 'Credit Card',
-                                    'paypal' => 'PayPal',
-                                    'crypto' => 'Cryptocurrency',
-                                ])
-                                ->required(),
-                        ])
-                        ->action(function ($records, array $data) {
-                            $records->each->markAsPaid($data['payment_method']);
+                        ->action(function ($records) {
+                            $completedCount = 0;
+                            foreach ($records as $record) {
+                                if ($record->status === OrderStatus::PROCESSING) {
+                                    $record->markAsCompleted();
+                                    $completedCount++;
+                                }
+                            }
                             Notification::make()
-                                ->title('Orders marked as paid')
+                                ->title("Marked {$completedCount} orders as completed")
                                 ->success()
                                 ->send();
                         }),
                 ]),
             ])
-            ->defaultSort('billing_month', 'desc');
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

@@ -4,14 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\ApiKey;
 use App\Models\MembershipPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
- */
 class OrderFactory extends Factory
 {
     /**
@@ -21,72 +17,78 @@ class OrderFactory extends Factory
      */
     public function definition(): array
     {
-        $totalRequests = fake()->numberBetween(100, 5000);
-        $totalCost = fake()->randomFloat(2, 50.00, 500.00);
-
-        $invoiceSent = fake()->boolean(70); // 70% chance invoice is sent
-        $isPaid = $invoiceSent ? fake()->boolean(60) : false; // 60% of sent invoices are paid
+        $subtotal = fake()->randomFloat(2, 100.00, 1000.00);
+        $discount = fake()->boolean(30) ? fake()->randomFloat(2, 0, $subtotal * 0.2) : 0; // 30% chance of discount, max 20%
+        $total = $subtotal - $discount;
 
         return [
             'id' => Str::uuid(),
-            'api_key_id' => ApiKey::factory(),
-            'membership_plan_id' => fake()->boolean(30) ? MembershipPlan::factory() : null,
-            'billing_month' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-01'),
-            'total_requests' => $totalRequests,
-            'total_cost' => $totalCost,
-            'invoice_sent' => $invoiceSent,
-            'invoice_sent_at' => $invoiceSent ? fake()->dateTimeBetween('-2 months', 'now') : null,
-            'paid' => $isPaid,
-            'paid_at' => $isPaid ? fake()->dateTimeBetween('-1 month', 'now') : null,
-            'payment_method' => $isPaid ? fake()->randomElement(['bank_transfer', 'credit_card', 'paypal', 'crypto']) : null,
+            'membership_plan_id' => fake()->boolean(40) ? MembershipPlan::factory() : null,
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'total' => $total,
+            'status' => fake()->randomElement(['pending', 'processing', 'completed']),
         ];
     }
 
     /**
-     * Indicate that the invoice is paid.
+     * Indicate that the order is pending.
      */
-    public function paid(): static
+    public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
-            'paid' => true,
-            'paid_at' => fake()->dateTimeBetween('-1 month', 'now'),
-            'payment_method' => fake()->randomElement(['bank_transfer', 'credit_card', 'paypal', 'crypto']),
-            'invoice_sent' => true,
-            'invoice_sent_at' => fake()->dateTimeBetween('-2 months', '-1 month'),
+            'status' => 'pending',
         ]);
     }
 
     /**
-     * Indicate that the invoice is unpaid.
+     * Indicate that the order is processing.
      */
-    public function unpaid(): static
+    public function processing(): static
     {
         return $this->state(fn (array $attributes) => [
-            'paid' => false,
-            'paid_at' => null,
-            'payment_method' => null,
+            'status' => 'processing',
         ]);
     }
 
     /**
-     * Indicate that the invoice has been sent.
+     * Indicate that the order is completed.
      */
-    public function sent(): static
+    public function completed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'invoice_sent' => true,
-            'invoice_sent_at' => fake()->dateTimeBetween('-2 months', 'now'),
+            'status' => 'completed',
         ]);
     }
 
     /**
-     * Indicate that the invoice has not been sent.
+     * Indicate that the order has a discount.
      */
-    public function notSent(): static
+    public function withDiscount(float $discountAmount = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'invoice_sent' => false,
-            'invoice_sent_at' => null,
-        ]);
+        return $this->state(function (array $attributes) use ($discountAmount) {
+            $subtotal = $attributes['subtotal'] ?? 100.00;
+            $discount = $discountAmount ?? fake()->randomFloat(2, 10.00, $subtotal * 0.3);
+            
+            return [
+                'discount' => $discount,
+                'total' => $subtotal - $discount,
+            ];
+        });
+    }
+
+    /**
+     * Indicate that the order has no discount.
+     */
+    public function withoutDiscount(): static
+    {
+        return $this->state(function (array $attributes) {
+            $subtotal = $attributes['subtotal'] ?? 100.00;
+            
+            return [
+                'discount' => 0,
+                'total' => $subtotal,
+            ];
+        });
     }
 }

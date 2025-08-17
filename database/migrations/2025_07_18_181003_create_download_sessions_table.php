@@ -39,39 +39,23 @@ return new class extends Migration
             $table->index(['user_id', 'created_at']);
         });
 
-        // Create invoices table (previously monthly_billings)
-        Schema::create('invoices', function (Blueprint $table) {
+        // Create orders table (previously invoices/monthly_billings)
+        Schema::create('orders', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('api_key_id')->constrained('api_keys')->onDelete('cascade');
             $table->foreignId('membership_plan_id')->nullable()->constrained('membership_plans')->onDelete('set null');
+            $table->foreignId('payment_id')->nullable()->constrained('transactions')->onDelete('set null');
 
-            // Billing details
-            $table->date('billing_month');
-            $table->integer('total_requests')->default(0);
-            $table->decimal('total_cost', 10, 2)->default(0);
-
-            // Platform breakdown
-            $table->integer('youtube_requests')->default(0);
-            $table->integer('tiktok_requests')->default(0);
-            $table->integer('instagram_requests')->default(0);
-            $table->integer('facebook_requests')->default(0);
-
-            // Invoice status
-            $table->boolean('invoice_sent')->default(false);
-            $table->timestamp('invoice_sent_at')->nullable();
-
-            // Payment status
-            $table->boolean('paid')->default(false);
-            $table->timestamp('paid_at')->nullable();
-            $table->string('payment_method')->nullable();
+            // Order details
+            $table->decimal('total', 10, 2)->default(0);
+            $table->decimal('subtotal', 10, 2)->default(0);
+            $table->decimal('discount', 10, 2)->default(0);
+            $table->enum('status', ['pending', 'processing', 'completed'])->default('pending');
 
             $table->timestamps();
 
             // Indexes
-            $table->index(['api_key_id', 'billing_month']);
-            $table->index(['billing_month', 'paid']);
-            $table->index(['invoice_sent', 'paid']);
-            $table->unique(['api_key_id', 'billing_month']);
+            $table->index(['status', 'created_at']);
+            $table->index(['membership_plan_id', 'status']);
         });
     }
 
@@ -80,7 +64,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('invoices');
+        Schema::dropIfExists('orders');
         Schema::dropIfExists('download_sessions');
     }
 };

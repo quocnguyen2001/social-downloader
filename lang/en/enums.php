@@ -54,4 +54,10 @@ return [
         'PUT' => 'PUT',
         'DELETE' => 'DELETE',
     ],
+
+    'order_status' => [
+        'pending' => 'Pending',
+        'processing' => 'Processing',
+        'completed' => 'Completed',
+    ],
 ];

@@ -54,4 +54,10 @@ return [
         'PUT' => 'PUT',
         'DELETE' => 'DELETE',
     ],
+
+    'order_status' => [
+        'pending' => 'Đang chờ',
+        'processing' => 'Đang xử lý',
+        'completed' => 'Hoàn thành',
+    ],
 ];

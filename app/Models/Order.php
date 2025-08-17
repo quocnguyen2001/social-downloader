@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\PaymentMethod;
+use App\Enums\OrderStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,35 +17,20 @@ class Order extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
-        'api_key_id',
         'membership_plan_id',
-        'billing_month',
-        'total_requests',
-        'total_cost',
-        'invoice_sent',
-        'invoice_sent_at',
-        'paid',
-        'paid_at',
-        'payment_method',
+        'payment_id',
+        'total',
+        'subtotal',
+        'discount',
+        'status',
     ];
 
     protected $casts = [
-        'billing_month' => 'date',
-        'total_cost' => 'decimal:2',
-        'invoice_sent' => 'boolean',
-        'invoice_sent_at' => 'datetime',
-        'paid' => 'boolean',
-        'paid_at' => 'datetime',
-        'payment_method' => PaymentMethod::class,
+        'total' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'status' => OrderStatus::class,
     ];
-
-    /**
-     * Get the API key that owns this order record.
-     */
-    public function apiKey(): BelongsTo
-    {
-        return $this->belongsTo(ApiKey::class);
-    }
 
     /**
      * Get the membership plan associated with this order.
@@ -60,167 +45,140 @@ class Order extends Model
      */
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'invoice_id');
     }
 
     /**
-     * Get all API requests for this billing period.
-     */
-    public function apiRequests()
-    {
-        $startOfMonth = $this->billing_month->startOfMonth();
-        $endOfMonth = $this->billing_month->copy()->endOfMonth();
-
-        return $this->apiKey->apiRequests()
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
-    }
-
-    /**
-     * Calculate the total cost and request counts from API requests.
+     * Calculate the total from subtotal and discount.
      */
     public function calculateTotal(): void
     {
-        $startOfMonth = $this->billing_month->startOfMonth();
-        $endOfMonth = $this->billing_month->copy()->endOfMonth();
-
-        $requests = $this->apiKey->apiRequests()
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->where('billed', true)
-            ->get();
-
-        $this->total_requests = $requests->count();
-        $this->total_cost = $requests->sum('cost');
-
+        $this->total = $this->subtotal - $this->discount;
         $this->save();
     }
 
     /**
-     * Mark this order as paid.
+     * Apply a discount to the order.
      */
-    public function markAsPaid(?string $paymentMethod = null): void
+    public function applyDiscount(float $discountAmount): void
     {
-        $this->update([
-            'paid' => true,
-            'paid_at' => now(),
-            'payment_method' => $paymentMethod,
-        ]);
+        $this->discount = $discountAmount;
+        $this->calculateTotal();
     }
 
     /**
-     * Mark this order as unpaid.
+     * Mark this order as processing.
      */
-    public function markAsUnpaid(): void
+    public function markAsProcessing(): void
     {
-        $this->update([
-            'paid' => false,
-            'paid_at' => null,
-            'payment_method' => null,
-        ]);
+        $this->update(['status' => OrderStatus::PROCESSING]);
     }
 
     /**
-     * Send order for this billing.
+     * Mark this order as completed.
      */
-    public function sendOrder(): void
+    public function markAsCompleted(): void
     {
-        $this->update([
-            'invoice_sent' => true,
-            'invoice_sent_at' => now(),
-        ]);
-
-        // Here you would implement actual order sending logic
-        // For now, we just mark it as sent
+        $this->update(['status' => OrderStatus::COMPLETED]);
     }
 
     /**
-     * Scope to filter paid orders.
+     * Mark this order as pending.
      */
-    public function scopePaid($query)
+    public function markAsPending(): void
     {
-        return $query->where('paid', true);
+        $this->update(['status' => OrderStatus::PENDING]);
     }
 
     /**
-     * Scope to filter unpaid orders.
+     * Scope to filter orders by status.
      */
-    public function scopeUnpaid($query)
+    public function scopeWithStatus($query, OrderStatus $status)
     {
-        return $query->where('paid', false);
+        return $query->where('status', $status);
     }
 
     /**
-     * Scope to filter orders with sent orders.
+     * Scope to filter pending orders.
      */
-    public function scopeOrderSent($query)
+    public function scopePending($query)
     {
-        return $query->where('invoice_sent', true);
+        return $query->where('status', OrderStatus::PENDING);
     }
 
     /**
-     * Scope to filter orders without sent orders.
+     * Scope to filter processing orders.
      */
-    public function scopeOrderNotSent($query)
+    public function scopeProcessing($query)
     {
-        return $query->where('invoice_sent', false);
+        return $query->where('status', OrderStatus::PROCESSING);
     }
 
     /**
-     * Scope to filter orders by month.
+     * Scope to filter completed orders.
      */
-    public function scopeForMonth($query, $year, $month)
+    public function scopeCompleted($query)
     {
-        return $query->whereYear('billing_month', $year)
-            ->whereMonth('billing_month', $month);
+        return $query->where('status', OrderStatus::COMPLETED);
     }
 
     /**
-     * Scope to filter orders for a specific API key.
+     * Scope to filter orders for a specific membership plan.
      */
-    public function scopeForApiKey($query, $apiKeyId)
+    public function scopeForMembershipPlan($query, $membershipPlanId)
     {
-        return $query->where('api_key_id', $apiKeyId);
+        return $query->where('membership_plan_id', $membershipPlanId);
     }
 
     /**
-     * Get formatted total cost with currency.
+     * Get formatted total with currency.
      */
-    public function getFormattedTotalCostAttribute(): string
+    public function getFormattedTotalAttribute(): string
     {
-        return number_format($this->total_cost, 2).' VND';
+        return number_format($this->total, 2).' VND';
     }
 
     /**
-     * Get the billing month in a readable format.
+     * Get formatted subtotal with currency.
      */
-    public function getFormattedBillingMonthAttribute(): string
+    public function getFormattedSubtotalAttribute(): string
     {
-        return $this->billing_month->format('F Y');
+        return number_format($this->subtotal, 2).' VND';
     }
 
     /**
-     * Get the payment status badge color.
+     * Get formatted discount with currency.
      */
-    public function getPaymentStatusBadgeColorAttribute(): string
+    public function getFormattedDiscountAttribute(): string
     {
-        return $this->paid ? 'success' : 'danger';
+        return number_format($this->discount, 2).' VND';
     }
 
     /**
-     * Get the order status badge color.
+     * Get the status badge color.
      */
-    public function getOrderStatusBadgeColorAttribute(): string
+    public function getStatusBadgeColorAttribute(): string
     {
-        return $this->invoice_sent ? 'success' : 'warning';
+        return $this->status->getColor();
     }
 
     /**
-     * Check if this order is overdue (unpaid and order sent more than 30 days ago).
+     * Check if this order has a discount applied.
      */
-    public function isOverdue(): bool
+    public function hasDiscount(): bool
     {
-        return ! $this->paid &&
-               $this->invoice_sent &&
-               $this->invoice_sent_at &&
-               $this->invoice_sent_at->diffInDays(now()) > 30;
+        return $this->discount > 0;
+    }
+
+    /**
+     * Get the discount percentage if applicable.
+     */
+    public function getDiscountPercentage(): float
+    {
+        if ($this->subtotal <= 0) {
+            return 0;
+        }
+
+        return ($this->discount / $this->subtotal) * 100;
     }
 }
