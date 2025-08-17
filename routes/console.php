@@ -21,3 +21,10 @@ Schedule::command('downloads:cleanup-expired')
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cleanup-expired-downloads.log'));
+
+// Schedule the bank transfer checker to run every 5 seconds
+Schedule::command('bank-transfer:check --force')
+    ->cron('*/5 * * * * *') // Every 5 seconds using cron expression
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/bank-transfer-check.log'));

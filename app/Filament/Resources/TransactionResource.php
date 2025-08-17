@@ -55,7 +55,7 @@ class TransactionResource extends Resource
 
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount')
-                    ->money('USD')
+                    ->money('VND')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('currency')
@@ -208,7 +208,7 @@ class TransactionResource extends Resource
                             ->schema([
                                 Infolists\Components\TextEntry::make('amount')
                                     ->label('Amount')
-                                    ->money('USD'),
+                                    ->money('VND'),
                                 Infolists\Components\TextEntry::make('currency')
                                     ->label('Currency'),
                                 Infolists\Components\TextEntry::make('payment_method')
@@ -222,34 +222,6 @@ class TransactionResource extends Resource
                                     ->label('Order ID'),
                             ]),
                     ]),
-
-                Infolists\Components\Section::make('Payment Logs')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('payment_logs')
-                            ->label('Logs')
-                            ->formatStateUsing(function ($state) {
-                                if (empty($state)) {
-                                    return 'No logs available';
-                                }
-
-                                $formatted = '';
-                                foreach ($state as $log) {
-                                    $formatted .= sprintf(
-                                        "[%s] %s\n",
-                                        $log['timestamp'] ?? 'Unknown time',
-                                        $log['event'] ?? 'Unknown event'
-                                    );
-                                    if (isset($log['reason'])) {
-                                        $formatted .= "Reason: {$log['reason']}\n";
-                                    }
-                                    $formatted .= "\n";
-                                }
-
-                                return trim($formatted);
-                            })
-                            ->placeholder('No logs available'),
-                    ])
-                    ->collapsible(),
 
                 Infolists\Components\Section::make('Timestamps')
                     ->schema([
