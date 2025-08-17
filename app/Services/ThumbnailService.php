@@ -31,7 +31,7 @@ class ThumbnailService
             ]);
 
             // Get the configured storage disk
-            $disk = config('filesystems.default', 'local');
+            $disk = 'public';
 
             // Download the thumbnail
             $response = Http::timeout(30)
