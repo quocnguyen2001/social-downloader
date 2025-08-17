@@ -40,13 +40,7 @@ class Order extends Model
         return $this->belongsTo(MembershipPlan::class);
     }
 
-    /**
-     * Get the transactions for this order.
-     */
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(Transaction::class, 'invoice_id');
-    }
+
 
     /**
      * Calculate the total from subtotal and discount.

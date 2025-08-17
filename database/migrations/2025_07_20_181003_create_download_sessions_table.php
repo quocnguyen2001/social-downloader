@@ -43,7 +43,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('membership_plan_id')->nullable()->constrained('membership_plans')->onDelete('set null');
-            $table->foreignId('payment_id')->nullable()->constrained('transactions')->onDelete('set null');
+            $table->foreignUuid('payment_id')->nullable()->constrained('transactions')->onDelete('set null');
 
             // Order details
             $table->decimal('total', 10, 2)->default(0);

@@ -9,8 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Import Order model for relationship
-
 class Transaction extends Model
 {
     /** @use HasFactory<\Database\Factories\TransactionFactory> */
@@ -18,20 +16,19 @@ class Transaction extends Model
 
     protected $fillable = [
         'user_id',
-        'invoice_id',
-        'email',
+        'customer_name',
+        'customer_email',
+        'charge_id',
+        'order_id',
         'payment_method',
         'currency',
         'payment_logs',
         'amount',
-        'transaction_id',
         'status',
-        'processed_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'processed_at' => 'datetime',
         'payment_logs' => 'array',
     ];
 
@@ -44,22 +41,13 @@ class Transaction extends Model
     }
 
     /**
-     * Get the order that this transaction belongs to.
-     */
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo(Order::class);
-    }
-
-    /**
      * Mark this transaction as completed.
      */
-    public function markAsCompleted(?string $transactionId = null): void
+    public function markAsCompleted(?string $chargeId = null): void
     {
         $this->update([
             'status' => 'completed',
-            'processed_at' => now(),
-            'transaction_id' => $transactionId ?? $this->transaction_id,
+            'charge_id' => $chargeId ?? $this->charge_id,
         ]);
     }
 
@@ -79,7 +67,6 @@ class Transaction extends Model
 
         $this->update([
             'status' => 'failed',
-            'processed_at' => now(),
             'payment_logs' => $logs,
         ]);
     }
@@ -151,7 +138,7 @@ class Transaction extends Model
      */
     public function scopeForOrder($query, $orderId)
     {
-        return $query->where('invoice_id', $orderId);
+        return $query->where('order_id', $orderId);
     }
 
     /**

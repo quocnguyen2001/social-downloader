@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Order;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -37,8 +36,10 @@ class TransactionFactory extends Factory
         return [
             'id' => Str::uuid(),
             'user_id' => User::factory(),
-            'invoice_id' => Order::factory(),
-            'email' => fake()->email(),
+            'customer_name' => fake()->name(),
+            'customer_email' => fake()->email(),
+            'charge_id' => fake()->regexify('[A-Z0-9]{10,20}'),
+            'order_id' => fake()->regexify('[A-Z0-9]{8,12}'),
             'payment_method' => fake()->randomElement($paymentMethods),
             'currency' => fake()->randomElement($currencies),
             'payment_logs' => fake()->optional()->randomElements([
@@ -48,9 +49,7 @@ class TransactionFactory extends Factory
                 'processing_time' => fake()->numberBetween(100, 5000),
             ]),
             'amount' => fake()->randomFloat(2, 1, 999.99),
-            'transaction_id' => fake()->optional()->regexify('[A-Z0-9]{10,20}'),
             'status' => fake()->randomElement($statuses),
-            'processed_at' => fake()->optional(0.8)->dateTimeBetween('-1 year', 'now'),
         ];
     }
 
@@ -61,7 +60,6 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'pending',
-            'processed_at' => null,
         ]);
     }
 
@@ -72,8 +70,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'completed',
-            'processed_at' => fake()->dateTimeBetween('-1 month', 'now'),
-            'transaction_id' => fake()->regexify('[A-Z0-9]{10,20}'),
+            'charge_id' => fake()->regexify('[A-Z0-9]{10,20}'),
         ]);
     }
 
@@ -84,7 +81,6 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'failed',
-            'processed_at' => fake()->dateTimeBetween('-1 month', 'now'),
             'payment_logs' => [
                 'error_code' => fake()->randomElement(['CARD_DECLINED', 'INSUFFICIENT_FUNDS', 'EXPIRED_CARD']),
                 'error_message' => fake()->sentence(),
@@ -100,7 +96,6 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'cancelled',
-            'processed_at' => fake()->dateTimeBetween('-1 month', 'now'),
         ]);
     }
 
@@ -111,8 +106,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'refunded',
-            'processed_at' => fake()->dateTimeBetween('-1 month', 'now'),
-            'transaction_id' => fake()->regexify('[A-Z0-9]{10,20}'),
+            'charge_id' => fake()->regexify('[A-Z0-9]{10,20}'),
             'payment_logs' => [
                 'refund_reason' => fake()->sentence(),
                 'refund_amount' => $attributes['amount'] ?? fake()->randomFloat(2, 1, 999.99),
@@ -128,7 +122,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'payment_method' => 'paypal',
-            'transaction_id' => fake()->regexify('[A-Z0-9]{17}'),
+            'charge_id' => fake()->regexify('[A-Z0-9]{17}'),
             'payment_logs' => [
                 'paypal_transaction_id' => fake()->regexify('[A-Z0-9]{17}'),
                 'payer_id' => fake()->regexify('[A-Z0-9]{13}'),
@@ -144,7 +138,7 @@ class TransactionFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'payment_method' => 'stripe',
-            'transaction_id' => 'ch_'.fake()->regexify('[a-zA-Z0-9]{24}'),
+            'charge_id' => 'ch_'.fake()->regexify('[a-zA-Z0-9]{24}'),
             'payment_logs' => [
                 'stripe_charge_id' => 'ch_'.fake()->regexify('[a-zA-Z0-9]{24}'),
                 'stripe_customer_id' => 'cus_'.fake()->regexify('[a-zA-Z0-9]{14}'),
