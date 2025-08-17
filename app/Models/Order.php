@@ -11,9 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Invoice extends Model
+class Order extends Model
 {
-    /** @use HasFactory<\Database\Factories\InvoiceFactory> */
+    /** @use HasFactory<\Database\Factories\OrderFactory> */
     use HasFactory, HasUuids;
 
     protected $fillable = [
@@ -22,10 +22,6 @@ class Invoice extends Model
         'billing_month',
         'total_requests',
         'total_cost',
-        'youtube_requests',
-        'tiktok_requests',
-        'instagram_requests',
-        'facebook_requests',
         'invoice_sent',
         'invoice_sent_at',
         'paid',
@@ -44,7 +40,7 @@ class Invoice extends Model
     ];
 
     /**
-     * Get the API key that owns this invoice record.
+     * Get the API key that owns this order record.
      */
     public function apiKey(): BelongsTo
     {
@@ -52,7 +48,7 @@ class Invoice extends Model
     }
 
     /**
-     * Get the membership plan associated with this invoice.
+     * Get the membership plan associated with this order.
      */
     public function membershipPlan(): BelongsTo
     {
@@ -60,7 +56,7 @@ class Invoice extends Model
     }
 
     /**
-     * Get the transactions for this invoice.
+     * Get the transactions for this order.
      */
     public function transactions(): HasMany
     {
@@ -95,17 +91,11 @@ class Invoice extends Model
         $this->total_requests = $requests->count();
         $this->total_cost = $requests->sum('cost');
 
-        // Calculate platform breakdown
-        $this->youtube_requests = $requests->where('platform', 'youtube')->count();
-        $this->tiktok_requests = $requests->where('platform', 'tiktok')->count();
-        $this->instagram_requests = $requests->where('platform', 'instagram')->count();
-        $this->facebook_requests = $requests->where('platform', 'facebook')->count();
-
         $this->save();
     }
 
     /**
-     * Mark this invoice as paid.
+     * Mark this order as paid.
      */
     public function markAsPaid(?string $paymentMethod = null): void
     {
@@ -117,7 +107,7 @@ class Invoice extends Model
     }
 
     /**
-     * Mark this invoice as unpaid.
+     * Mark this order as unpaid.
      */
     public function markAsUnpaid(): void
     {
@@ -129,21 +119,21 @@ class Invoice extends Model
     }
 
     /**
-     * Send invoice for this billing.
+     * Send order for this billing.
      */
-    public function sendInvoice(): void
+    public function sendOrder(): void
     {
         $this->update([
             'invoice_sent' => true,
             'invoice_sent_at' => now(),
         ]);
 
-        // Here you would implement actual invoice sending logic
+        // Here you would implement actual order sending logic
         // For now, we just mark it as sent
     }
 
     /**
-     * Scope to filter paid invoices.
+     * Scope to filter paid orders.
      */
     public function scopePaid($query)
     {
@@ -151,7 +141,7 @@ class Invoice extends Model
     }
 
     /**
-     * Scope to filter unpaid invoices.
+     * Scope to filter unpaid orders.
      */
     public function scopeUnpaid($query)
     {
@@ -159,23 +149,23 @@ class Invoice extends Model
     }
 
     /**
-     * Scope to filter invoices with sent invoices.
+     * Scope to filter orders with sent orders.
      */
-    public function scopeInvoiceSent($query)
+    public function scopeOrderSent($query)
     {
         return $query->where('invoice_sent', true);
     }
 
     /**
-     * Scope to filter invoices without sent invoices.
+     * Scope to filter orders without sent orders.
      */
-    public function scopeInvoiceNotSent($query)
+    public function scopeOrderNotSent($query)
     {
         return $query->where('invoice_sent', false);
     }
 
     /**
-     * Scope to filter invoices by month.
+     * Scope to filter orders by month.
      */
     public function scopeForMonth($query, $year, $month)
     {
@@ -184,7 +174,7 @@ class Invoice extends Model
     }
 
     /**
-     * Scope to filter invoices for a specific API key.
+     * Scope to filter orders for a specific API key.
      */
     public function scopeForApiKey($query, $apiKeyId)
     {
@@ -216,15 +206,15 @@ class Invoice extends Model
     }
 
     /**
-     * Get the invoice status badge color.
+     * Get the order status badge color.
      */
-    public function getInvoiceStatusBadgeColorAttribute(): string
+    public function getOrderStatusBadgeColorAttribute(): string
     {
         return $this->invoice_sent ? 'success' : 'warning';
     }
 
     /**
-     * Check if this invoice is overdue (unpaid and invoice sent more than 30 days ago).
+     * Check if this order is overdue (unpaid and order sent more than 30 days ago).
      */
     public function isOverdue(): bool
     {
@@ -232,20 +222,5 @@ class Invoice extends Model
                $this->invoice_sent &&
                $this->invoice_sent_at &&
                $this->invoice_sent_at->diffInDays(now()) > 30;
-    }
-
-    /**
-     * Get the most popular platform for this billing period.
-     */
-    public function getMostPopularPlatformAttribute(): string
-    {
-        $platforms = [
-            'youtube' => $this->youtube_requests,
-            'tiktok' => $this->tiktok_requests,
-            'instagram' => $this->instagram_requests,
-            'facebook' => $this->facebook_requests,
-        ];
-
-        return array_search(max($platforms), $platforms) ?: 'none';
     }
 }

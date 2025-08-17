@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Invoice>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Order>
  */
-class InvoiceFactory extends Factory
+class OrderFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -24,14 +24,6 @@ class InvoiceFactory extends Factory
         $totalRequests = fake()->numberBetween(100, 5000);
         $totalCost = fake()->randomFloat(2, 50.00, 500.00);
 
-        // Distribute requests across platforms
-        $youtubeRequests = fake()->numberBetween(0, $totalRequests);
-        $remaining = $totalRequests - $youtubeRequests;
-        $tiktokRequests = fake()->numberBetween(0, $remaining);
-        $remaining -= $tiktokRequests;
-        $instagramRequests = fake()->numberBetween(0, $remaining);
-        $facebookRequests = $remaining - $instagramRequests;
-
         $invoiceSent = fake()->boolean(70); // 70% chance invoice is sent
         $isPaid = $invoiceSent ? fake()->boolean(60) : false; // 60% of sent invoices are paid
 
@@ -42,10 +34,6 @@ class InvoiceFactory extends Factory
             'billing_month' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-01'),
             'total_requests' => $totalRequests,
             'total_cost' => $totalCost,
-            'youtube_requests' => $youtubeRequests,
-            'tiktok_requests' => $tiktokRequests,
-            'instagram_requests' => $instagramRequests,
-            'facebook_requests' => $facebookRequests,
             'invoice_sent' => $invoiceSent,
             'invoice_sent_at' => $invoiceSent ? fake()->dateTimeBetween('-2 months', 'now') : null,
             'paid' => $isPaid,

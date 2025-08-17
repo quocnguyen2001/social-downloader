@@ -19,7 +19,7 @@ return new class extends SettingsMigration
         $this->migrator->add('payment_gateway.bank_name', null);
         $this->migrator->add('payment_gateway.bank_account', null);
         $this->migrator->add('payment_gateway.bank_account_number', null);
-        $this->migrator->add('payment_gateway.money_transfer_content_template', 'Payment for invoice #{invoice_id} - {user_name}');
+        $this->migrator->add('payment_gateway.money_transfer_content_template', 'Payment for order #{order_id} - {user_name}');
         $this->migrator->add('payment_gateway.api_transactions_api', null);
         $this->migrator->add('payment_gateway.bank_transfer_enabled', false);
         $this->migrator->add('payment_gateway.bank_transfer_currency', 'VND');

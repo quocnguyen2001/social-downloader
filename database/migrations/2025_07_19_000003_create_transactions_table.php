@@ -18,7 +18,7 @@ return new class extends Migration
 
             // Required relationships
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignUuid('invoice_id')->constrained('invoices')->onDelete('cascade');
+            $table->foreignUuid('invoice_id')->constrained('orders')->onDelete('cascade');
 
             // Transaction details
             $table->string('email'); // User's email for transaction

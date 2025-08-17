@@ -11,8 +11,8 @@ use App\Http\Requests\Api\TriggerVideoDownloadRequest;
 use App\Jobs\ProcessVideoDownload;
 use App\Models\DownloadOption;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 

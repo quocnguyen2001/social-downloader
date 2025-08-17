@@ -54,7 +54,7 @@ return [
         ],
     ],
 
-    'invoice' => [
+    'order' => [
         'singular' => 'Hóa đơn',
         'plural' => 'Hóa đơn',
         'fields' => [
@@ -63,10 +63,6 @@ return [
             'billing_month' => 'Tháng thanh toán',
             'total_requests' => 'Tổng yêu cầu',
             'total_cost' => 'Tổng chi phí',
-            'youtube_requests' => 'Yêu cầu YouTube',
-            'tiktok_requests' => 'Yêu cầu TikTok',
-            'instagram_requests' => 'Yêu cầu Instagram',
-            'facebook_requests' => 'Yêu cầu Facebook',
             'invoice_sent' => 'Đã gửi hóa đơn',
             'invoice_sent_at' => 'Thời gian gửi hóa đơn',
             'paid' => 'Đã thanh toán',

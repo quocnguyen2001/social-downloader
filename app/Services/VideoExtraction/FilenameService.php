@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Service for generating stable, hash-based filenames for video downloads.
- * 
+ *
  * This service ensures consistent naming regardless of video title changes
  * and provides utilities for filename management.
  */
@@ -24,16 +24,16 @@ class FilenameService
      * @return string Stable filename template for yt-dlp
      */
     public function generateStableFilename(
-        string $originUrl, 
-        string $cdnId, 
+        string $originUrl,
+        string $cdnId,
         ?string $downloadSessionId = null,
         bool $includeTimestamp = true
     ): string {
         // Create a unique identifier based on URL, format, and session
-        $hashInput = $this->normalizeUrl($originUrl) . '|' . $cdnId;
-        
+        $hashInput = $this->normalizeUrl($originUrl).'|'.$cdnId;
+
         if ($downloadSessionId) {
-            $hashInput .= '|' . $downloadSessionId;
+            $hashInput .= '|'.$downloadSessionId;
         }
 
         // Generate a short, stable hash
@@ -69,7 +69,8 @@ class FilenameService
      */
     public function generateContentHash(string $originUrl, string $cdnId): string
     {
-        $hashInput = $this->normalizeUrl($originUrl) . '|' . $cdnId;
+        $hashInput = $this->normalizeUrl($originUrl).'|'.$cdnId;
+
         return substr(hash('sha256', $hashInput), 0, 16);
     }
 
@@ -83,7 +84,7 @@ class FilenameService
     {
         // Remove extension first
         $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-        
+
         // Pattern: hash_timestamp or just hash
         if (preg_match('/^([a-f0-9]{16})(?:_\d{8}_\d{6})?$/', $nameWithoutExt, $matches)) {
             return $matches[1];
@@ -116,21 +117,21 @@ class FilenameService
     {
         $title = $metadata['title'] ?? 'video';
         $author = $metadata['uploader'] ?? null;
-        
+
         // Clean title for filename use
         $cleanTitle = $this->sanitizeForFilename($title);
-        
+
         // Add author if available and space permits
         if ($author && strlen($cleanTitle) < $maxLength - 20) {
             $cleanAuthor = $this->sanitizeForFilename($author);
             $cleanTitle = "{$cleanAuthor} - {$cleanTitle}";
         }
-        
+
         // Truncate if too long
         if (strlen($cleanTitle) > $maxLength - strlen($extension) - 1) {
-            $cleanTitle = substr($cleanTitle, 0, $maxLength - strlen($extension) - 4) . '...';
+            $cleanTitle = substr($cleanTitle, 0, $maxLength - strlen($extension) - 4).'...';
         }
-        
+
         return "{$cleanTitle}.{$extension}";
     }
 
@@ -144,26 +145,26 @@ class FilenameService
     private function normalizeUrl(string $url): string
     {
         $parsed = parse_url($url);
-        
-        if (!$parsed) {
+
+        if (! $parsed) {
             return $url;
         }
-        
+
         // Rebuild URL without certain query parameters
-        $normalized = $parsed['scheme'] . '://' . $parsed['host'];
-        
+        $normalized = $parsed['scheme'].'://'.$parsed['host'];
+
         if (isset($parsed['port'])) {
-            $normalized .= ':' . $parsed['port'];
+            $normalized .= ':'.$parsed['port'];
         }
-        
+
         if (isset($parsed['path'])) {
             $normalized .= $parsed['path'];
         }
-        
+
         // For some platforms, preserve important query parameters
         if (isset($parsed['query'])) {
             parse_str($parsed['query'], $queryParams);
-            
+
             // Keep only content-relevant parameters
             $keepParams = [];
             foreach (['v', 'video_id', 'p', 'reel'] as $param) {
@@ -171,12 +172,12 @@ class FilenameService
                     $keepParams[$param] = $queryParams[$param];
                 }
             }
-            
-            if (!empty($keepParams)) {
-                $normalized .= '?' . http_build_query($keepParams);
+
+            if (! empty($keepParams)) {
+                $normalized .= '?'.http_build_query($keepParams);
             }
         }
-        
+
         return $normalized;
     }
 
@@ -190,13 +191,13 @@ class FilenameService
     {
         // Remove or replace problematic characters
         $sanitized = preg_replace('/[^\w\s\-_\.]/', '', $string);
-        
+
         // Replace multiple spaces/underscores with single ones
         $sanitized = preg_replace('/[\s_]+/', '_', $sanitized);
-        
+
         // Remove leading/trailing underscores and dots
         $sanitized = trim($sanitized, '_.');
-        
+
         return $sanitized ?: 'video';
     }
 }

@@ -76,8 +76,9 @@ class YtDlpService
         if ($envPath !== null && trim($envPath) !== '') {
             Log::info('Using cookie file path from environment variable', [
                 'path' => $envPath,
-                'source' => 'environment'
+                'source' => 'environment',
             ]);
+
             return $envPath;
         }
 
@@ -89,18 +90,21 @@ class YtDlpService
             if ($settingsPath !== null && trim($settingsPath) !== '') {
                 Log::info('Using cookie file path from settings', [
                     'path' => $settingsPath,
-                    'source' => 'settings'
+                    'source' => 'settings',
                 ]);
-                return  $settingsPath;
+
+                return $settingsPath;
             }
 
             Log::info('No cookie file path configured in settings');
+
             return null;
 
         } catch (\Exception $e) {
             Log::warning('Failed to load cookie settings, no fallback available', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }

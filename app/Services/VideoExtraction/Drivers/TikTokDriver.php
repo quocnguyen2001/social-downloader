@@ -8,7 +8,7 @@ use App\Enums\Platform;
 
 /**
  * TikTok video extraction driver.
- * 
+ *
  * Handles video extraction from TikTok URLs including:
  * - tiktok.com/@user/video/*
  * - vm.tiktok.com/*

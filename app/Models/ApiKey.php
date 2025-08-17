@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// Import Order model for relationship
+
 class ApiKey extends Model
 {
     /** @use HasFactory<\Database\Factories\ApiKeyFactory> */
@@ -55,11 +57,11 @@ class ApiKey extends Model
     }
 
     /**
-     * Get all invoices for this API key.
+     * Get all orders for this API key.
      */
-    public function invoices()
+    public function orders()
     {
-        return $this->hasMany(Invoice::class);
+        return $this->hasMany(Order::class);
     }
 
     /**
@@ -210,3 +212,5 @@ class ApiKey extends Model
         return $query->where('status', ApiKeyStatus::SUSPENDED);
     }
 }
+
+// Import for Order relationship

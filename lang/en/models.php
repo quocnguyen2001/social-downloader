@@ -54,19 +54,15 @@ return [
         ],
     ],
 
-    'invoice' => [
-        'singular' => 'Invoice',
-        'plural' => 'Invoices',
+    'order' => [
+        'singular' => 'Order',
+        'plural' => 'Orders',
         'fields' => [
             'id' => 'ID',
             'api_key_id' => 'API Key',
             'billing_month' => 'Billing Month',
             'total_requests' => 'Total Requests',
             'total_cost' => 'Total Cost',
-            'youtube_requests' => 'YouTube Requests',
-            'tiktok_requests' => 'TikTok Requests',
-            'instagram_requests' => 'Instagram Requests',
-            'facebook_requests' => 'Facebook Requests',
             'invoice_sent' => 'Invoice Sent',
             'invoice_sent_at' => 'Invoice Sent At',
             'paid' => 'Paid',

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\InvoiceResource\Pages;
+use App\Filament\Resources\OrderResource\Pages;
 use App\Models\ApiKey;
-use App\Models\Invoice;
 use App\Models\MembershipPlan;
+use App\Models\Order;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
@@ -19,19 +19,19 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class InvoiceResource extends Resource
+class OrderResource extends Resource
 {
-    protected static ?string $model = Invoice::class;
+    protected static ?string $model = Order::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     protected static ?string $navigationGroup = 'Billing & Revenue';
 
-    protected static ?string $navigationLabel = 'Invoices';
+    protected static ?string $navigationLabel = 'Orders';
 
-    protected static ?string $modelLabel = 'Invoice';
+    protected static ?string $modelLabel = 'Order';
 
-    protected static ?string $pluralModelLabel = 'Invoices';
+    protected static ?string $pluralModelLabel = 'Orders';
 
     protected static ?int $navigationSort = 1;
 
@@ -39,7 +39,7 @@ class InvoiceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Invoice Information')
+                Forms\Components\Section::make('Order Information')
                     ->schema([
                         Forms\Components\Select::make('api_key_id')
                             ->label(trans('messages.table.columns.api_key'))
@@ -70,29 +70,6 @@ class InvoiceResource extends Resource
                             ->step(0.01)
                             ->default(0.00)
                             ->required(),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Platform Breakdown')
-                    ->schema([
-                        Forms\Components\TextInput::make('youtube_requests')
-                            ->label('YouTube Requests')
-                            ->numeric()
-                            ->default(0),
-
-                        Forms\Components\TextInput::make('tiktok_requests')
-                            ->label('TikTok Requests')
-                            ->numeric()
-                            ->default(0),
-
-                        Forms\Components\TextInput::make('instagram_requests')
-                            ->label('Instagram Requests')
-                            ->numeric()
-                            ->default(0),
-
-                        Forms\Components\TextInput::make('facebook_requests')
-                            ->label('Facebook Requests')
-                            ->numeric()
-                            ->default(0),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Payment Information')
@@ -225,17 +202,17 @@ class InvoiceResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
 
-                Tables\Actions\Action::make('send_invoice')
+                Tables\Actions\Action::make('send_order')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('info')
-                    ->action(function (Invoice $record) {
-                        $record->sendInvoice();
+                    ->action(function (Order $record) {
+                        $record->sendOrder();
                         Notification::make()
-                            ->title('Invoice sent successfully')
+                            ->title('Order sent successfully')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Invoice $record): bool => ! $record->invoice_sent),
+                    ->visible(fn (Order $record): bool => ! $record->invoice_sent),
 
                 Tables\Actions\Action::make('mark_as_paid')
                     ->icon('heroicon-o-check-circle')
@@ -250,32 +227,32 @@ class InvoiceResource extends Resource
                             ])
                             ->required(),
                     ])
-                    ->action(function (Invoice $record, array $data) {
+                    ->action(function (Order $record, array $data) {
                         $record->markAsPaid($data['payment_method']);
                         Notification::make()
-                            ->title('Invoice marked as paid')
+                            ->title('Order marked as paid')
                             ->success()
                             ->send();
                     })
-                    ->visible(fn (Invoice $record): bool => ! $record->paid),
+                    ->visible(fn (Order $record): bool => ! $record->paid),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
 
-                    Tables\Actions\BulkAction::make('send_invoices')
+                    Tables\Actions\BulkAction::make('send_orders')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
                         ->action(function ($records) {
                             $sentCount = 0;
                             foreach ($records as $record) {
                                 if (! $record->invoice_sent) {
-                                    $record->sendInvoice();
+                                    $record->sendOrder();
                                     $sentCount++;
                                 }
                             }
                             Notification::make()
-                                ->title("Sent {$sentCount} invoices")
+                                ->title("Sent {$sentCount} orders")
                                 ->success()
                                 ->send();
                         }),
@@ -296,7 +273,7 @@ class InvoiceResource extends Resource
                         ->action(function ($records, array $data) {
                             $records->each->markAsPaid($data['payment_method']);
                             Notification::make()
-                                ->title('Invoices marked as paid')
+                                ->title('Orders marked as paid')
                                 ->success()
                                 ->send();
                         }),
@@ -315,14 +292,14 @@ class InvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInvoices::route('/'),
-            'create' => Pages\CreateInvoice::route('/create'),
-            'view' => Pages\ViewInvoice::route('/{record}'),
+            'index' => Pages\ListOrders::route('/'),
+            'create' => Pages\CreateOrder::route('/create'),
+            'view' => Pages\ViewOrder::route('/{record}'),
         ];
     }
 
     /**
-     * Disable edit capabilities for invoices.
+     * Disable edit capabilities for orders.
      */
     public static function canEdit($record): bool
     {

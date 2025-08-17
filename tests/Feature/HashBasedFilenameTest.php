@@ -120,7 +120,7 @@ class HashBasedFilenameTest extends TestCase
         $cdnId = 'best';
 
         $hashWithoutSession = $this->filenameService->generateContentHash($url, $cdnId);
-        
+
         $filenameWithSession = $this->filenameService->generateStableFilename($url, $cdnId, 'session-123', false);
         $filenameWithoutSession = $this->filenameService->generateStableFilename($url, $cdnId, null, false);
 

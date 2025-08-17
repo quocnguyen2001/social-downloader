@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Enums\DownloadOptionStatus;
-use App\Models\DownloadOption;
 use App\Models\DownloadSession;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -50,14 +49,15 @@ class CleanupExpiredDownloads extends Command
                 ->expired()
                 ->with(['downloadOptions' => function ($query) {
                     $query->where('status', DownloadOptionStatus::DOWNLOADED)
-                          ->whereNotNull('storage_disk')
-                          ->whereNotNull('storage_file_path');
+                        ->whereNotNull('storage_disk')
+                        ->whereNotNull('storage_file_path');
                 }])
                 ->limit($batchSize)
                 ->get();
 
             if ($expiredSessions->isEmpty()) {
                 $this->info('No expired download sessions found.');
+
                 return 0;
             }
 
@@ -70,6 +70,7 @@ class CleanupExpiredDownloads extends Command
 
             if ($totalFiles === 0) {
                 $this->info('No downloaded files found in expired sessions.');
+
                 return 0;
             }
 
@@ -82,6 +83,7 @@ class CleanupExpiredDownloads extends Command
 
             if ($dryRun) {
                 $this->info('DRY RUN completed. No files were deleted.');
+
                 return 0;
             }
 

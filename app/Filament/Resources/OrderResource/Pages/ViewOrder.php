@@ -2,22 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\InvoiceResource\Pages;
+namespace App\Filament\Resources\OrderResource\Pages;
 
-use App\Filament\Resources\InvoiceResource;
+use App\Filament\Resources\OrderResource;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewInvoice extends ViewRecord
+class ViewOrder extends ViewRecord
 {
-    protected static string $resource = InvoiceResource::class;
+    protected static string $resource = OrderResource::class;
 
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Invoice Information')
+                Infolists\Components\Section::make('Order Information')
                     ->schema([
                         Infolists\Components\TextEntry::make('apiKey.name')
                             ->label('API Key')
@@ -51,34 +51,6 @@ class ViewInvoice extends ViewRecord
                         Infolists\Components\TextEntry::make('created_at')
                             ->label('Created At')
                             ->dateTime(),
-                    ])
-                    ->columns(2),
-
-                Infolists\Components\Section::make('Platform Breakdown')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('youtube_requests')
-                            ->label('YouTube Requests')
-                            ->numeric()
-                            ->badge()
-                            ->color('danger'),
-
-                        Infolists\Components\TextEntry::make('tiktok_requests')
-                            ->label('TikTok Requests')
-                            ->numeric()
-                            ->badge()
-                            ->color('gray'),
-
-                        Infolists\Components\TextEntry::make('instagram_requests')
-                            ->label('Instagram Requests')
-                            ->numeric()
-                            ->badge()
-                            ->color('pink'),
-
-                        Infolists\Components\TextEntry::make('facebook_requests')
-                            ->label('Facebook Requests')
-                            ->numeric()
-                            ->badge()
-                            ->color('blue'),
                     ])
                     ->columns(2),
 

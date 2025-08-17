@@ -29,7 +29,7 @@ return [
     'monthly_billing' => [
         'mark_as_paid' => 'Đánh dấu đã thanh toán',
         'mark_as_unpaid' => 'Đánh dấu chưa thanh toán',
-        'send_invoice' => 'Gửi hóa đơn',
+        'send_order' => 'Gửi đơn hàng',
         'recalculate' => 'Tính toán lại',
     ],
 

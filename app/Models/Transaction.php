@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// Import Order model for relationship
+
 class Transaction extends Model
 {
     /** @use HasFactory<\Database\Factories\TransactionFactory> */
@@ -42,11 +44,11 @@ class Transaction extends Model
     }
 
     /**
-     * Get the invoice that this transaction belongs to.
+     * Get the order that this transaction belongs to.
      */
-    public function invoice(): BelongsTo
+    public function order(): BelongsTo
     {
-        return $this->belongsTo(Invoice::class);
+        return $this->belongsTo(Order::class);
     }
 
     /**
@@ -145,11 +147,11 @@ class Transaction extends Model
     }
 
     /**
-     * Scope to filter transactions for a specific invoice.
+     * Scope to filter transactions for a specific order.
      */
-    public function scopeForInvoice($query, $invoiceId)
+    public function scopeForOrder($query, $orderId)
     {
-        return $query->where('invoice_id', $invoiceId);
+        return $query->where('invoice_id', $orderId);
     }
 
     /**

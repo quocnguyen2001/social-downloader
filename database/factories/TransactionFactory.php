@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -37,7 +37,7 @@ class TransactionFactory extends Factory
         return [
             'id' => Str::uuid(),
             'user_id' => User::factory(),
-            'invoice_id' => Invoice::factory(),
+            'invoice_id' => Order::factory(),
             'email' => fake()->email(),
             'payment_method' => fake()->randomElement($paymentMethods),
             'currency' => fake()->randomElement($currencies),
