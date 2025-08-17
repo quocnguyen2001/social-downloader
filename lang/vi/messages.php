@@ -39,6 +39,17 @@ return [
         'download_not_started' => 'Tải xuống video chưa được bắt đầu',
     ],
 
+    'payment' => [
+        'bank_transfer_initiated' => 'Thanh toán chuyển khoản đã được khởi tạo. Vui lòng hoàn tất chuyển khoản theo hướng dẫn được cung cấp.',
+        'bank_transfer_instructions' => 'Vui lòng chuyển đúng số tiền vào thông tin tài khoản ngân hàng được cung cấp trong email xác nhận đơn hàng.',
+        'bank_transfer_not_configured' => 'Phương thức thanh toán chuyển khoản chưa được cấu hình đúng cách.',
+        'bank_transfer_failed' => 'Xử lý chuyển khoản ngân hàng thất bại. Vui lòng thử lại hoặc liên hệ hỗ trợ.',
+        'paypal_processing' => 'Thanh toán PayPal đang được xử lý. Bạn sẽ được chuyển hướng để hoàn tất thanh toán.',
+        'paypal_checkout_created' => 'Thanh toán PayPal đã được tạo thành công. Vui lòng hoàn tất thanh toán.',
+        'paypal_not_configured' => 'Phương thức thanh toán PayPal chưa được cấu hình đúng cách.',
+        'paypal_failed' => 'Thanh toán PayPal thất bại. Vui lòng thử lại hoặc sử dụng phương thức thanh toán khác.',
+    ],
+
     'navigation' => [
         'dashboard' => 'Bảng điều khiển',
         'api_keys' => 'Khóa API',

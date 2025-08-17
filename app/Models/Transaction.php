@@ -41,6 +41,14 @@ class Transaction extends Model
     }
 
     /**
+     * Get the order that this transaction belongs to.
+     */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    /**
      * Mark this transaction as completed.
      */
     public function markAsCompleted(?string $chargeId = null): void
@@ -150,7 +158,7 @@ class Transaction extends Model
             return 'N/A';
         }
 
-        return number_format($this->amount, 2).' '.strtoupper($this->currency);
+        return number_format((float) $this->amount, 2).' '.strtoupper($this->currency);
     }
 
     /**

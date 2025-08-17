@@ -127,6 +127,8 @@ return [
         'paypal_client_secret_required' => 'PayPal Client Secret is required when PayPal is enabled',
         'invalid_api_url' => 'Invalid API URL format',
         'invalid_currency' => 'Invalid currency code',
+        'invalid_payment_method' => 'The selected payment method is not available',
+        'no_payment_methods_enabled' => 'No payment methods are currently enabled',
     ],
 
     'status' => [

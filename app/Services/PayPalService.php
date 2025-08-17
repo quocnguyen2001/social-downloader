@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Log;
 use PayPalServerSDK\Environment;
 use PayPalServerSDK\PayPalServerSDKClient;
 use PayPalServerSDK\PayPalServerSDKClientBuilder;
+use PayPalServerSDK\Models\OrderRequest;
+use PayPalServerSDK\Models\PurchaseUnitRequest;
+use PayPalServerSDK\Models\AmountWithBreakdown;
+use PayPalServerSDK\Models\ApplicationContext;
 
 /**
  * PayPal Service Wrapper.
@@ -82,13 +86,46 @@ class PayPalService
     public function createOrder(array $orderData): array
     {
         try {
-            // For now, return a placeholder implementation
-            // This will be implemented when actual payment processing is needed
+            $client = $this->getClient();
+
+            // Build the order request
+            $orderRequest = $this->buildOrderRequest($orderData);
+
+            // Create the order using PayPal SDK
+            $ordersController = $client->getOrdersController();
+            $response = $ordersController->ordersCreate($orderRequest);
+
+            if ($response->getStatusCode() !== 201) {
+                throw new \Exception('PayPal order creation failed with status: ' . $response->getStatusCode());
+            }
+
+            $order = $response->getResult();
+
+            // Extract approval URL for checkout
+            $approvalUrl = null;
+            foreach ($order->getLinks() as $link) {
+                if ($link->getRel() === 'approve') {
+                    $approvalUrl = $link->getHref();
+                    break;
+                }
+            }
+
+            if (!$approvalUrl) {
+                throw new \Exception('PayPal approval URL not found in response');
+            }
+
+            Log::info('PayPal order created successfully', [
+                'paypal_order_id' => $order->getId(),
+                'status' => $order->getStatus(),
+                'approval_url' => $approvalUrl,
+            ]);
+
             return [
                 'success' => true,
-                'order_id' => 'test_order_'.uniqid(),
-                'status' => 'CREATED',
-                'message' => 'PayPal order creation placeholder - implement when needed',
+                'paypal_order_id' => $order->getId(),
+                'status' => $order->getStatus(),
+                'approval_url' => $approvalUrl,
+                'checkout_url' => $approvalUrl,
             ];
 
         } catch (\Exception $e) {
@@ -141,30 +178,38 @@ class PayPalService
     /**
      * Build PayPal order request body.
      */
-    private function buildOrderRequest(array $orderData): array
+    private function buildOrderRequest(array $orderData): OrderRequest
     {
-        return [
-            'intent' => 'CAPTURE',
-            'purchase_units' => [
-                [
-                    'reference_id' => $orderData['reference_id'] ?? uniqid(),
-                    'amount' => [
-                        'currency_code' => $orderData['currency'] ?? $this->settings->paypal_currency,
-                        'value' => $orderData['amount'],
-                    ],
-                    'description' => $orderData['description'] ?? 'Payment',
-                ],
-            ],
-            'application_context' => [
-                'cancel_url' => $orderData['cancel_url'] ?? url('/payment/cancel'),
-                'return_url' => $orderData['return_url'] ?? url('/payment/success'),
-                'brand_name' => $orderData['brand_name'] ?? config('app.name'),
-                'locale' => $orderData['locale'] ?? 'en-US',
-                'landing_page' => 'BILLING',
-                'shipping_preference' => 'NO_SHIPPING',
-                'user_action' => 'PAY_NOW',
-            ],
-        ];
+        // Create amount object
+        $amount = AmountWithBreakdown::builder()
+            ->currencyCode($orderData['currency'] ?? $this->settings->paypal_currency)
+            ->value(number_format((float)$orderData['amount'], 2, '.', ''))
+            ->build();
+
+        // Create purchase unit
+        $purchaseUnit = PurchaseUnitRequest::builder()
+            ->referenceId($orderData['reference_id'] ?? uniqid())
+            ->amount($amount)
+            ->description($orderData['description'] ?? 'Payment')
+            ->build();
+
+        // Create application context
+        $applicationContext = ApplicationContext::builder()
+            ->cancelUrl($orderData['cancel_url'] ?? url('/payment/cancel'))
+            ->returnUrl($orderData['return_url'] ?? url('/payment/success'))
+            ->brandName($orderData['brand_name'] ?? config('app.name'))
+            ->locale($orderData['locale'] ?? 'en-US')
+            ->landingPage('BILLING')
+            ->shippingPreference('NO_SHIPPING')
+            ->userAction('PAY_NOW')
+            ->build();
+
+        // Create and return order request
+        return OrderRequest::builder()
+            ->intent('CAPTURE')
+            ->purchaseUnits([$purchaseUnit])
+            ->applicationContext($applicationContext)
+            ->build();
     }
 
     /**

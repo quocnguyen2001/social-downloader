@@ -127,6 +127,8 @@ return [
         'paypal_client_secret_required' => 'PayPal Client Secret là bắt buộc khi bật PayPal',
         'invalid_api_url' => 'Định dạng URL API không hợp lệ',
         'invalid_currency' => 'Mã tiền tệ không hợp lệ',
+        'invalid_payment_method' => 'Phương thức thanh toán được chọn không khả dụng',
+        'no_payment_methods_enabled' => 'Hiện tại không có phương thức thanh toán nào được bật',
     ],
 
     'status' => [

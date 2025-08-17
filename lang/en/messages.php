@@ -45,7 +45,11 @@ return [
     'payment' => [
         'bank_transfer_initiated' => 'Bank transfer payment initiated. Please complete the transfer using the provided instructions.',
         'bank_transfer_instructions' => 'Please transfer the exact amount to the bank account details provided in your order confirmation email.',
+        'bank_transfer_not_configured' => 'Bank transfer payment method is not properly configured.',
+        'bank_transfer_failed' => 'Bank transfer processing failed. Please try again or contact support.',
         'paypal_processing' => 'PayPal payment is being processed. You will be redirected to complete the payment.',
+        'paypal_checkout_created' => 'PayPal checkout created successfully. Please complete the payment.',
+        'paypal_not_configured' => 'PayPal payment method is not properly configured.',
         'paypal_failed' => 'PayPal payment failed. Please try again or use a different payment method.',
     ],
 

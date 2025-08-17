@@ -30,14 +30,14 @@ class OrderService
         return DB::transaction(function () use ($user, $data) {
             // Validate membership plan
             $membershipPlan = $this->validateMembershipPlan($data['membership_plan_id']);
-            
+
             // Calculate order totals
             $subtotal = $membershipPlan->price;
-            $discount = $this->calculateDiscount($subtotal, $data['coupon_code'] ?? null);
+            $discount = $this->calculateDiscount((float) $subtotal, $data['coupon_code'] ?? null);
             $total = $subtotal - $discount;
 
             // Create the order
-            $order = Order::create([
+            $order = Order::query()->create([
                 'user_id' => $user->id,
                 'membership_plan_id' => $membershipPlan->id,
                 'subtotal' => $subtotal,
@@ -139,9 +139,9 @@ class OrderService
     /**
      * Validate membership plan availability.
      */
-    private function validateMembershipPlan(int $membershipPlanId): MembershipPlan
+    private function validateMembershipPlan(int|string $membershipPlanId): MembershipPlan
     {
-        $plan = MembershipPlan::where('id', $membershipPlanId)
+        $plan = MembershipPlan::query()->where('id', $membershipPlanId)
             ->where('is_active', true)
             ->first();
 

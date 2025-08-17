@@ -32,22 +32,34 @@ class OrderController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             if (!$user) {
                 return $this->unauthorizedResponse(__('messages.error.authentication_required'));
             }
 
-            $order = $this->orderService->createOrder($user, $request->validated());
+            $validatedData = $request->validated();
+
+            // Additional payment method validation
+            if (!$this->paymentService->validatePaymentMethod($validatedData['payment_method'])) {
+                return $this->badRequestResponse(__('payment_gateway.validation.invalid_payment_method'));
+            }
+
+            // Check if any payment methods are available
+            $availablePaymentMethods = $this->paymentService->getAvailablePaymentMethods();
+            if (empty($availablePaymentMethods)) {
+                return $this->badRequestResponse(__('payment_gateway.validation.no_payment_methods_enabled'));
+            }
+
+            $order = $this->orderService->createOrder($user, $validatedData);
 
             // Process payment
             $paymentResult = $this->paymentService->processPayment($order->transaction);
 
             return $this->createdResponse(
-                new OrderResource($order),
+                new OrderResource($order)
+                    ->additional(['payment' => $paymentResult]),
                 __('messages.success.order_created')
-            )->additional([
-                'payment' => $paymentResult
-            ]);
+            );
 
         } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse($e->getMessage());
@@ -73,7 +85,7 @@ class OrderController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             if (!$user) {
                 return $this->unauthorizedResponse(__('messages.error.authentication_required'));
             }
@@ -107,7 +119,7 @@ class OrderController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             if (!$user) {
                 return $this->unauthorizedResponse(__('messages.error.authentication_required'));
             }
