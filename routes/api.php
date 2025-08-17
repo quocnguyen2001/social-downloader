@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoDownloadController;
 use App\Http\Controllers\Api\VideoExtractionController;
+use App\Http\Controllers\Api\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,6 +44,17 @@ Route::prefix('v1')->group(function () {
         Route::get('/me', [UserController::class, 'me'])->name('api.user.me');
         Route::post('/me', [UserController::class, 'updateProfile'])->name('api.user.update-profile');
     });
+
+    // Order management routes (require Sanctum authentication)
+    Route::middleware('auth:sanctum')->prefix('orders')->group(function () {
+        Route::post('/', [OrderController::class, 'store'])->name('api.orders.store');
+        Route::get('/', [OrderController::class, 'index'])->name('api.orders.index');
+        Route::get('/{id}', [OrderController::class, 'show'])->name('api.orders.show');
+    });
+
+    // Customer orders route (alternative endpoint)
+    Route::middleware('auth:sanctum')->get('/customer/orders', [OrderController::class, 'index'])
+        ->name('api.customer.orders');
 
     // Public endpoints (no authentication required)
     Route::get('/settings', [SettingsController::class, 'index'])

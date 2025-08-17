@@ -94,6 +94,14 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Get the orders for the user.
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
      * Check if the user has a specific membership plan.
      */
     public function hasMembershipPlan(string $planSlug): bool

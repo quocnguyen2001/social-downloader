@@ -22,6 +22,9 @@ return [
         'failed_sessions_retried' => 'Queued :count failed sessions for retry',
         'download_triggered' => 'Video download has been triggered and will be processed in the background',
         'download_ready' => 'Video download is ready for access',
+        'order_created' => 'Order created successfully',
+        'orders_retrieved' => 'Orders retrieved successfully',
+        'order_retrieved' => 'Order retrieved successfully',
     ],
 
     'warnings' => [
@@ -37,6 +40,13 @@ return [
         'pending_processing' => ':pending pending, :processing processing',
         'download_processing' => 'Video download is currently being processed',
         'download_not_started' => 'Video download has not been started yet',
+    ],
+
+    'payment' => [
+        'bank_transfer_initiated' => 'Bank transfer payment initiated. Please complete the transfer using the provided instructions.',
+        'bank_transfer_instructions' => 'Please transfer the exact amount to the bank account details provided in your order confirmation email.',
+        'paypal_processing' => 'PayPal payment is being processed. You will be redirected to complete the payment.',
+        'paypal_failed' => 'PayPal payment failed. Please try again or use a different payment method.',
     ],
 
     'navigation' => [
@@ -339,5 +349,11 @@ return [
         'missing_origin_url' => 'Origin URL is missing from download session',
         'download_failed' => 'Video download has failed',
         'internal_server_error' => 'An internal server error occurred',
+        'authentication_required' => 'Authentication is required',
+        'membership_plan_not_found' => 'Membership plan not found or inactive',
+        'order_creation_failed' => 'Failed to create order',
+        'orders_retrieval_failed' => 'Failed to retrieve orders',
+        'order_retrieval_failed' => 'Failed to retrieve order',
+        'order_not_found' => 'Order not found',
     ],
 ];

@@ -17,6 +17,7 @@ class Order extends Model
     use HasFactory, HasUuids;
 
     protected $fillable = [
+        'user_id',
         'membership_plan_id',
         'payment_id',
         'total',
@@ -33,11 +34,27 @@ class Order extends Model
     ];
 
     /**
+     * Get the user that owns this order.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * Get the membership plan associated with this order.
      */
     public function membershipPlan(): BelongsTo
     {
         return $this->belongsTo(MembershipPlan::class);
+    }
+
+    /**
+     * Get the transaction associated with this order.
+     */
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'payment_id');
     }
 
 

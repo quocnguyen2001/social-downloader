@@ -252,4 +252,98 @@ class VietQRService
             fn (string $bankName): bool => str_contains(strtolower($bankName), $searchTerm)
         );
     }
+
+    /**
+     * Generate VietQR code image URL.
+     *
+     * @param string $bankId Bank identifier code
+     * @param string $accountNo Bank account number
+     * @param string $template QR template type
+     * @param float|null $amount Transaction amount (optional)
+     * @param string|null $description Additional information (optional)
+     * @param string|null $accountName Account holder name (optional)
+     *
+     * @return string Generated QR code image URL
+     *
+     * @throws \InvalidArgumentException When required parameters are invalid
+     */
+    public function getQRCodeImageURL(
+        string $bankId,
+        string $accountNo,
+        string $template,
+        ?float $amount = null,
+        ?string $description = null,
+        ?string $accountName = null
+    ): string {
+        // Validate required parameters
+        if (empty(trim($bankId))) {
+            throw new \InvalidArgumentException('Bank ID cannot be empty');
+        }
+
+        if (empty(trim($accountNo))) {
+            throw new \InvalidArgumentException('Account number cannot be empty');
+        }
+
+        if (empty(trim($template))) {
+            throw new \InvalidArgumentException('Template cannot be empty');
+        }
+
+        // Sanitize parameters for URL construction
+        $bankId = trim($bankId);
+        $accountNo = trim($accountNo);
+        $template = trim($template);
+
+        // Build base URL
+        $baseUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-{$template}.png";
+
+        // Build query parameters
+        $queryParams = [];
+
+        if ($amount !== null && $amount > 0) {
+            $queryParams['amount'] = number_format($amount, 0, '', '');
+        }
+
+        if (!empty($description)) {
+            $queryParams['addInfo'] = urlencode(trim($description));
+        }
+
+        if (!empty($accountName)) {
+            $queryParams['accountName'] = urlencode(trim($accountName));
+        }
+
+        // Append query parameters if any exist
+        if (!empty($queryParams)) {
+            $baseUrl .= '?' . http_build_query($queryParams);
+        }
+
+        return $baseUrl;
+    }
+
+    /**
+     * Generate bank logo image URL.
+     *
+     * @param string $bankCode Three-letter bank code (e.g., "ABB")
+     *
+     * @return string Generated bank logo image URL
+     *
+     * @throws \InvalidArgumentException When bank code is invalid
+     */
+    public function getBankLogoImageURL(string $bankCode): string
+    {
+        // Validate bank code parameter
+        if (empty(trim($bankCode))) {
+            throw new \InvalidArgumentException('Bank code cannot be empty');
+        }
+
+        // Sanitize and format bank code
+        $bankCode = strtoupper(trim($bankCode));
+
+        // Validate bank code format (should be 2-4 characters)
+        if (!preg_match('/^[A-Z]{2,4}$/', $bankCode)) {
+            throw new \InvalidArgumentException('Bank code must be 2-4 uppercase letters');
+        }
+
+        // Build and return logo URL
+        return "https://api.vietqr.io/img/{$bankCode}.png";
+    }
 }
