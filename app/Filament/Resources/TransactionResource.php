@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
@@ -183,6 +184,22 @@ class TransactionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+
+                Tables\Actions\Action::make('mark_as_completed')
+                    ->label('Mark as Completed')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Mark Transaction as Completed')
+                    ->modalDescription('Are you sure you want to mark this transaction as completed? This action cannot be undone.')
+                    ->action(function (Transaction $record) {
+                        $record->markAsCompleted();
+                        Notification::make()
+                            ->title('Transaction marked as completed successfully')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Transaction $record): bool => $record->status !== 'completed'),
             ])
             ->bulkActions([
                 // No bulk actions for read-only resource

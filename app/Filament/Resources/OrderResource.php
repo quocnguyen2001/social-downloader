@@ -284,4 +284,13 @@ class OrderResource extends Resource
     {
         return false;
     }
+
+    /**
+     * Optimize query performance with eager loading.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['transaction', 'membershipPlan']);
+    }
 }

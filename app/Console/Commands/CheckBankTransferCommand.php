@@ -7,7 +7,9 @@ namespace App\Console\Commands;
 use App\Models\Transaction;
 use App\Settings\PaymentGatewaySettings;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -15,9 +17,6 @@ use Illuminate\Support\Facades\Log;
 
 class CheckBankTransferCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     */
     protected $signature = 'bank-transfer:check
                             {--batch-size=10 : Number of transactions to process in one batch}
                             {--dry-run : Show what would be matched without actually updating database}
@@ -36,27 +35,23 @@ class CheckBankTransferCommand extends Command
     /**
      * Minimum score required for automatic transaction completion.
      */
-    private const MIN_AUTO_COMPLETE_SCORE = 70;
+    private const int MIN_AUTO_COMPLETE_SCORE = 70;
 
     /**
      * Minimum score for manual review consideration.
      */
-    private const MIN_REVIEW_SCORE = 50;
+    private const int MIN_REVIEW_SCORE = 50;
 
     /**
      * API response cache duration in seconds.
      */
-    private const CACHE_DURATION = 30;
+    private const int CACHE_DURATION = 30;
 
-    /**
-     * Execute the console command.
-     */
     public function handle(PaymentGatewaySettings $settings): int
     {
         $this->settings = $settings;
 
         try {
-            // Load and validate configuration
             if (! $this->validateConfiguration()) {
                 return 1;
             }
@@ -69,7 +64,6 @@ class CheckBankTransferCommand extends Command
                 $this->warn('DRY RUN MODE - No transactions will be updated');
             }
 
-            // Fetch pending transactions
             $pendingTransactions = $this->fetchPendingTransactions($batchSize);
 
             if ($pendingTransactions->isEmpty()) {
@@ -80,7 +74,6 @@ class CheckBankTransferCommand extends Command
 
             $this->info("Found {$pendingTransactions->count()} pending transaction(s) to process.");
 
-            // Fetch bank transactions from API
             $bankTransactions = $this->fetchBankTransactions();
 
             if (empty($bankTransactions)) {
@@ -91,15 +84,13 @@ class CheckBankTransferCommand extends Command
 
             $this->info('Retrieved '.count($bankTransactions).' bank transaction(s) from API.');
 
-            // Process matching
             $results = $this->processMatching($pendingTransactions, $bankTransactions, $dryRun, $force);
 
-            // Display results
             $this->displayResults($results);
 
             return $results['failed'] > 0 ? 1 : 0;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("Command failed: {$e->getMessage()}");
             Log::error('CheckBankTransferCommand failed', [
                 'error' => $e->getMessage(),
@@ -110,9 +101,6 @@ class CheckBankTransferCommand extends Command
         }
     }
 
-    /**
-     * Validate configuration settings.
-     */
     private function validateConfiguration(): bool
     {
         if (! $this->settings->bank_transfer_enabled) {
@@ -136,10 +124,7 @@ class CheckBankTransferCommand extends Command
         return true;
     }
 
-    /**
-     * Fetch pending bank transfer transactions.
-     */
-    private function fetchPendingTransactions(int $limit): \Illuminate\Database\Eloquent\Collection
+    private function fetchPendingTransactions(int $limit): Collection
     {
         return Transaction::byPaymentMethod('bank_transfer')
             ->pending()
@@ -149,9 +134,6 @@ class CheckBankTransferCommand extends Command
             ->get();
     }
 
-    /**
-     * Fetch bank transactions from external API.
-     */
     private function fetchBankTransactions(): array
     {
         $cacheKey = 'bank_transactions_'.date('Y-m-d_H-i-s');
@@ -177,12 +159,11 @@ class CheckBankTransferCommand extends Command
                     return [];
                 }
 
-                // Filter for incoming transactions only
                 return array_filter($data['transactions'], function ($transaction) {
                     return isset($transaction['type']) && $transaction['type'] === 'IN';
                 });
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to fetch bank transactions', [
                     'error' => $e->getMessage(),
                     'api_endpoint' => $this->settings->api_transactions_api,
@@ -193,9 +174,6 @@ class CheckBankTransferCommand extends Command
         });
     }
 
-    /**
-     * Validate API response structure.
-     */
     private function validateApiResponse(array $data): bool
     {
         if (! isset($data['status']) || $data['status'] !== 'success') {
@@ -213,11 +191,8 @@ class CheckBankTransferCommand extends Command
         return true;
     }
 
-    /**
-     * Process matching between pending transactions and bank transactions.
-     */
     private function processMatching(
-        \Illuminate\Database\Eloquent\Collection $pendingTransactions,
+        Collection $pendingTransactions,
         array $bankTransactions,
         bool $dryRun,
         bool $force
@@ -239,7 +214,6 @@ class CheckBankTransferCommand extends Command
                 $match = $this->findBestMatch($transaction, $bankTransactions);
 
                 if ($match && $match['score'] >= self::MIN_AUTO_COMPLETE_SCORE) {
-                    // Auto-complete match
                     if (! $dryRun) {
                         if ($force || $this->confirmMatch($transaction, $match)) {
                             $this->updateTransactionStatus($transaction, $match);
@@ -252,7 +226,6 @@ class CheckBankTransferCommand extends Command
                     ];
 
                 } elseif ($match && $match['score'] >= self::MIN_REVIEW_SCORE) {
-                    // Needs manual review
                     $results['review_needed']++;
                     $results['reviews'][] = [
                         'transaction' => $transaction,
@@ -267,7 +240,7 @@ class CheckBankTransferCommand extends Command
                     ]);
                 }
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $results['failed']++;
                 $results['errors'][] = [
                     'transaction_id' => $transaction->id,
@@ -284,9 +257,6 @@ class CheckBankTransferCommand extends Command
         return $results;
     }
 
-    /**
-     * Find the best matching bank transaction for a pending transaction.
-     */
     private function findBestMatch(Transaction $transaction, array $bankTransactions): ?array
     {
         $expectedDescription = $this->generateExpectedDescription($transaction);
@@ -319,33 +289,24 @@ class CheckBankTransferCommand extends Command
     ): int {
         $score = 0;
 
-        // Description matching (50 points max)
         if ($this->isDescriptionMatch($transaction->charge_id, $bankTransaction['description'] ?? '')) {
             $score += 50;
         }
 
-        // Amount matching (30 points max)
         if ($this->isAmountMatch((float) $transaction->amount, (float) ($bankTransaction['amount'] ?? 0))) {
             $score += 30;
         }
 
-        // Date proximity (20 points max)
         $score += $this->calculateDateScore($transaction, $bankTransaction);
 
         return $score;
     }
 
-    /**
-     * Check if description contains the charge ID.
-     */
     private function isDescriptionMatch(string $chargeId, string $description): bool
     {
         return stripos($description, $chargeId) !== false;
     }
 
-    /**
-     * Check if amounts match within tolerance.
-     */
     private function isAmountMatch(float $expectedAmount, float $bankAmount): bool
     {
         $tolerance = max(
@@ -377,7 +338,7 @@ class CheckBankTransferCommand extends Command
                 $daysDiff <= 7 => 5,   // Within 1 week
                 default => 0           // Too old
             };
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Failed to parse bank transaction date', [
                 'date' => $bankTransaction['transactionDate'],
                 'error' => $e->getMessage(),
@@ -387,9 +348,6 @@ class CheckBankTransferCommand extends Command
         }
     }
 
-    /**
-     * Generate expected description from template.
-     */
     private function generateExpectedDescription(Transaction $transaction): string
     {
         $template = $this->settings->money_transfer_content_template;
@@ -398,30 +356,24 @@ class CheckBankTransferCommand extends Command
             '{code}' => $transaction->charge_id,
             '{order_id}' => $transaction->order_id,
             '{user_name}' => $transaction->user?->name ?? 'Unknown',
-            '{amount}' => number_format((float)$transaction->amount, 0),
+            '{amount}' => number_format((float) $transaction->amount, 0),
         ];
 
         return str_replace(array_keys($placeholders), array_values($placeholders), $template);
     }
 
-    /**
-     * Confirm match with user (if not in force mode).
-     */
     private function confirmMatch(Transaction $transaction, array $match): bool
     {
         $this->info('Potential match found:');
         $this->line("  Transaction ID: {$transaction->id}");
         $this->line("  Charge ID: {$transaction->charge_id}");
-        $this->line('  Amount: '.number_format((float)$transaction->amount, 0)." {$transaction->currency}");
+        $this->line('  Amount: '.number_format((float) $transaction->amount, 0)." {$transaction->currency}");
         $this->line('  Bank Amount: '.number_format($match['bank_transaction']['amount'], 0));
         $this->line("  Match Score: {$match['score']}");
 
         return $this->confirm('Mark this transaction as completed?');
     }
 
-    /**
-     * Update transaction status to completed.
-     */
     private function updateTransactionStatus(Transaction $transaction, array $match): void
     {
         DB::transaction(function () use ($transaction, $match) {
@@ -443,9 +395,6 @@ class CheckBankTransferCommand extends Command
         ]);
     }
 
-    /**
-     * Display processing results.
-     */
     private function displayResults(array $results): void
     {
         $this->info('Processing completed:');
