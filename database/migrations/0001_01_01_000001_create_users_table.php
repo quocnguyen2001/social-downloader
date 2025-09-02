@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -21,10 +18,10 @@ return new class extends Migration
             $table->timestamp('membership_started_at')->nullable();
             $table->timestamp('membership_expires_at')->nullable();
             $table->string('password');
+            $table->boolean('is_admin')->default(false);
             $table->rememberToken();
             $table->timestamps();
 
-            // Add indexes for better performance
             $table->index('membership_plan_id');
             $table->index(['membership_expires_at', 'membership_plan_id']);
         });
@@ -45,9 +42,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');
