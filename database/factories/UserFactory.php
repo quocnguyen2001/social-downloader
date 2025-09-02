@@ -37,6 +37,7 @@ class UserFactory extends Factory
             ),
             'membership_started_at' => fake()->optional(0.6)->dateTimeBetween('-1 year', 'now'),
             'membership_expires_at' => fake()->optional(0.6)->dateTimeBetween('now', '+1 year'),
+            'is_admin' => fake()->boolean(1),
         ];
     }
 

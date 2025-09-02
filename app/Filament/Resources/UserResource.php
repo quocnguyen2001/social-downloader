@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Components\SharedColors;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\MembershipPlan;
@@ -128,14 +129,7 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('membershipPlan.name')
                     ->label('Plan')
                     ->badge()
-                    ->color(fn ($record) => match ($record->membershipPlan?->slug) {
-                        'free' => 'gray',
-                        'basic' => 'info',
-                        'pro' => 'success',
-                        'premium' => 'warning',
-                        'enterprise' => 'danger',
-                        default => 'gray',
-                    })
+                    ->color(fn ($record) => SharedColors::membershipPlanType()[$record->membershipPlan?->slug] ?? 'gray')
                     ->default('No Plan'),
 
                 Tables\Columns\TextColumn::make('membership_expires_at')
@@ -166,12 +160,7 @@ class UserResource extends Resource
                     ->counts('tokens')
                     ->alignEnd()
                     ->badge()
-                    ->color(fn ($state) => match (true) {
-                        $state === 0 => 'gray',
-                        $state <= 2 => 'success',
-                        $state <= 5 => 'warning',
-                        default => 'danger',
-                    }),
+                    ->color(fn ($state) => SharedColors::getTokenCountColor($state)),
 
                 Tables\Columns\TextColumn::make('last_login_at')
                     ->label('Last Login')

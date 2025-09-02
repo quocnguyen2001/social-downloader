@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Components\SharedColors;
 use App\Filament\Resources\MembershipPlanResource\Pages;
 use App\Models\MembershipPlan;
 use Filament\Forms;
@@ -175,12 +176,7 @@ class MembershipPlanResource extends Resource
 
                 Tables\Columns\TextColumn::make('billing_cycle')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'monthly' => 'info',
-                        'yearly' => 'success',
-                        'lifetime' => 'warning',
-                        default => 'gray',
-                    }),
+                    ->color(fn (string $state): string => SharedColors::membershipPlanBillingCycle()[$state] ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('daily_request_limit')
                     ->label('Daily Limit')
@@ -282,12 +278,7 @@ class MembershipPlanResource extends Resource
                         Infolists\Components\TextEntry::make('billing_cycle')
                             ->label('Billing Cycle')
                             ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'monthly' => 'info',
-                                'yearly' => 'success',
-                                'lifetime' => 'warning',
-                                default => 'gray',
-                            }),
+                            ->color(fn (string $state): string => SharedColors::membershipPlanBillingCycle()[$state] ?? 'gray'),
                     ])
                     ->columns(2),
 

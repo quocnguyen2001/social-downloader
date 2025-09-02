@@ -188,7 +188,7 @@ class DownloadSession extends Model
      */
     public function isProcessing(): bool
     {
-        return $this->status === DownloadSessionStatus::FETCHING_METADATA;
+        return $this->isFetchingMetadata();
     }
 
     /**
@@ -224,14 +224,6 @@ class DownloadSession extends Model
     }
 
     /**
-     * Scope to filter processing sessions (fetching metadata).
-     */
-    public function scopeProcessing($query)
-    {
-        return $query->where('status', DownloadSessionStatus::FETCHING_METADATA);
-    }
-
-    /**
      * Scope to filter sessions that are fetching metadata.
      */
     public function scopeFetchingMetadata($query)
@@ -245,14 +237,6 @@ class DownloadSession extends Model
     public function scopeMetadataFetched($query)
     {
         return $query->where('status', DownloadSessionStatus::METADATA_FETCHED);
-    }
-
-    /**
-     * Scope to filter completed sessions (ready for download).
-     */
-    public function scopeCompleted($query)
-    {
-        return $query->where('status', DownloadSessionStatus::READY_FOR_DOWNLOAD);
     }
 
     /**
@@ -400,18 +384,5 @@ class DownloadSession extends Model
 
             return false;
         }
-    }
-
-    /**
-     * Check if Instagram thumbnail URL is valid and not expired.
-     *
-     * @deprecated This method is kept for backward compatibility but may not be needed
-     * with the new S3 storage system. Consider removing in future versions.
-     */
-    private function isInstagramThumbnailValid(): bool
-    {
-        // This method is deprecated as we now store thumbnails on S3
-        // instead of relying on Instagram's URLs
-        return $this->isThumbnailValid();
     }
 }

@@ -189,6 +189,14 @@ class ApiKey extends Model
     }
 
     /**
+     * Scope to filter API keys by status.
+     */
+    public function scopeByStatus($query, ApiKeyStatus $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
      * Scope to filter active API keys.
      */
     public function scopeActive($query)

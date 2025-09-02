@@ -58,6 +58,7 @@ class User extends Authenticatable implements FilamentUser
             'membership_started_at' => 'datetime',
             'membership_expires_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'is_admin' => 'boolean',
         ];
     }
 
@@ -255,6 +256,6 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return $this->is_admin;
     }
 }

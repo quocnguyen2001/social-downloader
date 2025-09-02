@@ -3,7 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Enums\DownloadSessionStatus;
-use App\Enums\Platform;
+use App\Filament\Components\SharedActions;
+use App\Filament\Components\SharedColors;
+use App\Filament\Components\SharedFilters;
+use App\Filament\Components\SharedFormComponents;
 use App\Filament\Resources\DownloadSessionResource\Pages;
 use App\Filament\Resources\DownloadSessionResource\RelationManagers\DownloadOptionsRelationManager;
 use App\Models\ApiKey;
@@ -15,7 +18,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -47,23 +49,11 @@ class DownloadSessionResource extends Resource
                             ->required()
                             ->searchable(),
 
-                        Forms\Components\TextInput::make('original_url')
-                            ->url()
-                            ->required()
-                            ->maxLength(1000)
-                            ->label(trans('messages.labels.original_url'))
-                            ->placeholder(trans('messages.placeholders.enter_original_url')),
+                        SharedFormComponents::urlInput(),
 
-                        Forms\Components\Select::make('platform')
-                            ->label(trans('messages.labels.platform'))
-                            ->options(Platform::getOptions())
-                            ->required(),
+                        SharedFormComponents::platformSelect(),
 
-                        Forms\Components\Select::make('status')
-                            ->label(trans('messages.labels.status'))
-                            ->options(DownloadSessionStatus::getOptions())
-                            ->default(DownloadSessionStatus::PENDING->value)
-                            ->required(),
+                        SharedFormComponents::downloadSessionStatusSelect(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Video Details')
@@ -110,18 +100,8 @@ class DownloadSessionResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('platform')
                     ->label(trans('messages.table.columns.platform'))
-                    ->colors([
-                        'danger' => Platform::YOUTUBE->value,
-                        'warning' => Platform::TIKTOK->value,
-                        'success' => Platform::INSTAGRAM->value,
-                        'primary' => Platform::FACEBOOK->value,
-                    ])
-                    ->icons([
-                        'heroicon-o-play' => Platform::YOUTUBE->value,
-                        'heroicon-o-musical-note' => Platform::TIKTOK->value,
-                        'heroicon-o-camera' => Platform::INSTAGRAM->value,
-                        'heroicon-o-users' => Platform::FACEBOOK->value,
-                    ])
+                    ->colors(SharedColors::platform())
+                    ->icons(SharedColors::platformIcons())
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('title')
@@ -134,12 +114,7 @@ class DownloadSessionResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->label(trans('messages.table.columns.status'))
-                    ->colors([
-                        'warning' => DownloadSessionStatus::PENDING->value,
-                        'info' => DownloadSessionStatus::FETCHING_METADATA->value,
-                        'primary' => DownloadSessionStatus::METADATA_FETCHED->value,
-                        'success' => DownloadSessionStatus::READY_FOR_DOWNLOAD->value,
-                    ])
+                    ->colors(SharedColors::downloadSessionStatus())
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('formatted_duration')
@@ -158,21 +133,11 @@ class DownloadSessionResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('api_key_id')
-                    ->label('API Key')
-                    ->options(ApiKey::pluck('name', 'id'))
-                    ->searchable(),
+                SharedFilters::apiKeyFilter(),
 
-                SelectFilter::make('platform')
-                    ->options([
-                        'youtube' => 'YouTube',
-                        'tiktok' => 'TikTok',
-                        'instagram' => 'Instagram',
-                        'facebook' => 'Facebook',
-                    ]),
+                SharedFilters::platformFilter(),
 
-                SelectFilter::make('status')
-                    ->options(DownloadSessionStatus::getOptions()),
+                SharedFilters::downloadSessionStatusFilter(),
 
                 Filter::make('created_at')
                     ->form([
@@ -236,35 +201,9 @@ class DownloadSessionResource extends Resource
                     })
                     ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::METADATA_FETCHED),
 
-                Tables\Actions\Action::make('mark_failed')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->form([
-                        Forms\Components\Textarea::make('error_message')
-                            ->required()
-                            ->label('Error Message'),
-                    ])
-                    ->action(function (DownloadSession $record, array $data) {
-                        $record->markAsFailed($data['error_message']);
-                        Notification::make()
-                            ->title('Download session marked as failed')
-                            ->warning()
-                            ->send();
-                    })
-                    ->visible(fn (DownloadSession $record) => in_array($record->status, [DownloadSessionStatus::PENDING, DownloadSessionStatus::FETCHING_METADATA])),
+                SharedActions::markAsFailedAction(),
 
-                Tables\Actions\Action::make('mark_expired')
-                    ->icon('heroicon-o-clock')
-                    ->color('secondary')
-                    ->requiresConfirmation()
-                    ->action(function (DownloadSession $record) {
-                        $record->markAsExpired();
-                        Notification::make()
-                            ->title('Download session marked as expired')
-                            ->warning()
-                            ->send();
-                    })
-                    ->visible(fn (DownloadSession $record) => ! $record->isExpired()),
+                SharedActions::markAsExpiredAction(),
 
                 Tables\Actions\ViewAction::make(),
             ])

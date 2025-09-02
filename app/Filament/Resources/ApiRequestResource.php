@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Enums\Platform;
+use App\Filament\Components\SharedColors;
+use App\Filament\Components\SharedFilters;
 use App\Filament\Resources\ApiRequestResource\Pages;
-use App\Models\ApiKey;
 use App\Models\ApiRequest;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -12,7 +12,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -102,18 +101,8 @@ class ApiRequestResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('platform')
                     ->label(trans('messages.table.columns.platform'))
-                    ->colors([
-                        'danger' => Platform::YOUTUBE->value,
-                        'warning' => Platform::TIKTOK->value,
-                        'success' => Platform::INSTAGRAM->value,
-                        'primary' => Platform::FACEBOOK->value,
-                    ])
-                    ->icons([
-                        'heroicon-o-play' => Platform::YOUTUBE->value,
-                        'heroicon-o-musical-note' => Platform::TIKTOK->value,
-                        'heroicon-o-camera' => Platform::INSTAGRAM->value,
-                        'heroicon-o-users' => Platform::FACEBOOK->value,
-                    ])
+                    ->colors(SharedColors::platform())
+                    ->icons(SharedColors::platformIcons())
                     ->sortable(),
 
                 Tables\Columns\BadgeColumn::make('status_code')
@@ -168,30 +157,13 @@ class ApiRequestResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('api_key_id')
-                    ->label(trans('messages.table.columns.api_key'))
-                    ->options(ApiKey::pluck('name', 'id'))
-                    ->searchable(),
+                SharedFilters::apiKeyFilter(),
 
-                SelectFilter::make('platform')
-                    ->label(trans('messages.table.filters.platform'))
-                    ->options(Platform::getOptions()),
+                SharedFilters::platformFilter(),
 
-                SelectFilter::make('status_code')
-                    ->label(trans('messages.table.filters.status_code'))
-                    ->options([
-                        '200' => trans('messages.filters.success'),
-                        '400' => trans('messages.filters.bad_request'),
-                        '404' => trans('messages.filters.not_found'),
-                        '500' => trans('messages.filters.server_error'),
-                    ]),
+                SharedFilters::statusCodeFilter(),
 
-                SelectFilter::make('billed')
-                    ->label(trans('messages.table.filters.billed'))
-                    ->options([
-                        '1' => trans('messages.filters.billed'),
-                        '0' => trans('messages.filters.not_billed'),
-                    ]),
+                SharedFilters::billedFilter(),
 
                 Filter::make('created_at')
                     ->form([

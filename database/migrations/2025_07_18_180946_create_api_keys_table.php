@@ -32,7 +32,6 @@ return new class extends Migration
 
             $table->index('user_id');
             $table->index(['user_id', 'status']);
-            $table->index('tier');
         });
     }
 

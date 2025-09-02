@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
                 'membership_plan_id' => null,
+                'is_admin' => true,
             ]);
         }
     }

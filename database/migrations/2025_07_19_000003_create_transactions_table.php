@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
@@ -18,7 +15,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('customer_name');
             $table->string('customer_email');
-            $table->unique('charge_id');
+            $table->string('charge_id')->unique();
             $table->string('order_id');
             $table->string('payment_method');
             $table->string('currency', 3)->default('VND');
@@ -30,13 +27,9 @@ return new class extends Migration
             $table->index(['user_id', 'created_at']);
             $table->index(['order_id', 'status']);
             $table->index(['status', 'created_at']);
-            $table->index(['charge_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('transactions');

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\DownloadSessionStatus;
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
 use App\Models\DownloadSession;
@@ -12,13 +13,11 @@ class StatsOverviewWidget extends BaseWidget
 {
     protected function getStats(): array
     {
-        // Get API Keys stats
         $totalApiKeys = ApiKey::count();
         $activeApiKeys = ApiKey::active()->count();
         $inactiveApiKeys = ApiKey::inactive()->count();
         $suspendedApiKeys = ApiKey::suspended()->count();
 
-        // Get today's requests
         $todayRequests = ApiRequest::today()->count();
         $todaySuccessfulRequests = ApiRequest::today()->successful()->count();
         $todaySuccessRate = $todayRequests > 0 ? round(($todaySuccessfulRequests / $todayRequests) * 100, 1) : 0;
@@ -31,11 +30,11 @@ class StatsOverviewWidget extends BaseWidget
             ->sum('cost');
         $revenueChange = $lastMonthRevenue > 0 ? round((($thisMonthRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100, 1) : 0;
 
-        // Get active download sessions
-        $activeDownloadSessions = DownloadSession::active()->count();
-        $pendingSessions = DownloadSession::pending()->count();
-        $processingSessions = DownloadSession::processing()->count();
-        $completedToday = DownloadSession::completed()->whereDate('created_at', today())->count();
+        $downloadSessions = DownloadSession::all();
+
+        $activeDownloadSessions = $downloadSessions->where('status', DownloadSessionStatus::READY_FOR_DOWNLOAD)->count();
+        $pendingSessions = $downloadSessions->where('status', DownloadSessionStatus::PENDING)->count();
+        $processingSessions = $downloadSessions->where('status', DownloadSessionStatus::FETCHING_METADATA)->count();
 
         return [
             Stat::make(trans('messages.widgets.stats_overview.total_api_keys'), $totalApiKeys)
