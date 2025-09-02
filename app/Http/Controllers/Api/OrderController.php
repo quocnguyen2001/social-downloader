@@ -100,8 +100,10 @@ class OrderController extends Controller
             $paymentResult = $this->paymentService->processPayment($order->transaction);
 
             return $this->createdResponse(
-                new OrderResource($order)
-                    ->additional(['payment' => $paymentResult]),
+                [
+                    ...(new OrderResource($order)->toArray($request)),
+                    'payment' => $paymentResult,
+                ],
                 __('messages.success.order_created')
             );
 

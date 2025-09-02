@@ -268,7 +268,6 @@ class PaymentService
                 throw new \Exception($paypalResult['error'] ?? 'PayPal order creation failed');
             }
 
-            // Log PayPal order creation
             $transaction->addPaymentLog('paypal_order_created', [
                 'paypal_order_id' => $paypalResult['paypal_order_id'],
                 'status' => $paypalResult['status'],

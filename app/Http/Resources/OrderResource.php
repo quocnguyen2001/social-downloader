@@ -23,6 +23,7 @@ class OrderResource extends JsonResource
             'subtotal' => $this->subtotal,
             'discount' => $this->discount,
             'total' => $this->total,
+            'currency' => $this->transaction->currency ?? 'VND',
             'formatted_subtotal' => $this->formatted_subtotal,
             'formatted_discount' => $this->formatted_discount,
             'formatted_total' => $this->formatted_total,

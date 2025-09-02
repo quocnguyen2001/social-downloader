@@ -12,11 +12,19 @@ class PublicController
 
     public function paymentMethods(PaymentService $paymentService)
     {
+        $methods = $paymentService->getAvailablePaymentMethods();
+
+        $data = [];
+
+        foreach ($methods as $method => $label) {
+            $data[] = [
+                'label' => $label,
+                'value' => $method,
+            ];
+        }
         return response()->json([
             'success' => true,
-            'data' => [
-                'payment_methods' => $paymentService->getPaymentMethodDetails(),
-            ],
+            'data' => $data,
         ]);
     }
 

@@ -29,6 +29,8 @@ class MembershipPlanResource extends JsonResource
             'price' => $this->price,
             'currency' => $this->currency,
             'billing_cycle' => $this->billing_cycle,
+            'billing_cycle_label' => $this->billing_cycle_label,
+            'formatted_price' => $this->formatted_price,
             'daily_request_limit' => $this->daily_request_limit,
             'total_request_download' => $this->total_request_download,
             'allowed_platforms' => $this->allowed_platforms,
@@ -37,6 +39,9 @@ class MembershipPlanResource extends JsonResource
             'priority_processing' => $this->priority_processing,
             'is_active' => $this->is_active,
             'is_featured' => $this->is_featured,
+            'sort_order' => $this->sort_order,
+            'has_unlimited_daily_requests' => $this->hasUnlimitedRequests('daily'),
+            'has_unlimited_total_requests' => $this->hasUnlimitedRequests('total'),
         ];
     }
 }

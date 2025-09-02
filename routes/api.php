@@ -56,6 +56,8 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/membership-plans', [MembershipPlanController::class, 'index'])
         ->name('api.membership-plans.index');
+    Route::get('/membership-plans/{id}', [MembershipPlanController::class, 'show'])
+        ->name('api.membership-plans.show');
 
     Route::prefix('extract')->group(function () {
         Route::get('/platforms', [VideoExtractionController::class, 'platforms'])

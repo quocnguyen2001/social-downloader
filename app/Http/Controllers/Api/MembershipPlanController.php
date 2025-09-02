@@ -10,30 +10,21 @@ use App\Models\MembershipPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Http\Resources\MembershipPlanResource;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-/**
- * Membership Plan Controller for API endpoints.
- *
- * Handles public access to membership plan information.
- */
 class MembershipPlanController extends Controller
 {
     use ApiResponseTrait;
 
-    /**
-     * Get all active membership plans.
-     */
     public function index(Request $request): JsonResponse
     {
         try {
-            // Get query parameters for filtering
             $activeOnly = $request->boolean('active_only', true);
             $featuredOnly = $request->boolean('featured_only', false);
 
-            // Build query
             $query = MembershipPlan::query();
 
-            // Apply filters
             if ($activeOnly) {
                 $query->active();
             }
@@ -42,37 +33,12 @@ class MembershipPlanController extends Controller
                 $query->featured();
             }
 
-            // Get plans ordered by sort order and price
             $plans = $query->ordered()->get();
 
-            // Transform plans data for API response
-            $plansData = $plans->map(function (MembershipPlan $plan) {
-                return [
-                    'id' => $plan->id,
-                    'name' => $plan->name,
-                    'slug' => $plan->slug,
-                    'description' => $plan->description,
-                    'price' => $plan->price,
-                    'currency' => $plan->currency,
-                    'billing_cycle' => $plan->billing_cycle,
-                    'billing_cycle_label' => $plan->billing_cycle_label,
-                    'formatted_price' => $plan->formatted_price,
-                    'daily_request_limit' => $plan->daily_request_limit,
-                    'total_request_download' => $plan->total_request_download,
-                    'allowed_platforms' => $plan->allowed_platforms,
-                    'allowed_qualities' => $plan->allowed_qualities,
-                    'allowed_formats' => $plan->allowed_formats,
-                    'priority_processing' => $plan->priority_processing,
-                    'is_active' => $plan->is_active,
-                    'is_featured' => $plan->is_featured,
-                    'sort_order' => $plan->sort_order,
-                    'has_unlimited_daily_requests' => $plan->hasUnlimitedRequests('daily'),
-                    'has_unlimited_total_requests' => $plan->hasUnlimitedRequests('total'),
-                ];
-            });
+            $plansData = MembershipPlanResource::collection($plans);
 
             Log::info('Membership plans retrieved via API', [
-                'count' => $plansData->count(),
+                'count' => $plans->count(),
                 'active_only' => $activeOnly,
                 'featured_only' => $featuredOnly,
                 'ip_address' => $request->ip(),
@@ -80,7 +46,7 @@ class MembershipPlanController extends Controller
             ]);
 
             return $this->apiSuccessResponse(
-                $plansData->toArray(),
+                $plansData->toArray($request),
                 __('Membership plans retrieved successfully.')
             );
 
@@ -93,6 +59,63 @@ class MembershipPlanController extends Controller
 
             return $this->apiErrorResponse(
                 __('Failed to retrieve membership plans.'),
+                null,
+                500
+            );
+        }
+    }
+
+    public function show(Request $request, int $id): JsonResponse
+    {
+        try {
+            $plan = MembershipPlan::findOrFail($id);
+
+            // Check if the plan is active (optional - you can remove this if you want to show inactive plans too)
+            if (!$plan->is_active) {
+                return $this->apiErrorResponse(
+                    __('Membership plan not found or not available.'),
+                    null,
+                    404
+                );
+            }
+
+            $planData = new MembershipPlanResource($plan);
+
+            Log::info('Membership plan retrieved via API', [
+                'plan_id' => $id,
+                'plan_name' => $plan->name,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return $this->apiSuccessResponse(
+                $planData->toArray($request),
+                __('Membership plan retrieved successfully.')
+            );
+
+        } catch (ModelNotFoundException $e) {
+            Log::warning('Membership plan not found via API', [
+                'plan_id' => $id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return $this->apiErrorResponse(
+                __('Membership plan not found.'),
+                null,
+                404
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve membership plan via API', [
+                'plan_id' => $id,
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return $this->apiErrorResponse(
+                __('Failed to retrieve membership plan.'),
                 null,
                 500
             );

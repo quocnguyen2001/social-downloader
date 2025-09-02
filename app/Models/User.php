@@ -195,10 +195,10 @@ class User extends Authenticatable implements FilamentUser
     /**
      * Get days until membership expires.
      */
-    public function getDaysUntilExpiration(): ?int
+    public function getDaysUntilExpiration(): ?float
     {
         if (! $this->membership_expires_at) {
-            return null; // No expiration
+            return 0;
         }
 
         return max(0, now()->diffInDays($this->membership_expires_at, false));
