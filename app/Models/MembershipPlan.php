@@ -235,18 +235,6 @@ class MembershipPlan extends Model
     }
 
     /**
-     * Get all available formats.
-     */
-    public static function getAvailableFormats(): array
-    {
-        return [
-            'mp4' => 'MP4',
-            'webm' => 'WebM',
-            'mp3' => 'MP3',
-        ];
-    }
-
-    /**
      * Get all available billing cycles.
      */
     public static function getAvailableBillingCycles(): array

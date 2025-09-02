@@ -7,29 +7,14 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CreateOrderRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return auth()->check();
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         $paymentService = app(PaymentService::class);
         $availablePaymentMethods = $paymentService->getAvailablePaymentMethodValues();
 
-        // If no payment methods are available, we still need to validate the field
-        // but it will fail validation with a custom message
         $paymentMethodRule = empty($availablePaymentMethods)
-            ? ['required', 'string', 'in:'] // This will always fail
-            : ['required', 'string', 'in:' . implode(',', $availablePaymentMethods)];
+            ? ['required', 'string', 'in:']
+            : ['required', 'string', 'in:'.implode(',', $availablePaymentMethods)];
 
         return [
             'membership_plan_id' => ['required', 'integer', 'exists:membership_plans,id'],
@@ -38,9 +23,6 @@ class CreateOrderRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
     public function messages(): array
     {
         $paymentService = app(PaymentService::class);
@@ -59,9 +41,6 @@ class CreateOrderRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom attributes for validator errors.
-     */
     public function attributes(): array
     {
         return [

@@ -24,35 +24,30 @@ class OrderController extends Controller
 
     /**
      * Create a new order.
-     *
-     * @param CreateOrderRequest $request
-     * @return JsonResponse
      */
     public function store(CreateOrderRequest $request): JsonResponse
     {
         try {
-            $user = auth()->user();
+            $user = $request->user();
 
-            if (!$user) {
+            if (! $user) {
                 return $this->unauthorizedResponse(__('messages.error.authentication_required'));
             }
 
             $validatedData = $request->validated();
 
-            // Additional payment method validation
-            if (!$this->paymentService->validatePaymentMethod($validatedData['payment_method'])) {
-                return $this->badRequestResponse(__('payment_gateway.validation.invalid_payment_method'));
+            if (! $this->paymentService->validatePaymentMethod($validatedData['payment_method'])) {
+                return $this->errorResponse(__('payment_gateway.validation.invalid_payment_method'));
             }
 
-            // Check if any payment methods are available
             $availablePaymentMethods = $this->paymentService->getAvailablePaymentMethods();
+
             if (empty($availablePaymentMethods)) {
-                return $this->badRequestResponse(__('payment_gateway.validation.no_payment_methods_enabled'));
+                return $this->errorResponse(__('payment_gateway.validation.no_payment_methods_enabled'));
             }
 
             $order = $this->orderService->createOrder($user, $validatedData);
 
-            // Process payment
             $paymentResult = $this->paymentService->processPayment($order->transaction);
 
             return $this->createdResponse(
@@ -77,16 +72,13 @@ class OrderController extends Controller
 
     /**
      * Get customer orders.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
         try {
             $user = auth()->user();
 
-            if (!$user) {
+            if (! $user) {
                 return $this->unauthorizedResponse(__('messages.error.authentication_required'));
             }
 
@@ -94,7 +86,7 @@ class OrderController extends Controller
             $orders = $this->orderService->getUserOrders($user, $filters);
 
             return $this->paginatedResponse(
-                $orders->through(fn($order) => new OrderResource($order)),
+                $orders->through(fn ($order) => new OrderResource($order)),
                 __('messages.success.orders_retrieved')
             );
 
@@ -111,16 +103,13 @@ class OrderController extends Controller
 
     /**
      * Get a specific order.
-     *
-     * @param string $id
-     * @return JsonResponse
      */
     public function show(string $id): JsonResponse
     {
         try {
             $user = auth()->user();
 
-            if (!$user) {
+            if (! $user) {
                 return $this->unauthorizedResponse(__('messages.error.authentication_required'));
             }
 

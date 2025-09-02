@@ -13,30 +13,21 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Service for handling order operations.
- */
 class OrderService
 {
     public function __construct(
         private readonly PaymentService $paymentService
     ) {}
 
-    /**
-     * Create a new order for a user.
-     */
     public function createOrder(User $user, array $data): Order
     {
         return DB::transaction(function () use ($user, $data) {
-            // Validate membership plan
             $membershipPlan = $this->validateMembershipPlan($data['membership_plan_id']);
 
-            // Calculate order totals
             $subtotal = $membershipPlan->price;
             $discount = $this->calculateDiscount((float) $subtotal, $data['coupon_code'] ?? null);
             $total = $subtotal - $discount;
 
-            // Create the order
             $order = Order::query()->create([
                 'user_id' => $user->id,
                 'membership_plan_id' => $membershipPlan->id,
@@ -46,7 +37,6 @@ class OrderService
                 'status' => OrderStatus::PENDING,
             ]);
 
-            // Create payment transaction
             $paymentMethod = PaymentMethod::from($data['payment_method']);
             $transaction = $this->paymentService->createTransaction(
                 $user,
@@ -55,7 +45,6 @@ class OrderService
                 $total
             );
 
-            // Update order with payment reference
             $order->update(['payment_id' => $transaction->id]);
 
             Log::info('Order created successfully', [
@@ -70,21 +59,16 @@ class OrderService
         });
     }
 
-    /**
-     * Get orders for a specific user.
-     */
     public function getUserOrders(User $user, array $filters = [])
     {
         $query = $user->orders()
             ->with(['membershipPlan', 'transaction'])
             ->orderBy('created_at', 'desc');
 
-        // Apply status filter if provided
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        // Apply date range filter if provided
         if (isset($filters['from_date'])) {
             $query->whereDate('created_at', '>=', $filters['from_date']);
         }
@@ -96,9 +80,6 @@ class OrderService
         return $query->paginate($filters['per_page'] ?? 15);
     }
 
-    /**
-     * Update order status.
-     */
     public function updateOrderStatus(Order $order, OrderStatus $status): Order
     {
         $order->update(['status' => $status]);
@@ -112,16 +93,11 @@ class OrderService
         return $order->fresh();
     }
 
-    /**
-     * Process order completion.
-     */
     public function completeOrder(Order $order): Order
     {
         return DB::transaction(function () use ($order) {
-            // Mark order as completed
             $order = $this->updateOrderStatus($order, OrderStatus::COMPLETED);
 
-            // Assign membership plan to user
             if ($order->membershipPlan) {
                 $this->assignMembershipToUser($order->user, $order->membershipPlan);
             }
@@ -136,28 +112,22 @@ class OrderService
         });
     }
 
-    /**
-     * Validate membership plan availability.
-     */
     private function validateMembershipPlan(int|string $membershipPlanId): MembershipPlan
     {
         $plan = MembershipPlan::query()->where('id', $membershipPlanId)
             ->where('is_active', true)
             ->first();
 
-        if (!$plan) {
+        if (! $plan) {
             throw new ModelNotFoundException(__('messages.error.membership_plan_not_found'));
         }
 
         return $plan;
     }
 
-    /**
-     * Calculate discount based on coupon code.
-     */
     private function calculateDiscount(float $subtotal, ?string $couponCode): float
     {
-        if (!$couponCode) {
+        if (! $couponCode) {
             return 0.0;
         }
 
@@ -171,9 +141,6 @@ class OrderService
         return 0.0;
     }
 
-    /**
-     * Assign membership plan to user.
-     */
     private function assignMembershipToUser(User $user, MembershipPlan $plan): void
     {
         $expiresAt = match ($plan->billing_cycle) {

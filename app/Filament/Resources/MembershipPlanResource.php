@@ -14,11 +14,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-/**
- * Membership Plan Resource for Filament Admin Panel.
- *
- * Manages membership plans with pricing, limits, and features.
- */
 class MembershipPlanResource extends Resource
 {
     protected static ?string $model = MembershipPlan::class;
@@ -73,7 +68,8 @@ class MembershipPlanResource extends Resource
                         Forms\Components\Textarea::make('description')
                             ->label(__('filament.resources.membership_plan.fields.description'))
                             ->maxLength(1000)
-                            ->rows(3),
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
@@ -91,6 +87,7 @@ class MembershipPlanResource extends Resource
                             ->label(__('filament.resources.membership_plan.fields.currency'))
                             ->required()
                             ->options([
+                                'VND' => 'VND (₫)',
                                 'USD' => 'USD ($)',
                                 'EUR' => 'EUR (€)',
                                 'GBP' => 'GBP (£)',
@@ -139,11 +136,6 @@ class MembershipPlanResource extends Resource
                             ->label(__('filament.resources.membership_plan.fields.allowed_qualities'))
                             ->options(MembershipPlan::getAvailableQualities())
                             ->columns(4),
-
-                        Forms\Components\CheckboxList::make('allowed_formats')
-                            ->label(__('filament.resources.membership_plan.fields.allowed_formats'))
-                            ->options(MembershipPlan::getAvailableFormats())
-                            ->columns(3),
                     ]),
 
                 Forms\Components\Section::make(__('filament.resources.membership_plan.sections.features_limits'))
