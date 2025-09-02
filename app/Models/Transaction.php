@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\OrderStatus;
+use App\Events\OrderCompletedEvent;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class Transaction extends Model
 {
@@ -32,25 +36,27 @@ class Transaction extends Model
         'payment_logs' => 'array',
     ];
 
-    /**
-     * Get the user that owns this transaction.
-     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::updated(function (Transaction $transaction) {
+            if ($transaction->isDirty('status') && $transaction->status === 'completed') {
+                $transaction->handleOrderCompletion();
+            }
+        });
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the order that this transaction belongs to.
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * Mark this transaction as completed.
-     */
     public function markAsCompleted(?string $chargeId = null): void
     {
         $this->update([
@@ -59,9 +65,6 @@ class Transaction extends Model
         ]);
     }
 
-    /**
-     * Mark this transaction as failed.
-     */
     public function markAsFailed(?string $reason = null): void
     {
         $logs = $this->payment_logs ?? [];
@@ -79,9 +82,6 @@ class Transaction extends Model
         ]);
     }
 
-    /**
-     * Add a log entry to the payment logs.
-     */
     public function addPaymentLog(string $event, array $data = []): void
     {
         $logs = $this->payment_logs ?? [];
@@ -93,65 +93,41 @@ class Transaction extends Model
         $this->update(['payment_logs' => $logs]);
     }
 
-    /**
-     * Scope to filter transactions by status.
-     */
     public function scopeByStatus($query, string $status)
     {
         return $query->where('status', $status);
     }
 
-    /**
-     * Scope to filter completed transactions.
-     */
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
     }
 
-    /**
-     * Scope to filter pending transactions.
-     */
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
 
-    /**
-     * Scope to filter failed transactions.
-     */
     public function scopeFailed($query)
     {
         return $query->where('status', 'failed');
     }
 
-    /**
-     * Scope to filter transactions by payment method.
-     */
     public function scopeByPaymentMethod($query, string $paymentMethod)
     {
         return $query->where('payment_method', $paymentMethod);
     }
 
-    /**
-     * Scope to filter transactions for a specific user.
-     */
     public function scopeForUser($query, $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    /**
-     * Scope to filter transactions for a specific order.
-     */
     public function scopeForOrder($query, $orderId)
     {
         return $query->where('order_id', $orderId);
     }
 
-    /**
-     * Get formatted amount with currency.
-     */
     public function getFormattedAmountAttribute(): string
     {
         if (! $this->amount) {
@@ -161,9 +137,6 @@ class Transaction extends Model
         return number_format((float) $this->amount, 2).' '.strtoupper($this->currency);
     }
 
-    /**
-     * Get the status badge color.
-     */
     public function getStatusBadgeColorAttribute(): string
     {
         return match ($this->status) {
@@ -174,37 +147,72 @@ class Transaction extends Model
         };
     }
 
-    /**
-     * Check if the transaction is completed.
-     */
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
     }
 
-    /**
-     * Check if the transaction is pending.
-     */
     public function isPending(): bool
     {
         return $this->status === 'pending';
     }
 
-    /**
-     * Check if the transaction is failed.
-     */
     public function isFailed(): bool
     {
         return $this->status === 'failed';
     }
 
-    /**
-     * Get the latest payment log entry.
-     */
     public function getLatestPaymentLogAttribute(): ?array
     {
         $logs = $this->payment_logs ?? [];
 
         return empty($logs) ? null : end($logs);
+    }
+
+    protected function handleOrderCompletion(): void
+    {
+        try {
+            $order = $this->order;
+
+            if (! $order) {
+                Log::warning('Transaction completed but no associated order found', [
+                    'transaction_id' => $this->id,
+                ]);
+
+                return;
+            }
+
+            $order->update(['status' => OrderStatus::COMPLETED]);
+
+            if ($order->completed_at === null) {
+                $order->update(['completed_at' => now()]);
+
+                OrderCompletedEvent::dispatch($order, [
+                    'transaction_id' => $this->id,
+                    'completed_via' => 'transaction_status_change',
+                ]);
+
+                Log::info('Order marked as completed and event dispatched', [
+                    'order_id' => $order->id,
+                    'transaction_id' => $this->id,
+                    'user_id' => $order->user_id,
+                ]);
+            } else {
+                Log::info('Order already completed, skipping event dispatch', [
+                    'order_id' => $order->id,
+                    'transaction_id' => $this->id,
+                    'completed_at' => $order->completed_at->toISOString(),
+                ]);
+            }
+
+        } catch (Throwable $exception) {
+            Log::error('Failed to handle order completion', [
+                'transaction_id' => $this->id,
+                'exception' => $exception->getMessage(),
+                'exception_trace' => $exception->getTraceAsString(),
+            ]);
+
+            throw $exception;
+        }
     }
 }

@@ -9,14 +9,16 @@ use App\Enums\PaymentMethod;
 use App\Models\MembershipPlan;
 use App\Models\Order;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class OrderService
+readonly class OrderService
 {
     public function __construct(
-        private readonly PaymentService $paymentService
+        private PaymentService $paymentService
     ) {}
 
     public function createOrder(User $user, array $data): Order
@@ -59,7 +61,7 @@ class OrderService
         });
     }
 
-    public function getUserOrders(User $user, array $filters = [])
+    public function getUserOrders(User $user, array $filters = []): LengthAwarePaginator
     {
         $query = $user->orders()
             ->with(['membershipPlan', 'transaction'])
@@ -141,13 +143,14 @@ class OrderService
         return 0.0;
     }
 
-    private function assignMembershipToUser(User $user, MembershipPlan $plan): void
+    public function assignMembershipToUser(User $user, MembershipPlan $plan): void
     {
+        $now = Carbon::now();
+
         $expiresAt = match ($plan->billing_cycle) {
-            'monthly' => now()->addMonth(),
-            'yearly' => now()->addYear(),
+            'yearly' => $now->addYear(),
             'lifetime' => null,
-            default => now()->addMonth(),
+            default => $now->addMonth(),
         };
 
         $user->assignMembershipPlan($plan, $expiresAt);

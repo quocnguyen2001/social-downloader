@@ -42,9 +42,11 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('discount', 10, 2)->default(0);
             $table->string('status')->default('pending');
+            $table->timestamp('completed_at')->nullable();
             $table->timestamps();
 
             $table->index(['status', 'created_at']);
+            $table->index(['status', 'completed_at']);
             $table->index(['membership_plan_id', 'status']);
         });
     }

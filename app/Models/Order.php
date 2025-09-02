@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
@@ -24,6 +23,7 @@ class Order extends Model
         'subtotal',
         'discount',
         'status',
+        'completed_at',
     ];
 
     protected $casts = [
@@ -31,6 +31,7 @@ class Order extends Model
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
         'status' => OrderStatus::class,
+        'completed_at' => 'datetime',
     ];
 
     /**
@@ -56,8 +57,6 @@ class Order extends Model
     {
         return $this->belongsTo(Transaction::class, 'payment_id');
     }
-
-
 
     /**
      * Calculate the total from subtotal and discount.
@@ -191,5 +190,15 @@ class Order extends Model
         }
 
         return ($this->discount / $this->subtotal) * 100;
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status === OrderStatus::COMPLETED && $this->completed_at !== null;
+    }
+
+    public function getFormattedCompletedAtAttribute(): ?string
+    {
+        return $this->completed_at?->format('Y-m-d H:i:s');
     }
 }
