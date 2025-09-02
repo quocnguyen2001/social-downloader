@@ -27,46 +27,54 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.user_management');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Users';
+        return __('filament.navigation.labels.users');
     }
 
     public static function getModelLabel(): string
     {
-        return 'User';
+        return __('filament.resources.user.label');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Users';
+        return __('filament.resources.user.plural_label');
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('User Information')
+                Forms\Components\Section::make(__('filament.resources.user.sections.user_information'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label(__('filament.resources.user.fields.name'))
                             ->required()
                             ->maxLength(255),
 
                         Forms\Components\TextInput::make('email')
+                            ->label(__('filament.resources.user.fields.email'))
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
 
                         Forms\Components\DateTimePicker::make('email_verified_at')
-                            ->label('Email Verified At')
+                            ->label(__('filament.resources.user.fields.email_verified_at'))
                             ->nullable(),
 
                         Forms\Components\TextInput::make('password')
+                            ->label(__('filament.resources.user.fields.password'))
                             ->password()
                             ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                             ->dehydrated(fn ($state) => filled($state))
@@ -75,16 +83,17 @@ class UserResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Membership Information')
+                Forms\Components\Section::make(__('filament.resources.user.sections.membership_information'))
                     ->schema([
                         Forms\Components\Select::make('membership_plan_id')
-                            ->label('Membership Plan')
+                            ->label(__('filament.resources.user.fields.membership_plan'))
                             ->relationship('membershipPlan', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable()
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
+                                    ->label(__('filament.resources.user.fields.name'))
                                     ->required(),
                                 Forms\Components\TextInput::make('slug')
                                     ->required(),
@@ -94,13 +103,13 @@ class UserResource extends Resource
                             ]),
 
                         Forms\Components\DateTimePicker::make('membership_started_at')
-                            ->label('Membership Started')
+                            ->label(__('filament.resources.user.fields.membership_started'))
                             ->nullable(),
 
                         Forms\Components\DateTimePicker::make('membership_expires_at')
-                            ->label('Membership Expires')
+                            ->label(__('filament.resources.user.fields.membership_expires'))
                             ->nullable()
-                            ->helperText('Leave empty for lifetime membership'),
+                            ->helperText(__('filament.resources.user.messages.lifetime_membership')),
                     ])
                     ->columns(3),
             ]);
@@ -111,92 +120,80 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->label('ID')
+                    ->label(__('filament.resources.user.columns.id'))
                     ->sortable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('filament.resources.user.columns.name'))
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('email')
+                    ->label(__('filament.resources.user.columns.email'))
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->copyMessage('Email copied to clipboard'),
+                    ->copyMessage(__('filament.resources.user.messages.email_copied')),
 
                 Tables\Columns\TextColumn::make('membershipPlan.name')
-                    ->label('Plan')
+                    ->label(__('filament.resources.user.columns.plan'))
                     ->badge()
                     ->color(fn ($record) => SharedColors::membershipPlanType()[$record->membershipPlan?->slug] ?? 'gray')
-                    ->default('No Plan'),
+                    ->default(__('filament.resources.user.messages.no_plan')),
 
                 Tables\Columns\TextColumn::make('membership_expires_at')
-                    ->label('Expires')
+                    ->label(__('filament.resources.user.columns.expires'))
                     ->dateTime()
                     ->sortable()
                     ->color(fn ($record) => $record?->hasMembershipExpired() ? 'danger' : 'success')
-                    ->formatStateUsing(fn ($state) => $state ? $state->format('M j, Y') : 'Never'),
+                    ->formatStateUsing(fn ($state) => $state ? $state->format('M j, Y') : __('filament.resources.user.messages.never')),
 
                 Tables\Columns\IconColumn::make('email_verified_at')
-                    ->label('Verified')
+                    ->label(__('filament.resources.user.columns.verified'))
                     ->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-circle'),
 
-                Tables\Columns\TextColumn::make('api_requests_count')
-                    ->label('API Requests')
-                    ->counts('apiRequests')
-                    ->alignEnd(),
-
-                Tables\Columns\TextColumn::make('download_sessions_count')
-                    ->label('Downloads')
-                    ->counts('downloadSessions')
-                    ->alignEnd(),
-
-                Tables\Columns\TextColumn::make('tokens_count')
-                    ->label('API Tokens')
-                    ->counts('tokens')
-                    ->alignEnd()
-                    ->badge()
-                    ->color(fn ($state) => SharedColors::getTokenCountColor($state)),
-
                 Tables\Columns\TextColumn::make('last_login_at')
-                    ->label('Last Login')
+                    ->label(__('filament.resources.user.columns.last_login'))
                     ->dateTime()
                     ->sortable()
                     ->since()
-                    ->placeholder('Never')
+                    ->placeholder(__('filament.resources.user.messages.never'))
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.resources.user.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label(__('filament.resources.user.columns.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('membership_plan_id')
-                    ->label('Membership Plan')
+                    ->label(__('filament.resources.user.filters.membership_plan'))
                     ->relationship('membershipPlan', 'name')
                     ->preload(),
 
                 Tables\Filters\TernaryFilter::make('email_verified_at')
-                    ->label('Email Verified')
+                    ->label(__('filament.resources.user.filters.email_verified'))
                     ->nullable(),
 
                 Tables\Filters\Filter::make('membership_expired')
-                    ->label('Membership Expired')
+                    ->label(__('filament.resources.user.filters.membership_expired'))
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('membership_expires_at')
                         ->where('membership_expires_at', '<', now())
                     ),
 
                 Tables\Filters\Filter::make('created_at')
+                    ->label(__('filament.resources.user.filters.created_at'))
                     ->form([
                         Forms\Components\DatePicker::make('created_from'),
                         Forms\Components\DatePicker::make('created_until'),
@@ -214,10 +211,10 @@ class UserResource extends Resource
                     }),
 
                 Tables\Filters\SelectFilter::make('has_tokens')
-                    ->label('API Tokens')
+                    ->label(__('filament.resources.user.filters.api_tokens'))
                     ->options([
-                        'with_tokens' => 'Has Tokens',
-                        'without_tokens' => 'No Tokens',
+                        'with_tokens' => __('filament.resources.user.filter_options.has_tokens'),
+                        'without_tokens' => __('filament.resources.user.filter_options.no_tokens'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return match ($data['value'] ?? null) {
@@ -228,11 +225,11 @@ class UserResource extends Resource
                     }),
 
                 Tables\Filters\SelectFilter::make('login_activity')
-                    ->label('Login Activity')
+                    ->label(__('filament.resources.user.filters.login_activity'))
                     ->options([
-                        'recent' => 'Logged in recently (7 days)',
-                        'inactive' => 'Inactive (30+ days)',
-                        'never' => 'Never logged in',
+                        'recent' => __('filament.resources.user.filter_options.recent_login'),
+                        'inactive' => __('filament.resources.user.filter_options.inactive_login'),
+                        'never' => __('filament.resources.user.filter_options.never_logged_in'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return match ($data['value'] ?? null) {
@@ -244,7 +241,7 @@ class UserResource extends Resource
                     }),
 
                 Tables\Filters\TernaryFilter::make('active_tokens')
-                    ->label('Has Active Tokens')
+                    ->label(__('filament.resources.user.filters.has_active_tokens'))
                     ->queries(
                         true: fn (Builder $query) => $query->has('tokens'),
                         false: fn (Builder $query) => $query->doesntHave('tokens'),
@@ -255,19 +252,19 @@ class UserResource extends Resource
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\Action::make('verify_email')
-                        ->label('Verify Email')
+                        ->label(__('filament.resources.user.actions.verify_email'))
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
                         ->action(fn (User $record) => $record->update(['email_verified_at' => now()]))
                         ->visible(fn (User $record) => ! $record->email_verified_at)
                         ->requiresConfirmation(),
                     Tables\Actions\Action::make('extend_membership')
-                        ->label('Extend Membership')
+                        ->label(__('filament.resources.user.actions.extend_membership'))
                         ->icon('heroicon-o-calendar-days')
                         ->color('warning')
                         ->form([
                             Forms\Components\DateTimePicker::make('new_expiry')
-                                ->label('New Expiry Date')
+                                ->label(__('filament.resources.user.messages.new_expiry_date'))
                                 ->required()
                                 ->default(fn (User $record) => $record->membership_expires_at?->addMonth() ?? now()->addMonth()
                                 ),
@@ -277,7 +274,7 @@ class UserResource extends Resource
                         })
                         ->visible(fn (User $record) => $record->membershipPlan),
                     Tables\Actions\Action::make('generate_token')
-                        ->label('Generate API Token')
+                        ->label(__('filament.resources.user.actions.generate_token'))
                         ->icon('heroicon-o-key')
                         ->color('info')
                         ->action(function (User $record) {
@@ -291,19 +288,22 @@ class UserResource extends Resource
 
                             // Show success notification with the token
                             Notification::make()
-                                ->title('API Token Generated Successfully')
-                                ->body('Token: '.$token->plainTextToken."\n\nExpires: ".now()->addDays(30)->format('M j, Y g:i A')."\n\n⚠️ Copy this token now - it won't be shown again!")
+                                ->title(__('filament.resources.user.messages.token_generated_title'))
+                                ->body(__('filament.resources.user.messages.token_generated_body', [
+                                    'token' => $token->plainTextToken,
+                                    'expires' => now()->addDays(30)->format('M j, Y g:i A'),
+                                ]))
                                 ->success()
                                 ->duration(30000) // Show for 30 seconds
                                 ->persistent() // Keep until manually dismissed
                                 ->send();
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Generate API Token')
-                        ->modalDescription('This will generate a new API token with full permissions that expires in 30 days. The token will be shown once in a notification.')
-                        ->modalSubmitActionLabel('Generate Token'),
+                        ->modalHeading(__('filament.resources.user.messages.generate_token_heading'))
+                        ->modalDescription(__('filament.resources.user.messages.generate_token_description'))
+                        ->modalSubmitActionLabel(__('filament.resources.user.messages.generate_token_submit')),
                     Tables\Actions\Action::make('manage_tokens')
-                        ->label('Manage Tokens')
+                        ->label(__('filament.resources.user.actions.manage_tokens'))
                         ->icon('heroicon-o-cog-6-tooth')
                         ->color('warning')
                         ->modalContent(function (User $record) {
@@ -317,15 +317,15 @@ class UserResource extends Resource
                         })
                         ->modalActions([
                             \Filament\Actions\Action::make('close')
-                                ->label('Close')
+                                ->label(__('filament.common.actions.close'))
                                 ->color('gray')
                                 ->close(),
                         ])
                         ->modalWidth('4xl')
-                        ->modalHeading(fn (User $record) => 'Manage API Tokens for '.$record->name)
+                        ->modalHeading(fn (User $record) => __('filament.resources.user.messages.manage_tokens_heading', ['name' => $record->name]))
                         ->visible(fn (User $record) => $record->tokens()->count() > 0),
                     Tables\Actions\Action::make('revoke_all_tokens')
-                        ->label('Revoke All Tokens')
+                        ->label(__('filament.resources.user.actions.revoke_all_tokens'))
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->action(function (User $record) {
@@ -333,15 +333,18 @@ class UserResource extends Resource
                             $record->tokens()->delete();
 
                             Notification::make()
-                                ->title('All Tokens Revoked')
-                                ->body("Successfully revoked {$tokenCount} token(s) for {$record->name}")
+                                ->title(__('filament.resources.user.messages.all_tokens_revoked_title'))
+                                ->body(__('filament.resources.user.messages.all_tokens_revoked_body', [
+                                    'count' => $tokenCount,
+                                    'name' => $record->name,
+                                ]))
                                 ->success()
                                 ->send();
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Revoke All API Tokens')
-                        ->modalDescription(fn (User $record) => "Are you sure you want to revoke all API tokens for {$record->name}? This action cannot be undone.")
-                        ->modalSubmitActionLabel('Revoke All Tokens')
+                        ->modalHeading(__('filament.resources.user.messages.revoke_all_heading'))
+                        ->modalDescription(fn (User $record) => __('filament.resources.user.messages.revoke_all_description', ['name' => $record->name]))
+                        ->modalSubmitActionLabel(__('filament.resources.user.messages.revoke_all_submit'))
                         ->visible(fn (User $record) => $record->tokens()->count() > 0),
                     Tables\Actions\DeleteAction::make(),
                 ]),
@@ -350,22 +353,22 @@ class UserResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\BulkAction::make('verify_emails')
-                        ->label('Verify Emails')
+                        ->label(__('filament.resources.user.actions.verify_emails'))
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
                         ->action(fn ($records) => $records->each->update(['email_verified_at' => now()]))
                         ->requiresConfirmation(),
                     Tables\Actions\BulkAction::make('assign_plan')
-                        ->label('Assign Plan')
+                        ->label(__('filament.resources.user.actions.assign_plan'))
                         ->icon('heroicon-o-credit-card')
                         ->color('info')
                         ->form([
                             Forms\Components\Select::make('membership_plan_id')
-                                ->label('Membership Plan')
+                                ->label(__('filament.resources.user.fields.membership_plan'))
                                 ->options(MembershipPlan::active()->pluck('name', 'id'))
                                 ->required(),
                             Forms\Components\DateTimePicker::make('expires_at')
-                                ->label('Expires At')
+                                ->label(__('filament.resources.user.forms.expires_at'))
                                 ->nullable(),
                         ])
                         ->action(function ($records, array $data) {
@@ -377,30 +380,30 @@ class UserResource extends Resource
                         })
                         ->requiresConfirmation(),
                     Tables\Actions\BulkAction::make('bulk_generate_tokens')
-                        ->label('Generate API Tokens')
+                        ->label(__('filament.resources.user.actions.bulk_generate_tokens'))
                         ->icon('heroicon-o-key')
                         ->color('info')
                         ->form([
                             Forms\Components\TextInput::make('token_name_prefix')
-                                ->label('Token Name Prefix')
+                                ->label(__('filament.resources.user.forms.token_name_prefix'))
                                 ->required()
-                                ->default('Bulk Generated')
-                                ->helperText('Each token will be named: [Prefix] - [User Name] - [Date]'),
+                                ->default(__('filament.resources.user.forms.token_name_prefix_default'))
+                                ->helperText(__('filament.resources.user.forms.token_name_prefix_help')),
                             Forms\Components\Select::make('abilities')
-                                ->label('Token Abilities')
+                                ->label(__('filament.resources.user.forms.token_abilities'))
                                 ->multiple()
                                 ->options([
-                                    '*' => 'All Abilities',
-                                    'auth:user' => 'User Profile Access',
-                                    'auth:logout' => 'Logout Access',
+                                    '*' => __('filament.resources.user.abilities.all'),
+                                    'auth:user' => __('filament.resources.user.abilities.user_profile'),
+                                    'auth:logout' => __('filament.resources.user.abilities.logout'),
                                 ])
                                 ->default(['*'])
-                                ->helperText('Select what these tokens can do'),
+                                ->helperText(__('filament.resources.user.forms.token_abilities_help')),
                             Forms\Components\DateTimePicker::make('expires_at')
-                                ->label('Expires At')
+                                ->label(__('filament.resources.user.forms.expires_at'))
                                 ->nullable()
                                 ->default(now()->addDays(30))
-                                ->helperText('Leave empty for no expiration'),
+                                ->helperText(__('filament.resources.user.forms.expires_at_help')),
                         ])
                         ->action(function ($records, array $data) {
                             $generatedCount = 0;
@@ -413,18 +416,18 @@ class UserResource extends Resource
                             }
 
                             Notification::make()
-                                ->title('Bulk Token Generation Complete')
-                                ->body("Successfully generated {$generatedCount} API token(s)")
+                                ->title(__('filament.resources.user.messages.bulk_token_generation_title'))
+                                ->body(__('filament.resources.user.messages.bulk_token_generation_body', ['count' => $generatedCount]))
                                 ->success()
                                 ->send();
                         })
                         ->modalWidth('lg')
                         ->requiresConfirmation()
-                        ->modalHeading('Bulk Generate API Tokens')
-                        ->modalDescription('Generate API tokens for all selected users. Each user will receive one token with the specified settings.')
-                        ->modalSubmitActionLabel('Generate Tokens'),
+                        ->modalHeading(__('filament.resources.user.forms.bulk_generate_heading'))
+                        ->modalDescription(__('filament.resources.user.forms.bulk_generate_description'))
+                        ->modalSubmitActionLabel(__('filament.resources.user.forms.bulk_generate_submit')),
                     Tables\Actions\BulkAction::make('bulk_revoke_tokens')
-                        ->label('Revoke All Tokens')
+                        ->label(__('filament.resources.user.actions.bulk_revoke_tokens'))
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->action(function ($records) {
@@ -437,15 +440,18 @@ class UserResource extends Resource
                             }
 
                             Notification::make()
-                                ->title('Bulk Token Revocation Complete')
-                                ->body("Successfully revoked {$totalRevoked} API token(s) from ".$records->count().' user(s)')
+                                ->title(__('filament.resources.user.messages.bulk_token_revocation_title'))
+                                ->body(__('filament.resources.user.messages.bulk_token_revocation_body', [
+                                    'count' => $totalRevoked,
+                                    'users' => $records->count(),
+                                ]))
                                 ->success()
                                 ->send();
                         })
                         ->requiresConfirmation()
-                        ->modalHeading('Revoke All API Tokens')
-                        ->modalDescription('Are you sure you want to revoke ALL API tokens for the selected users? This action cannot be undone.')
-                        ->modalSubmitActionLabel('Revoke All Tokens'),
+                        ->modalHeading(__('filament.resources.user.forms.bulk_revoke_heading'))
+                        ->modalDescription(__('filament.resources.user.forms.bulk_revoke_description'))
+                        ->modalSubmitActionLabel(__('filament.resources.user.forms.bulk_revoke_submit')),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

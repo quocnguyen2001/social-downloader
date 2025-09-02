@@ -19,9 +19,14 @@ class CookieSettings extends SettingsPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.settings');
+    }
 
     protected static string $settings = CookieSettingsClass::class;
 
@@ -30,7 +35,7 @@ class CookieSettings extends SettingsPage
      */
     public static function getNavigationLabel(): string
     {
-        return 'Cookie Settings';
+        return __('filament.navigation.labels.cookie_settings');
     }
 
     /**
@@ -38,7 +43,7 @@ class CookieSettings extends SettingsPage
      */
     public function getTitle(): string
     {
-        return 'Cookie Settings';
+        return __('filament.pages.cookie_settings.title');
     }
 
     /**
@@ -46,7 +51,7 @@ class CookieSettings extends SettingsPage
      */
     public function getHeading(): string
     {
-        return 'Cookie Settings';
+        return __('filament.pages.cookie_settings.heading');
     }
 
     /**
@@ -54,7 +59,7 @@ class CookieSettings extends SettingsPage
      */
     public function getSubheading(): ?string
     {
-        return 'Manage cookie configuration files for authenticated video extraction';
+        return __('filament.pages.cookie_settings.subheading');
     }
 
     /**

@@ -20,7 +20,6 @@ class ApiUsageChart extends ChartWidget
 
     protected function getData(): array
     {
-        // Get data for the last 30 days
         $endDate = now();
         $startDate = now()->subDays(29);
 
@@ -32,18 +31,15 @@ class ApiUsageChart extends ChartWidget
         $instagramCounts = [];
         $facebookCounts = [];
 
-        // Generate data for each day
         for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
             $dateString = $date->format('M j');
             $dates[] = $dateString;
 
-            // Get requests for this day
             $dayRequests = ApiRequest::whereDate('created_at', $date->toDateString());
 
             $requestCounts[] = $dayRequests->count();
             $revenueCounts[] = round($dayRequests->where('billed', true)->sum('cost'), 2);
 
-            // Platform breakdown
             $youtubeCounts[] = $dayRequests->where('platform', 'youtube')->count();
             $tiktokCounts[] = $dayRequests->where('platform', 'tiktok')->count();
             $instagramCounts[] = $dayRequests->where('platform', 'instagram')->count();
@@ -125,7 +121,7 @@ class ApiUsageChart extends ChartWidget
                     'position' => 'left',
                     'title' => [
                         'display' => true,
-                        'text' => 'Number of Requests',
+                        'text' => __('filament.widgets.api_usage_chart.y_axis_requests'),
                     ],
                 ],
                 'y1' => [
@@ -134,7 +130,7 @@ class ApiUsageChart extends ChartWidget
                     'position' => 'right',
                     'title' => [
                         'display' => true,
-                        'text' => 'Revenue (VND)',
+                        'text' => __('filament.widgets.api_usage_chart.y_axis_revenue'),
                     ],
                     'grid' => [
                         'drawOnChartArea' => false,

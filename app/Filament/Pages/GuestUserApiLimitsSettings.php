@@ -9,19 +9,18 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SettingsPage;
 
-/**
- * Guest User API Limits Settings Page.
- *
- * This page provides management interface for API restrictions and limitations
- * for unauthenticated (guest) users.
- */
 class GuestUserApiLimitsSettings extends SettingsPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-user';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.settings');
+    }
 
     protected static string $settings = GuestApiLimitsSettings::class;
 
@@ -30,7 +29,7 @@ class GuestUserApiLimitsSettings extends SettingsPage
      */
     public static function getNavigationLabel(): string
     {
-        return 'Guest User API Limits';
+        return __('filament.navigation.labels.guest_user_api_limits');
     }
 
     /**
@@ -38,7 +37,7 @@ class GuestUserApiLimitsSettings extends SettingsPage
      */
     public function getTitle(): string
     {
-        return 'Guest User API Limits';
+        return __('filament.pages.api_limits_settings.guest_user.title');
     }
 
     /**
@@ -46,7 +45,7 @@ class GuestUserApiLimitsSettings extends SettingsPage
      */
     public function getHeading(): string
     {
-        return 'Guest User API Limits';
+        return __('filament.pages.api_limits_settings.guest_user.heading');
     }
 
     /**
@@ -54,7 +53,7 @@ class GuestUserApiLimitsSettings extends SettingsPage
      */
     public function getSubheading(): ?string
     {
-        return 'Manage API restrictions and limitations for unauthenticated users';
+        return __('filament.pages.api_limits_settings.guest_user.subheading');
     }
 
     /**
@@ -64,63 +63,63 @@ class GuestUserApiLimitsSettings extends SettingsPage
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Request Limits')
-                    ->description('API request limitations for unauthenticated users')
+                Forms\Components\Section::make(__('filament.pages.api_limits_settings.sections.request_limits'))
+                    ->description(__('filament.pages.api_limits_settings.descriptions.guest_request_limits'))
                     ->schema([
                         Forms\Components\TextInput::make('daily_request_limit')
-                            ->label('Daily Request Limit')
+                            ->label(__('filament.pages.api_limits_settings.fields.daily_request_limit'))
                             ->required()
                             ->numeric()
                             ->minValue(1)
                             ->maxValue(1000)
-                            ->suffix('requests per day')
-                            ->helperText('Maximum number of API calls per day for guest users'),
+                            ->suffix(__('filament.pages.api_limits_settings.suffixes.requests_per_day'))
+                            ->helperText(__('filament.pages.api_limits_settings.help.daily_request_limit_guest')),
 
                         Forms\Components\TextInput::make('hourly_request_limit')
-                            ->label('Hourly Request Limit')
+                            ->label(__('filament.pages.api_limits_settings.fields.hourly_request_limit'))
                             ->required()
                             ->numeric()
                             ->minValue(1)
                             ->maxValue(100)
-                            ->suffix('requests per hour')
-                            ->helperText('Maximum number of API calls per hour for guest users'),
+                            ->suffix(__('filament.pages.api_limits_settings.suffixes.requests_per_hour'))
+                            ->helperText(__('filament.pages.api_limits_settings.help.hourly_request_limit_guest')),
 
                         Forms\Components\TextInput::make('rate_limit_per_minute')
-                            ->label('Rate Limit Per Minute')
+                            ->label(__('filament.pages.api_limits_settings.fields.rate_limit_per_minute'))
                             ->required()
                             ->numeric()
                             ->minValue(1)
                             ->maxValue(60)
-                            ->suffix('requests per minute')
-                            ->helperText('Rate limiting for guest users'),
+                            ->suffix(__('filament.pages.api_limits_settings.suffixes.requests_per_minute'))
+                            ->helperText(__('filament.pages.api_limits_settings.help.rate_limit_guest')),
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make('Platform Access')
-                    ->description('Allowed platforms for guest users')
+                Forms\Components\Section::make(__('filament.pages.api_limits_settings.sections.platform_access'))
+                    ->description(__('filament.pages.api_limits_settings.descriptions.guest_platform_access'))
                     ->schema([
                         Forms\Components\CheckboxList::make('allowed_platforms')
-                            ->label('Allowed Platforms')
+                            ->label(__('filament.pages.api_limits_settings.fields.allowed_platforms'))
                             ->options(GuestApiLimitsSettings::getPlatformOptions())
                             ->required()
-                            ->helperText('Select which platforms guest users can access'),
+                            ->helperText(__('filament.pages.api_limits_settings.help.allowed_platforms_guest')),
                     ])
                     ->columns(1),
 
-                Forms\Components\Section::make('Quality & Format Restrictions')
-                    ->description('Available quality and format options for guest users')
+                Forms\Components\Section::make(__('filament.pages.api_limits_settings.sections.quality_format_restrictions'))
+                    ->description(__('filament.pages.api_limits_settings.descriptions.guest_quality_format'))
                     ->schema([
                         Forms\Components\CheckboxList::make('allowed_qualities')
-                            ->label('Allowed Qualities')
+                            ->label(__('filament.pages.api_limits_settings.fields.allowed_qualities'))
                             ->options(GuestApiLimitsSettings::getQualityOptions())
                             ->required()
-                            ->helperText('Select which quality options guest users can request'),
+                            ->helperText(__('filament.pages.api_limits_settings.help.allowed_qualities_guest')),
 
                         Forms\Components\CheckboxList::make('allowed_formats')
-                            ->label('Allowed Formats')
+                            ->label(__('filament.pages.api_limits_settings.fields.allowed_formats'))
                             ->options(GuestApiLimitsSettings::getFormatOptions())
                             ->required()
-                            ->helperText('Select which file formats guest users can download'),
+                            ->helperText(__('filament.pages.api_limits_settings.help.allowed_formats_guest')),
                     ])
                     ->columns(2),
             ]);

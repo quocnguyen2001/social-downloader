@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\ApiUsageChart;
-use App\Filament\Widgets\RecentTokensWidget;
-use App\Filament\Widgets\RecentUsersTable;
 use App\Filament\Widgets\StatsOverviewWidget;
-use App\Filament\Widgets\TokenStatsWidget;
-use App\Filament\Widgets\TokenUsageChart;
 use App\Filament\Widgets\TopClientsWidget;
 use App\Filament\Widgets\UserStatsWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -24,14 +20,10 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            UserStatsWidget::class,
             StatsOverviewWidget::class,
-            TokenStatsWidget::class,
+            UserStatsWidget::class,
             ApiUsageChart::class,
-            TokenUsageChart::class,
             TopClientsWidget::class,
-            RecentUsersTable::class,
-            RecentTokensWidget::class,
         ];
     }
 
@@ -43,9 +35,9 @@ class Dashboard extends BaseDashboard
         return [
             'default' => 1,
             'md' => 2,
-            'lg' => 3,
-            'xl' => 3,
-            '2xl' => 3,
+            'lg' => 2,
+            'xl' => 2,
+            '2xl' => 2,
         ];
     }
 }

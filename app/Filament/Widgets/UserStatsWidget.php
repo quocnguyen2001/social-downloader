@@ -23,23 +23,23 @@ class UserStatsWidget extends BaseWidget
             ->count();
 
         return [
-            Stat::make('Total Users', number_format($totalUsers))
-                ->description('All registered users')
+            Stat::make(__('messages.widgets.user_stats.total_users'), number_format($totalUsers))
+                ->description(__('messages.widgets.user_stats.total_users_description'))
                 ->descriptionIcon('heroicon-m-users')
                 ->color('primary'),
 
-            Stat::make('Users with Plans', number_format($usersWithPlans))
-                ->description('Users assigned to membership plans')
+            Stat::make(__('messages.widgets.user_stats.users_with_plans'), number_format($usersWithPlans))
+                ->description(__('messages.widgets.user_stats.users_with_plans_description'))
                 ->descriptionIcon('heroicon-m-credit-card')
                 ->color('success'),
 
-            Stat::make('Active Members', number_format($activeMembers))
-                ->description('Users with active memberships')
+            Stat::make(__('messages.widgets.user_stats.active_members'), number_format($activeMembers))
+                ->description(__('messages.widgets.user_stats.active_members_description'))
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
 
-            Stat::make('Expired Members', number_format($expiredMembers))
-                ->description('Users with expired memberships')
+            Stat::make(__('messages.widgets.user_stats.expired_members'), number_format($expiredMembers))
+                ->description(__('messages.widgets.user_stats.expired_members_description'))
                 ->descriptionIcon('heroicon-m-x-circle')
                 ->color('danger'),
         ];

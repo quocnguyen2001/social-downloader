@@ -9,19 +9,18 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SettingsPage;
 
-/**
- * General Settings Page.
- *
- * This page provides management interface for general application settings
- * including site information, contact details, user management, and maintenance mode.
- */
 class GeneralSettings extends SettingsPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.settings');
+    }
 
     protected static string $settings = GeneralSettingsClass::class;
 
@@ -30,7 +29,7 @@ class GeneralSettings extends SettingsPage
      */
     public static function getNavigationLabel(): string
     {
-        return 'General Settings';
+        return __('filament.navigation.labels.general_settings');
     }
 
     /**
@@ -38,7 +37,7 @@ class GeneralSettings extends SettingsPage
      */
     public function getTitle(): string
     {
-        return 'General Settings';
+        return __('filament.pages.general_settings.title');
     }
 
     /**
@@ -46,7 +45,7 @@ class GeneralSettings extends SettingsPage
      */
     public function getHeading(): string
     {
-        return 'General Settings';
+        return __('filament.pages.general_settings.heading');
     }
 
     /**
@@ -54,7 +53,7 @@ class GeneralSettings extends SettingsPage
      */
     public function getSubheading(): ?string
     {
-        return 'Manage basic website information and configuration settings';
+        return __('filament.pages.general_settings.subheading');
     }
 
     /**

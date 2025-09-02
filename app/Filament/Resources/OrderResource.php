@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrderResource\Pages;
 use App\Enums\OrderStatus;
+use App\Filament\Resources\OrderResource\Pages;
 use App\Models\MembershipPlan;
 use App\Models\Order;
 use Filament\Forms;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -25,13 +24,33 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static ?string $navigationGroup = 'Billing & Revenue';
+    protected static ?string $navigationGroup = null;
 
-    protected static ?string $navigationLabel = 'Orders';
+    protected static ?string $navigationLabel = null;
 
-    protected static ?string $modelLabel = 'Order';
+    protected static ?string $modelLabel = null;
 
-    protected static ?string $pluralModelLabel = 'Orders';
+    protected static ?string $pluralModelLabel = null;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.billing_revenue');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.navigation.labels.orders');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.resources.order.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.resources.order.plural_label');
+    }
 
     protected static ?int $navigationSort = 1;
 
@@ -39,25 +58,25 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Order Information')
+                Forms\Components\Section::make(__('filament.resources.order.sections.order_information'))
                     ->schema([
                         Forms\Components\Select::make('membership_plan_id')
-                            ->label('Membership Plan')
+                            ->label(__('filament.resources.order.fields.membership_plan'))
                             ->options(MembershipPlan::pluck('name', 'id'))
                             ->searchable()
                             ->nullable(),
 
                         Forms\Components\Select::make('status')
-                            ->label('Status')
+                            ->label(__('filament.resources.order.fields.status'))
                             ->options(OrderStatus::getOptions())
                             ->required()
                             ->default(OrderStatus::PENDING->value),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Pricing Information')
+                Forms\Components\Section::make(__('filament.resources.order.sections.pricing_information'))
                     ->schema([
                         Forms\Components\TextInput::make('subtotal')
-                            ->label('Subtotal')
+                            ->label(__('filament.resources.order.fields.subtotal'))
                             ->numeric()
                             ->step(0.01)
                             ->default(0.00)
@@ -69,7 +88,7 @@ class OrderResource extends Resource
                             }),
 
                         Forms\Components\TextInput::make('discount')
-                            ->label('Discount')
+                            ->label(__('filament.resources.order.fields.discount'))
                             ->numeric()
                             ->step(0.01)
                             ->default(0.00)
@@ -80,7 +99,7 @@ class OrderResource extends Resource
                             }),
 
                         Forms\Components\TextInput::make('total')
-                            ->label('Total')
+                            ->label(__('filament.resources.order.fields.total'))
                             ->numeric()
                             ->step(0.01)
                             ->default(0.00)
@@ -96,28 +115,28 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('membershipPlan.name')
-                    ->label('Membership Plan')
+                    ->label(__('filament.resources.order.columns.membership_plan'))
                     ->searchable()
                     ->sortable()
                     ->placeholder('N/A'),
 
                 Tables\Columns\TextColumn::make('subtotal')
-                    ->label('Subtotal')
+                    ->label(__('filament.resources.order.columns.subtotal'))
                     ->money('VND')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('discount')
-                    ->label('Discount')
+                    ->label(__('filament.resources.order.columns.discount'))
                     ->money('VND')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('total')
-                    ->label('Total')
+                    ->label(__('filament.resources.order.columns.total'))
                     ->money('VND')
                     ->sortable(),
 
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Status')
+                    ->label(__('filament.resources.order.columns.status'))
                     ->colors([
                         'warning' => OrderStatus::PENDING->value,
                         'info' => OrderStatus::PROCESSING->value,
@@ -131,11 +150,13 @@ class OrderResource extends Resource
                     ->formatStateUsing(fn (OrderStatus $state): string => $state->getLabel()),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.fields.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label(__('filament.common.fields.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -171,24 +192,26 @@ class OrderResource extends Resource
                 Tables\Actions\DeleteAction::make(),
 
                 Tables\Actions\Action::make('mark_as_processing')
+                    ->label(__('filament.resources.order.actions.mark_as_processing'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('info')
                     ->action(function (Order $record) {
                         $record->markAsProcessing();
                         Notification::make()
-                            ->title('Order marked as processing')
+                            ->title(__('filament.resources.order.messages.order_marked_processing'))
                             ->success()
                             ->send();
                     })
                     ->visible(fn (Order $record): bool => $record->status === OrderStatus::PENDING),
 
                 Tables\Actions\Action::make('mark_as_completed')
+                    ->label(__('filament.resources.order.actions.mark_as_completed'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->action(function (Order $record) {
                         $record->markAsCompleted();
                         Notification::make()
-                            ->title('Order marked as completed')
+                            ->title(__('filament.resources.order.messages.order_marked_completed'))
                             ->success()
                             ->send();
                     })
@@ -199,6 +222,7 @@ class OrderResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
 
                     Tables\Actions\BulkAction::make('mark_as_processing')
+                        ->label(__('filament.resources.order.actions.mark_as_processing'))
                         ->icon('heroicon-o-arrow-path')
                         ->color('info')
                         ->action(function ($records) {
@@ -210,12 +234,13 @@ class OrderResource extends Resource
                                 }
                             }
                             Notification::make()
-                                ->title("Marked {$processedCount} orders as processing")
+                                ->title(__('filament.resources.order.messages.marked_orders_processing', ['count' => $processedCount]))
                                 ->success()
                                 ->send();
                         }),
 
                     Tables\Actions\BulkAction::make('mark_as_completed')
+                        ->label(__('filament.resources.order.actions.mark_as_completed'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(function ($records) {
@@ -227,7 +252,7 @@ class OrderResource extends Resource
                                 }
                             }
                             Notification::make()
-                                ->title("Marked {$completedCount} orders as completed")
+                                ->title(__('filament.resources.order.messages.marked_orders_completed', ['count' => $completedCount]))
                                 ->success()
                                 ->send();
                         }),

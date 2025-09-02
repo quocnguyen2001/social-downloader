@@ -21,52 +21,52 @@ class ApiKeyResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-key';
 
-    protected static ?string $navigationGroup = 'API Management';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.api_management');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return trans('messages.navigation.api_keys');
+        return __('filament.navigation.labels.api_keys');
     }
 
     public static function getModelLabel(): string
     {
-        return trans('models.api_key.singular');
+        return __('filament.resources.api_key.label');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return trans('models.api_key.plural');
+        return __('filament.resources.api_key.plural_label');
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make(trans('messages.sections.basic_information'))
+                Forms\Components\Section::make(__('filament.resources.api_key.sections.basic_information'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->label(trans('messages.labels.application_name'))
+                            ->label(__('filament.resources.api_key.fields.name'))
                             ->placeholder(trans('messages.placeholders.enter_application_name')),
-
-                        Forms\Components\TextInput::make('company_name')
-                            ->maxLength(255)
-                            ->label(trans('messages.labels.company_name'))
-                            ->placeholder(trans('messages.placeholders.enter_company_name')),
 
                         SharedFormComponents::apiKeyStatusSelect(),
                     ])->columns(2),
 
-                Forms\Components\Section::make(trans('messages.sections.limits_pricing'))
+                Forms\Components\Section::make(__('filament.resources.api_key.sections.limits_pricing'))
                     ->schema([
                         Forms\Components\TextInput::make('daily_limit')
                             ->numeric()
                             ->default(1000)
                             ->required()
-                            ->label(trans('messages.labels.daily_limit'))
+                            ->label(__('filament.resources.api_key.fields.daily_limit'))
                             ->placeholder(trans('messages.placeholders.enter_daily_limit'))
                             ->helperText(trans('messages.descriptions.daily_limit_description')),
 
@@ -74,7 +74,7 @@ class ApiKeyResource extends Resource
                             ->numeric()
                             ->default(30000)
                             ->required()
-                            ->label(trans('messages.labels.monthly_limit'))
+                            ->label(__('filament.resources.api_key.fields.monthly_limit'))
                             ->placeholder(trans('messages.placeholders.enter_monthly_limit'))
                             ->helperText(trans('messages.descriptions.monthly_limit_description')),
 
@@ -83,7 +83,7 @@ class ApiKeyResource extends Resource
                             ->step(0.0001)
                             ->default(0.0500)
                             ->required()
-                            ->label(trans('messages.labels.price_per_request'))
+                            ->label(__('filament.resources.api_key.fields.price_per_request'))
                             ->placeholder(trans('messages.placeholders.enter_price_per_request'))
                             ->helperText(trans('messages.descriptions.price_per_request_description')),
                     ])->columns(3),
@@ -107,56 +107,48 @@ class ApiKeyResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->label(trans('messages.table.columns.name')),
-
-                Tables\Columns\TextColumn::make('company_name')
-                    ->searchable()
-                    ->sortable()
-                    ->label(trans('messages.table.columns.company'))
-                    ->toggleable(),
+                    ->label(__('filament.resources.api_key.columns.name')),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors(SharedColors::apiKeyStatus())
                     ->sortable()
-                    ->label(trans('messages.table.columns.status')),
+                    ->label(__('filament.resources.api_key.columns.status')),
 
                 Tables\Columns\TextColumn::make('daily_usage_display')
-                    ->label(trans('messages.table.columns.daily_usage'))
+                    ->label(__('filament.resources.api_key.columns.daily_usage'))
                     ->getStateUsing(fn (ApiKey $record) => trans('messages.info.usage_display', [
                         'usage' => $record->daily_usage,
                         'limit' => $record->daily_limit,
                     ]))
-                    ->badge()
-                    ->color(fn (ApiKey $record) => SharedColors::getUsageLevelColor($record->daily_usage_percentage)),
+                    ->badge(),
 
                 Tables\Columns\TextColumn::make('monthly_usage_display')
-                    ->label(trans('messages.table.columns.monthly_usage'))
+                    ->label(__('filament.resources.api_key.columns.monthly_usage'))
                     ->getStateUsing(fn (ApiKey $record) => trans('messages.info.usage_display', [
                         'usage' => $record->monthly_usage,
                         'limit' => $record->monthly_limit,
                     ]))
-                    ->badge()
-                    ->color(fn (ApiKey $record) => SharedColors::getUsageLevelColor($record->monthly_usage_percentage)),
+                    ->badge(),
 
                 Tables\Columns\TextColumn::make('total_usage')
-                    ->label(trans('messages.table.columns.total_usage'))
+                    ->label(__('filament.resources.api_key.columns.total_usage'))
                     ->numeric()
                     ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('price_per_request')
-                    ->label(trans('messages.table.columns.price_request'))
+                    ->label(__('filament.resources.api_key.columns.price_request'))
                     ->money('VND', divideBy: 1)
                     ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('contact_email')
-                    ->label(trans('messages.table.columns.contact'))
+                    ->label(__('filament.resources.api_key.columns.contact'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label(trans('messages.labels.created_at'))
+                    ->label(__('filament.resources.api_key.columns.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -174,6 +166,7 @@ class ApiKeyResource extends Resource
                 SharedActions::suspendApiKeyAction(),
 
                 Tables\Actions\Action::make('reset_usage')
+                    ->label(__('filament.common.actions.reset_usage'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('info')
                     ->requiresConfirmation()
@@ -191,17 +184,18 @@ class ApiKeyResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('generate_new_key')
+                    ->label(__('filament.common.actions.generate_new_key'))
                     ->icon('heroicon-o-key')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalDescription('This will generate a new API key and invalidate the current one.')
+                    ->modalDescription(trans('messages.warnings.generate_new_key_warning'))
                     ->action(function (ApiKey $record) {
                         $newKey = ApiKey::generateKey();
                         $record->update(['key_hash' => hash('sha256', $newKey)]);
 
                         Notification::make()
-                            ->title(trans('messages.success.new_api_key_generated'))
-                            ->body("New key: {$newKey}")
+                            ->title(trans('messages.success.new_key_generated'))
+                            ->body(trans('messages.info.new_api_key', ['key' => $newKey]))
                             ->success()
                             ->persistent()
                             ->send();

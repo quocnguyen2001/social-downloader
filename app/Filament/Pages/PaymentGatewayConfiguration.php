@@ -14,19 +14,18 @@ use Filament\Notifications\Notification;
 use Filament\Pages\SettingsPage;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Payment Gateway Configuration Page.
- *
- * This page provides management interface for payment gateway settings
- * including bank transfer and PayPal configurations with tabbed interface.
- */
 class PaymentGatewayConfiguration extends SettingsPage
 {
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Settings';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 3;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.settings');
+    }
 
     protected static string $settings = PaymentGatewaySettings::class;
 
@@ -51,7 +50,7 @@ class PaymentGatewayConfiguration extends SettingsPage
      */
     public static function getNavigationLabel(): string
     {
-        return trans('payment_gateway.title');
+        return __('filament.navigation.labels.payment_gateway_configuration');
     }
 
     /**
@@ -59,7 +58,7 @@ class PaymentGatewayConfiguration extends SettingsPage
      */
     public function getTitle(): string
     {
-        return trans('payment_gateway.title');
+        return __('filament.pages.payment_gateway_configuration.title');
     }
 
     /**
@@ -67,7 +66,7 @@ class PaymentGatewayConfiguration extends SettingsPage
      */
     public function getHeading(): string
     {
-        return trans('payment_gateway.title');
+        return __('filament.pages.payment_gateway_configuration.heading');
     }
 
     /**
@@ -75,7 +74,7 @@ class PaymentGatewayConfiguration extends SettingsPage
      */
     public function getSubheading(): ?string
     {
-        return trans('payment_gateway.description');
+        return __('filament.pages.payment_gateway_configuration.subheading');
     }
 
     /**

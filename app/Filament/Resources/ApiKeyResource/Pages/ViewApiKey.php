@@ -99,55 +99,6 @@ class ViewApiKey extends ViewRecord
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Contact Information')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('contact_email')
-                            ->label('Contact Email')
-                            ->copyable()
-                            ->copyMessage('Email copied!')
-                            ->icon('heroicon-m-envelope'),
-
-                        Infolists\Components\TextEntry::make('billing_email')
-                            ->label('Billing Email')
-                            ->copyable()
-                            ->copyMessage('Email copied!')
-                            ->icon('heroicon-m-envelope')
-                            ->placeholder('Same as contact email'),
-
-                        Infolists\Components\TextEntry::make('company_name')
-                            ->label('Company Name')
-                            ->placeholder('No company specified'),
-
-                        Infolists\Components\TextEntry::make('webhook_url')
-                            ->label('Webhook URL')
-                            ->copyable()
-                            ->copyMessage('URL copied!')
-                            ->icon('heroicon-m-link')
-                            ->placeholder('No webhook configured'),
-                    ])
-                    ->columns(2),
-
-                Infolists\Components\Section::make('Permissions')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('allowed_platforms')
-                            ->label('Allowed Platforms')
-                            ->listWithLineBreaks()
-                            ->bulleted()
-                            ->placeholder('All platforms allowed'),
-
-                        Infolists\Components\TextEntry::make('allowed_qualities')
-                            ->label('Allowed Qualities')
-                            ->listWithLineBreaks()
-                            ->bulleted()
-                            ->placeholder('All qualities allowed'),
-
-                        Infolists\Components\TextEntry::make('allowed_formats')
-                            ->label('Allowed Formats')
-                            ->listWithLineBreaks()
-                            ->bulleted()
-                            ->placeholder('All formats allowed'),
-                    ])
-                    ->columns(1),
             ]);
     }
 

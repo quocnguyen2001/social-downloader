@@ -27,13 +27,33 @@ class DownloadSessionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-down-tray';
 
-    protected static ?string $navigationGroup = 'Download Management';
+    protected static ?string $navigationGroup = null;
 
-    protected static ?string $navigationLabel = 'Download Sessions';
+    protected static ?string $navigationLabel = null;
 
-    protected static ?string $modelLabel = 'Download Session';
+    protected static ?string $modelLabel = null;
 
-    protected static ?string $pluralModelLabel = 'Download Sessions';
+    protected static ?string $pluralModelLabel = null;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.downloads');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.navigation.labels.download_sessions');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.resources.download_session.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.resources.download_session.plural_label');
+    }
 
     protected static ?int $navigationSort = 1;
 
@@ -41,7 +61,7 @@ class DownloadSessionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Session Information')
+                Forms\Components\Section::make(__('filament.resources.download_session.sections.session_information'))
                     ->schema([
                         Forms\Components\Select::make('api_key_id')
                             ->label(trans('messages.table.columns.api_key'))
@@ -56,35 +76,35 @@ class DownloadSessionResource extends Resource
                         SharedFormComponents::downloadSessionStatusSelect(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Video Details')
+                Forms\Components\Section::make(__('filament.resources.download_session.sections.video_details'))
                     ->schema([
                         Forms\Components\TextInput::make('video_id')
                             ->maxLength(255)
-                            ->label(trans('messages.labels.video_id')),
+                            ->label(__('filament.resources.download_session.fields.video_id')),
 
                         Forms\Components\TextInput::make('title')
                             ->maxLength(500)
-                            ->label(trans('messages.labels.title'))
+                            ->label(__('filament.resources.download_session.fields.title'))
                             ->placeholder(trans('messages.placeholders.enter_video_title')),
 
                         Forms\Components\TextInput::make('thumbnail_path')
                             ->url()
                             ->maxLength(1000)
-                            ->label(trans('messages.labels.thumbnail_url')),
+                            ->label(__('filament.resources.download_session.fields.thumbnail_path')),
 
                         Forms\Components\TextInput::make('duration')
                             ->numeric()
-                            ->label(trans('messages.labels.duration')),
+                            ->label(__('filament.resources.download_session.fields.duration')),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Status & Errors')
+                Forms\Components\Section::make(__('filament.resources.download_session.sections.status_errors'))
                     ->schema([
                         Forms\Components\Textarea::make('error_message')
-                            ->label(trans('messages.labels.error_message'))
+                            ->label(__('filament.resources.download_session.fields.error_message'))
                             ->placeholder(trans('messages.placeholders.enter_error_message')),
 
                         Forms\Components\DateTimePicker::make('expires_at')
-                            ->label(trans('messages.labels.expires_at')),
+                            ->label(__('filament.resources.download_session.fields.expires_at')),
                     ])->columns(1),
             ]);
     }
@@ -99,13 +119,13 @@ class DownloadSessionResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\BadgeColumn::make('platform')
-                    ->label(trans('messages.table.columns.platform'))
+                    ->label(__('filament.resources.download_session.fields.platform'))
                     ->colors(SharedColors::platform())
                     ->icons(SharedColors::platformIcons())
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('title')
-                    ->label(trans('messages.table.columns.video_title'))
+                    ->label(__('filament.resources.download_session.fields.title'))
                     ->searchable()
                     ->limit(30)
                     ->tooltip(function (DownloadSession $record): ?string {
@@ -113,21 +133,22 @@ class DownloadSessionResource extends Resource
                     }),
 
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label(trans('messages.table.columns.status'))
+                    ->label(__('filament.resources.download_session.fields.status'))
                     ->colors(SharedColors::downloadSessionStatus())
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('formatted_duration')
-                    ->label('Duration')
+                    ->label(__('filament.resources.download_session.fields.duration'))
                     ->sortable('duration')
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('time_until_expiration')
-                    ->label('Expires')
+                    ->label(__('filament.resources.download_session.fields.expires_at'))
                     ->sortable('expires_at')
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.fields.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -160,42 +181,42 @@ class DownloadSessionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('start_fetching')
-                    ->label('Start Fetching Metadata')
+                    ->label(__('filament.resources.download_session.actions.start_fetching'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('info')
                     ->requiresConfirmation()
                     ->action(function (DownloadSession $record) {
                         $record->markAsFetchingMetadata();
                         Notification::make()
-                            ->title('Started fetching metadata')
+                            ->title(__('filament.resources.download_session.messages.started_fetching'))
                             ->success()
                             ->send();
                     })
                     ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::PENDING),
 
                 Tables\Actions\Action::make('mark_metadata_fetched')
-                    ->label('Mark Metadata Fetched')
+                    ->label(__('filament.resources.download_session.actions.mark_metadata_fetched'))
                     ->icon('heroicon-o-document-check')
                     ->color('primary')
                     ->requiresConfirmation()
                     ->action(function (DownloadSession $record) {
                         $record->markAsMetadataFetched();
                         Notification::make()
-                            ->title('Metadata marked as fetched')
+                            ->title(__('filament.resources.download_session.messages.metadata_fetched'))
                             ->success()
                             ->send();
                     })
                     ->visible(fn (DownloadSession $record) => $record->status === DownloadSessionStatus::FETCHING_METADATA),
 
                 Tables\Actions\Action::make('mark_ready_for_download')
-                    ->label('Mark Ready for Download')
+                    ->label(__('filament.resources.download_session.actions.mark_ready'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
                     ->action(function (DownloadSession $record) {
                         $record->markAsReadyForDownload();
                         Notification::make()
-                            ->title('Session marked as ready for download')
+                            ->title(__('filament.resources.download_session.messages.ready_for_download'))
                             ->success()
                             ->send();
                     })
@@ -212,6 +233,7 @@ class DownloadSessionResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
 
                     Tables\Actions\BulkAction::make('cleanup_expired')
+                        ->label(__('filament.resources.download_session.actions.cleanup_expired'))
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
@@ -220,12 +242,13 @@ class DownloadSessionResource extends Resource
                             $records->filter(fn ($record) => $record->isExpired())->each->delete();
 
                             Notification::make()
-                                ->title("Cleaned up {$expiredCount} expired sessions")
+                                ->title(__('filament.resources.download_session.messages.cleaned_expired', ['count' => $expiredCount]))
                                 ->success()
                                 ->send();
                         }),
 
                     Tables\Actions\BulkAction::make('reset_to_pending')
+                        ->label(__('filament.resources.download_session.actions.reset_to_pending'))
                         ->icon('heroicon-o-arrow-path')
                         ->color('warning')
                         ->action(function ($records) {
@@ -238,7 +261,7 @@ class DownloadSessionResource extends Resource
                             });
 
                             Notification::make()
-                                ->title("Reset {$resetSessions->count()} sessions to pending")
+                                ->title(__('filament.resources.download_session.messages.reset_sessions', ['count' => $resetSessions->count()]))
                                 ->success()
                                 ->send();
                         }),

@@ -42,16 +42,17 @@ class TopClientsWidget extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Client Name')
+                    ->label(__('messages.table.columns.client_name'))
                     ->searchable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('company_name')
-                    ->label('Company')
+                    ->label(__('messages.table.columns.company'))
                     ->searchable()
                     ->toggleable(),
 
                 Tables\Columns\BadgeColumn::make('status')
+                    ->label(__('messages.table.columns.status'))
                     ->colors([
                         'success' => 'active',
                         'warning' => 'inactive',
@@ -59,17 +60,17 @@ class TopClientsWidget extends BaseWidget
                     ]),
 
                 Tables\Columns\TextColumn::make('monthly_requests_count')
-                    ->label('This Month Requests')
+                    ->label(__('messages.table.columns.monthly_requests'))
                     ->numeric()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('monthly_revenue')
-                    ->label('This Month Revenue')
+                    ->label(__('messages.table.columns.monthly_revenue'))
                     ->money('VND', divideBy: 1)
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('monthly_usage_percentage')
-                    ->label('Monthly Usage %')
+                    ->label(__('messages.table.columns.monthly_usage_percent'))
                     ->getStateUsing(fn (ApiKey $record) => $record->monthly_usage_percentage.'%')
                     ->badge()
                     ->color(fn (ApiKey $record) => $record->monthly_usage_percentage > 80 ? 'danger' :
@@ -77,7 +78,7 @@ class TopClientsWidget extends BaseWidget
                     ),
 
                 Tables\Columns\TextColumn::make('daily_usage_percentage')
-                    ->label('Daily Usage %')
+                    ->label(__('messages.table.columns.daily_usage_percent'))
                     ->getStateUsing(fn (ApiKey $record) => $record->daily_usage_percentage.'%')
                     ->badge()
                     ->color(fn (ApiKey $record) => $record->daily_usage_percentage > 80 ? 'danger' :
@@ -86,12 +87,12 @@ class TopClientsWidget extends BaseWidget
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('price_per_request')
-                    ->label('Price/Request')
+                    ->label(__('messages.table.columns.price_request'))
                     ->money('VND', divideBy: 1)
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('total_usage')
-                    ->label('Total Usage')
+                    ->label(__('messages.table.columns.total_usage'))
                     ->numeric()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

@@ -25,32 +25,38 @@ class MembershipPlanResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 2;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.user_management');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Membership Plans';
+        return __('filament.navigation.labels.membership_plans');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Membership Plan';
+        return __('filament.resources.membership_plan.label');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Membership Plans';
+        return __('filament.resources.membership_plan.plural_label');
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
+                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.basic_information'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label(__('filament.resources.membership_plan.fields.name'))
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
@@ -58,20 +64,23 @@ class MembershipPlanResource extends Resource
                             ),
 
                         Forms\Components\TextInput::make('slug')
+                            ->label(__('filament.resources.membership_plan.fields.slug'))
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->rules(['alpha_dash']),
 
                         Forms\Components\Textarea::make('description')
+                            ->label(__('filament.resources.membership_plan.fields.description'))
                             ->maxLength(1000)
                             ->rows(3),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Pricing')
+                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.pricing'))
                     ->schema([
                         Forms\Components\TextInput::make('price')
+                            ->label(__('filament.resources.membership_plan.fields.price'))
                             ->required()
                             ->numeric()
                             ->default(0)
@@ -79,6 +88,7 @@ class MembershipPlanResource extends Resource
                             ->step(0.01),
 
                         Forms\Components\Select::make('currency')
+                            ->label(__('filament.resources.membership_plan.fields.currency'))
                             ->required()
                             ->options([
                                 'USD' => 'USD ($)',
@@ -88,16 +98,18 @@ class MembershipPlanResource extends Resource
                             ->default('USD'),
 
                         Forms\Components\Select::make('billing_cycle')
+                            ->label(__('filament.resources.membership_plan.fields.billing_cycle'))
                             ->required()
                             ->options(MembershipPlan::getAvailableBillingCycles())
                             ->default('monthly'),
                     ])
                     ->columns(3),
 
-                Forms\Components\Section::make('Request Limits')
-                    ->description('Set to 0 for unlimited requests')
+                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.request_limits'))
+                    ->description(__('filament.resources.membership_plan.descriptions.request_limits'))
                     ->schema([
                         Forms\Components\TextInput::make('daily_request_limit')
+                            ->label(__('filament.resources.membership_plan.fields.daily_request_limit'))
                             ->required()
                             ->numeric()
                             ->default(0)
@@ -105,56 +117,60 @@ class MembershipPlanResource extends Resource
                             ->suffix('requests/day'),
 
                         Forms\Components\TextInput::make('total_request_download')
-                            ->label('Total Download Requests')
+                            ->label(__('filament.resources.membership_plan.fields.total_request_download'))
                             ->required()
                             ->numeric()
                             ->default(0)
                             ->minValue(0)
                             ->suffix('total requests')
-                            ->helperText('Total number of download requests allowed (0 = unlimited)'),
+                            ->helperText(__('filament.resources.membership_plan.descriptions.total_download_requests')),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Platform & Quality Restrictions')
-                    ->description('Leave empty to allow all options')
+                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.platform_quality_restrictions'))
+                    ->description(__('filament.resources.membership_plan.descriptions.platform_quality_restrictions'))
                     ->schema([
                         Forms\Components\CheckboxList::make('allowed_platforms')
+                            ->label(__('filament.resources.membership_plan.fields.allowed_platforms'))
                             ->options(MembershipPlan::getAvailablePlatforms())
                             ->columns(2),
 
                         Forms\Components\CheckboxList::make('allowed_qualities')
+                            ->label(__('filament.resources.membership_plan.fields.allowed_qualities'))
                             ->options(MembershipPlan::getAvailableQualities())
                             ->columns(4),
 
                         Forms\Components\CheckboxList::make('allowed_formats')
+                            ->label(__('filament.resources.membership_plan.fields.allowed_formats'))
                             ->options(MembershipPlan::getAvailableFormats())
                             ->columns(3),
                     ]),
 
-                Forms\Components\Section::make('Features & Limits')
+                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.features_limits'))
                     ->schema([
                         Forms\Components\Toggle::make('priority_processing')
-                            ->label('Priority Processing')
-                            ->helperText('Process requests with higher priority'),
+                            ->label(__('filament.resources.membership_plan.fields.priority_processing'))
+                            ->helperText(__('filament.resources.membership_plan.descriptions.priority_processing')),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Plan Settings')
+                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.plan_settings'))
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label(__('filament.resources.membership_plan.fields.is_active'))
                             ->default(true)
-                            ->helperText('Only active plans are available for selection'),
+                            ->helperText(__('filament.resources.membership_plan.descriptions.active')),
 
                         Forms\Components\Toggle::make('is_featured')
-                            ->label('Featured')
-                            ->helperText('Featured plans are highlighted to users'),
+                            ->label(__('filament.resources.membership_plan.fields.is_featured'))
+                            ->helperText(__('filament.resources.membership_plan.descriptions.featured')),
 
                         Forms\Components\TextInput::make('sort_order')
+                            ->label(__('filament.resources.membership_plan.fields.sort_order'))
                             ->required()
                             ->numeric()
                             ->default(0)
-                            ->helperText('Lower numbers appear first'),
+                            ->helperText(__('filament.resources.membership_plan.descriptions.sort_order')),
                     ])
                     ->columns(2),
             ]);
@@ -165,53 +181,57 @@ class MembershipPlanResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('filament.resources.membership_plan.columns.name'))
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('price')
+                    ->label(__('filament.resources.membership_plan.columns.price'))
                     ->money('USD')
                     ->sortable()
                     ->alignEnd(),
 
                 Tables\Columns\TextColumn::make('billing_cycle')
+                    ->label(__('filament.resources.membership_plan.columns.billing_cycle'))
                     ->badge()
                     ->color(fn (string $state): string => SharedColors::membershipPlanBillingCycle()[$state] ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('daily_request_limit')
-                    ->label('Daily Limit')
-                    ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                    ->label(__('filament.resources.membership_plan.columns.daily_limit'))
+                    ->formatStateUsing(fn ($state) => $state === 0 ? __('filament.resources.membership_plan.messages.unlimited') : number_format($state))
                     ->alignEnd(),
 
                 Tables\Columns\TextColumn::make('total_request_download')
-                    ->label('Total Downloads')
-                    ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                    ->label(__('filament.resources.membership_plan.columns.total_downloads'))
+                    ->formatStateUsing(fn ($state) => $state === 0 ? __('filament.resources.membership_plan.messages.unlimited') : number_format($state))
                     ->alignEnd(),
 
                 Tables\Columns\TextColumn::make('users_count')
-                    ->label('Users')
+                    ->label(__('filament.resources.membership_plan.columns.users'))
                     ->counts('users')
                     ->alignEnd(),
 
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('filament.resources.membership_plan.columns.active'))
                     ->boolean(),
 
                 Tables\Columns\IconColumn::make('is_featured')
-                    ->label('Featured')
+                    ->label(__('filament.resources.membership_plan.columns.featured'))
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Order')
+                    ->label(__('filament.resources.membership_plan.columns.order'))
                     ->sortable()
                     ->alignEnd(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active Plans'),
+                    ->label(__('filament.resources.membership_plan.filters.active_plans')),
                 Tables\Filters\TernaryFilter::make('is_featured')
-                    ->label('Featured Plans'),
+                    ->label(__('filament.resources.membership_plan.filters.featured_plans')),
                 Tables\Filters\SelectFilter::make('billing_cycle')
+                    ->label(__('filament.resources.membership_plan.filters.billing_cycle'))
                     ->options(MembershipPlan::getAvailableBillingCycles()),
             ])
             ->actions([
@@ -223,13 +243,13 @@ class MembershipPlanResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\BulkAction::make('activate')
-                        ->label('Activate Selected')
+                        ->label(__('filament.resources.membership_plan.actions.activate_selected'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(fn ($records) => $records->each->update(['is_active' => true]))
                         ->requiresConfirmation(),
                     Tables\Actions\BulkAction::make('deactivate')
-                        ->label('Deactivate Selected')
+                        ->label(__('filament.resources.membership_plan.actions.deactivate_selected'))
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->action(fn ($records) => $records->each->update(['is_active' => false]))
@@ -244,86 +264,86 @@ class MembershipPlanResource extends Resource
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Basic Information')
+                Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.basic_information'))
                     ->schema([
                         Infolists\Components\TextEntry::make('name')
-                            ->label('Plan Name')
+                            ->label(__('filament.resources.membership_plan.fields.plan_name'))
                             ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
                             ->weight('bold'),
 
                         Infolists\Components\TextEntry::make('slug')
-                            ->label('Slug')
+                            ->label(__('filament.resources.membership_plan.fields.slug'))
                             ->badge()
                             ->color('gray'),
 
                         Infolists\Components\TextEntry::make('description')
-                            ->label('Description')
-                            ->placeholder('No description provided'),
+                            ->label(__('filament.resources.membership_plan.fields.description'))
+                            ->placeholder(__('filament.resources.membership_plan.messages.no_description_provided')),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Pricing & Billing')
+                Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.pricing_billing'))
                     ->schema([
                         Infolists\Components\TextEntry::make('price')
-                            ->label('Price')
+                            ->label(__('filament.resources.membership_plan.fields.price'))
                             ->money('USD')
                             ->size(Infolists\Components\TextEntry\TextEntrySize::Large)
                             ->weight('bold')
                             ->color('success'),
 
                         Infolists\Components\TextEntry::make('currency')
-                            ->label('Currency')
+                            ->label(__('filament.resources.membership_plan.fields.currency'))
                             ->badge(),
 
                         Infolists\Components\TextEntry::make('billing_cycle')
-                            ->label('Billing Cycle')
+                            ->label(__('filament.resources.membership_plan.fields.billing_cycle'))
                             ->badge()
                             ->color(fn (string $state): string => SharedColors::membershipPlanBillingCycle()[$state] ?? 'gray'),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Request Limits')
+                Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.request_limits'))
                     ->schema([
                         Infolists\Components\TextEntry::make('daily_request_limit')
-                            ->label('Daily Requests')
-                            ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                            ->label(__('filament.resources.membership_plan.fields.daily_request_limit'))
+                            ->formatStateUsing(fn ($state) => $state === 0 ? __('filament.resources.membership_plan.messages.unlimited') : number_format($state))
                             ->badge()
                             ->color(fn ($state) => $state === 0 ? 'success' : 'info'),
 
                         Infolists\Components\TextEntry::make('total_request_download')
-                            ->label('Total Download Requests')
-                            ->formatStateUsing(fn ($state) => $state === 0 ? 'Unlimited' : number_format($state))
+                            ->label(__('filament.resources.membership_plan.fields.total_request_download'))
+                            ->formatStateUsing(fn ($state) => $state === 0 ? __('filament.resources.membership_plan.messages.unlimited') : number_format($state))
                             ->badge()
                             ->color(fn ($state) => $state === 0 ? 'success' : 'warning'),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Platform & Quality Restrictions')
+                Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.platform_quality_restrictions'))
                     ->schema([
                         Infolists\Components\TextEntry::make('allowed_platforms')
-                            ->label('Allowed Platforms')
+                            ->label(__('filament.resources.membership_plan.fields.allowed_platforms'))
                             ->listWithLineBreaks()
                             ->bulleted()
-                            ->placeholder('All platforms allowed'),
+                            ->placeholder(__('filament.resources.membership_plan.messages.all_platforms_allowed')),
 
                         Infolists\Components\TextEntry::make('allowed_qualities')
-                            ->label('Allowed Qualities')
+                            ->label(__('filament.resources.membership_plan.fields.allowed_qualities'))
                             ->listWithLineBreaks()
                             ->bulleted()
-                            ->placeholder('All qualities allowed'),
+                            ->placeholder(__('filament.resources.membership_plan.messages.all_qualities_allowed')),
 
                         Infolists\Components\TextEntry::make('allowed_formats')
-                            ->label('Allowed Formats')
+                            ->label(__('filament.resources.membership_plan.fields.allowed_formats'))
                             ->listWithLineBreaks()
                             ->bulleted()
-                            ->placeholder('All formats allowed'),
+                            ->placeholder(__('filament.resources.membership_plan.messages.all_formats_allowed')),
                     ])
                     ->columns(1),
 
-                Infolists\Components\Section::make('Features & Settings')
+                Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.features_limits'))
                     ->schema([
                         Infolists\Components\IconEntry::make('priority_processing')
-                            ->label('Priority Processing')
+                            ->label(__('filament.resources.membership_plan.fields.priority_processing'))
                             ->boolean()
                             ->trueIcon('heroicon-o-check-circle')
                             ->falseIcon('heroicon-o-x-circle')
@@ -331,7 +351,7 @@ class MembershipPlanResource extends Resource
                             ->falseColor('danger'),
 
                         Infolists\Components\IconEntry::make('is_active')
-                            ->label('Active')
+                            ->label(__('filament.resources.membership_plan.fields.is_active'))
                             ->boolean()
                             ->trueIcon('heroicon-o-check-circle')
                             ->falseIcon('heroicon-o-x-circle')
@@ -339,7 +359,7 @@ class MembershipPlanResource extends Resource
                             ->falseColor('danger'),
 
                         Infolists\Components\IconEntry::make('is_featured')
-                            ->label('Featured')
+                            ->label(__('filament.resources.membership_plan.fields.is_featured'))
                             ->boolean()
                             ->trueIcon('heroicon-o-star')
                             ->falseIcon('heroicon-o-star')
@@ -347,25 +367,25 @@ class MembershipPlanResource extends Resource
                             ->falseColor('gray'),
 
                         Infolists\Components\TextEntry::make('sort_order')
-                            ->label('Sort Order')
+                            ->label(__('filament.resources.membership_plan.fields.sort_order'))
                             ->badge()
                             ->color('gray'),
 
                         Infolists\Components\TextEntry::make('users_count')
-                            ->label('Active Users')
+                            ->label(__('filament.resources.membership_plan.fields.active_users'))
                             ->badge()
                             ->color('primary'),
                     ])
                     ->columns(3),
 
-                Infolists\Components\Section::make('Timestamps')
+                Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.timestamps'))
                     ->schema([
                         Infolists\Components\TextEntry::make('created_at')
-                            ->label('Created At')
+                            ->label(__('filament.common.fields.created_at'))
                             ->dateTime(),
 
                         Infolists\Components\TextEntry::make('updated_at')
-                            ->label('Updated At')
+                            ->label(__('filament.common.fields.updated_at'))
                             ->dateTime(),
                     ])
                     ->columns(2)
