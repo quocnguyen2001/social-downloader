@@ -48,6 +48,8 @@ return [
         'paypal_checkout_created' => 'Thanh toán PayPal đã được tạo thành công. Vui lòng hoàn tất thanh toán.',
         'paypal_not_configured' => 'Phương thức thanh toán PayPal chưa được cấu hình đúng cách.',
         'paypal_failed' => 'Thanh toán PayPal thất bại. Vui lòng thử lại hoặc sử dụng phương thức thanh toán khác.',
+        'transaction_completed' => 'Giao dịch thanh toán đã hoàn thành thành công',
+        'transaction_not_completed' => 'Giao dịch thanh toán chưa hoàn thành',
     ],
 
     'navigation' => [

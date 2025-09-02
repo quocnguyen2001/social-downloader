@@ -51,6 +51,8 @@ return [
         'paypal_checkout_created' => 'PayPal checkout created successfully. Please complete the payment.',
         'paypal_not_configured' => 'PayPal payment method is not properly configured.',
         'paypal_failed' => 'PayPal payment failed. Please try again or use a different payment method.',
+        'transaction_completed' => 'Payment transaction completed successfully',
+        'transaction_not_completed' => 'Payment transaction is not completed yet',
     ],
 
     'navigation' => [

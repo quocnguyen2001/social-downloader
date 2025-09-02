@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MembershipPlanController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoDownloadController;
@@ -75,6 +76,12 @@ Route::prefix('v1')->group(function () {
                 ->name('api.auth.extract-video');
         });
 
+        Route::middleware(['auth:sanctum'])->group(function () {
+            Route::get('orders', [OrderController::class, 'index']);
+            Route::get('orders/{id}', [OrderController::class, 'show']);
+        });
+
+
         Route::get('extract/status/{sessionId}', [VideoExtractionController::class, 'status'])
             ->name('api.extract.status');
 
@@ -84,5 +91,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/status', [VideoDownloadController::class, 'checkStatus'])
                 ->name('api.download.status');
         });
+
+        Route::get('payment-methods', [PublicController::class, 'paymentMethods']);
+
+        Route::get('payment-status/{chargeId}', [PublicController::class, 'checkBankTransferStatus']);
     });
 });

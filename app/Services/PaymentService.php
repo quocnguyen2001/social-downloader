@@ -42,7 +42,7 @@ class PaymentService
                     'event' => 'transaction_created',
                     'payment_method' => $paymentMethod->value,
                     'amount' => $amount,
-                ]
+                ],
             ],
         ]);
 
@@ -110,6 +110,11 @@ class PaymentService
         return array_keys($this->getAvailablePaymentMethods());
     }
 
+    public function getPaymentMethodDetails(): array
+    {
+        return $this->getAvailablePaymentMethods();
+    }
+
     /**
      * Mark transaction as completed.
      */
@@ -157,7 +162,7 @@ class PaymentService
             $vietQRService = app(VietQRService::class);
 
             // Check if bank transfer is properly configured
-            if (!$settings->isBankTransferConfigured()) {
+            if (! $settings->isBankTransferConfigured()) {
                 throw new \Exception(__('messages.payment.bank_transfer_not_configured'));
             }
 
@@ -237,7 +242,7 @@ class PaymentService
             $paypalService = app(PayPalService::class);
 
             // Check if PayPal is properly configured
-            if (!$settings->isPayPalConfigured()) {
+            if (! $settings->isPayPalConfigured()) {
                 throw new \Exception(__('messages.payment.paypal_not_configured'));
             }
 
@@ -259,7 +264,7 @@ class PaymentService
             // Create PayPal order
             $paypalResult = $paypalService->createOrder($orderData);
 
-            if (!$paypalResult['success']) {
+            if (! $paypalResult['success']) {
                 throw new \Exception($paypalResult['error'] ?? 'PayPal order creation failed');
             }
 
@@ -302,6 +307,6 @@ class PaymentService
             PaymentMethod::PAYPAL => 'PP',
         };
 
-        return $prefix . '_' . now()->format('Ymd') . '_' . Str::random(8);
+        return $prefix.'_'.now()->format('Ymd').'_'.Str::random(8);
     }
 }

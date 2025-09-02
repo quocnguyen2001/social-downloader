@@ -7,6 +7,7 @@ use App\Models\ApiKey;
 use App\Services\ApiKeyCacheService;
 use App\Services\AuthenticatedApiKey;
 use Closure;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -35,21 +36,18 @@ class ApiKeyAuthentication
     public function handle(Request $request, Closure $next, string ...$scopes): Response
     {
         try {
-            // Extract API key from request
             $apiKeyValue = $this->extractApiKey($request);
 
             if (! $apiKeyValue) {
                 return $this->unauthorizedResponse('API key is required');
             }
 
-            // Validate and get API key with caching
             $apiKey = $this->validateApiKey($apiKeyValue);
 
             if (! $apiKey) {
                 return $this->unauthorizedResponse('Invalid API key');
             }
 
-            // Check API key status
             if ($apiKey->status !== ApiKeyStatus::ACTIVE) {
                 return $this->unauthorizedResponse('API key is not active');
             }
@@ -61,29 +59,22 @@ class ApiKeyAuthentication
                 'user_agent' => $request->userAgent(),
             ]);
 
-            // Check rate limits
             $rateLimitResult = $this->checkRateLimit($apiKey, $request);
             if ($rateLimitResult !== true) {
                 return $rateLimitResult;
             }
 
-            // Check usage limits
             $usageLimitResult = $this->checkUsageLimits($apiKey);
             if ($usageLimitResult !== true) {
                 return $usageLimitResult;
             }
 
-            // Check scopes if provided
             if (! empty($scopes) && ! $this->hasRequiredScopes($apiKey, $scopes)) {
                 return $this->forbiddenResponse('Insufficient permissions for this endpoint');
             }
 
-            // Store API key in singleton for request lifecycle
-
-            // Also add to request attributes for backward compatibility
             $request->attributes->set('api_key', $apiKey);
 
-            // Log successful authentication
             Log::info('API key authenticated successfully', [
                 'api_key_id' => $apiKey->id,
                 'tier' => $apiKey->tier,
@@ -94,7 +85,7 @@ class ApiKeyAuthentication
 
             return $next($request);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('API key authentication error', [
                 'error' => $e->getMessage(),
                 'request_path' => $request->path(),
@@ -110,19 +101,12 @@ class ApiKeyAuthentication
      */
     private function extractApiKey(Request $request): ?string
     {
-        // Try Authorization Bearer token first
-        $bearerToken = $request->bearerToken();
-        if ($bearerToken) {
-            return $bearerToken;
-        }
-
-        // Try X-API-Key header
         $apiKeyHeader = $request->header('X-API-Key');
+
         if ($apiKeyHeader) {
             return $apiKeyHeader;
         }
 
-        // Try api_key query parameter (less secure, for testing only)
         if (app()->environment(['local', 'testing'])) {
             return $request->query('api_key');
         }
@@ -137,46 +121,38 @@ class ApiKeyAuthentication
     {
         $keyHash = hash('sha256', $apiKeyValue);
 
-        // Try to get from cache first
         $apiKey = $this->cacheService->getCachedApiKey($keyHash);
 
         if ($apiKey === null) {
-            // Not in cache, query database
             $apiKey = ApiKey::where('key_hash', $keyHash)
                 ->where('status', ApiKeyStatus::ACTIVE)
                 ->first();
 
             if ($apiKey) {
-                // Cache the API key
                 $this->cacheService->cacheApiKey($keyHash, $apiKey);
             } else {
-                // Cache negative result
                 $this->cacheService->cacheInvalidApiKey($keyHash);
             }
         } elseif ($apiKey === false) {
-            // Cached negative result
             return null;
         }
 
         return $apiKey;
     }
 
-    /**
-     * Check rate limits for the API key.
-     */
     private function checkRateLimit(ApiKey $apiKey, Request $request): Response|bool
     {
         $user = $request->user();
         $rateLimitKey = "api_rate_limit:{$apiKey->id}";
-        $maxAttempts = $this->getRateLimitForTier($user ? $user->tier : 'none');
-        $decayMinutes = 1; // 1 minute window
+        $maxAttempts = $this->getRateLimitForTier('none');
+        $decayMinutes = 1;
 
         if (RateLimiter::tooManyAttempts($rateLimitKey, $maxAttempts)) {
             $retryAfter = RateLimiter::availableIn($rateLimitKey);
 
             Log::warning('API rate limit exceeded', [
                 'api_key_id' => $apiKey->id,
-                'tier' => $user ? $user->tier : null,
+                'tier' => null,
                 'max_attempts' => $maxAttempts,
                 'retry_after' => $retryAfter,
                 'ip' => $request->ip(),
@@ -196,9 +172,6 @@ class ApiKeyAuthentication
         return true;
     }
 
-    /**
-     * Check usage limits for the API key.
-     */
     private function checkUsageLimits(ApiKey $apiKey): Response|bool
     {
         // Check daily limit
@@ -218,7 +191,6 @@ class ApiKeyAuthentication
             ], 429);
         }
 
-        // Check monthly limit
         if ($apiKey->monthly_limit > 0 && $apiKey->monthly_usage >= $apiKey->monthly_limit) {
             Log::warning('Monthly usage limit exceeded', [
                 'api_key_id' => $apiKey->id,
@@ -238,13 +210,8 @@ class ApiKeyAuthentication
         return true;
     }
 
-    /**
-     * Check if API key has required scopes.
-     */
     private function hasRequiredScopes(ApiKey $apiKey, array $requiredScopes): bool
     {
-        // For now, we'll use a simple tier-based permission system
-        // This can be extended to use actual scopes/permissions
         $tierPermissions = [
             'basic' => ['extract'],
             'pro' => ['extract', 'batch'],
@@ -262,15 +229,11 @@ class ApiKeyAuthentication
         return true;
     }
 
-    /**
-     * Get rate limit for API key tier.
-     */
     private function getRateLimitForTier(string $tier): int
     {
         return match ($tier) {
             'premium' => 1000, // 1000 requests per minute
             'pro' => 300,      // 300 requests per minute
-            'basic' => 60,     // 60 requests per minute
             default => 60,     // 10 requests per minute for unknown tiers
         };
     }
@@ -311,9 +274,6 @@ class ApiKeyAuthentication
         ], 500);
     }
 
-    /**
-     * Determine the authentication method used.
-     */
     private function getAuthenticationMethod(Request $request): string
     {
         if ($request->bearerToken()) {
