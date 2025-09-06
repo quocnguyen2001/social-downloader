@@ -20,6 +20,6 @@ class OrderServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        parent::boot();
+
     }
 }

@@ -54,7 +54,7 @@ return [
         'bank_name' => 'Select the bank where payments will be received',
         'bank_account' => 'Full name of the account holder as registered with the bank',
         'bank_account_number' => 'The bank account number for receiving payments',
-        'money_transfer_content_template' => 'Template for transfer description. Use {order_id} and {user_name} as placeholders',
+        'money_transfer_content_template' => 'Template for transfer description. Use {charge_id} and {order_id} as placeholders',
         'api_transactions_api' => 'API endpoint for verifying bank transfer transactions',
         'bank_transfer_enabled' => 'Enable bank transfer as a payment method',
         'bank_transfer_currency' => 'Currency for bank transfer payments',

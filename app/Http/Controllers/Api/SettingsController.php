@@ -7,22 +7,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponseTrait;
 use App\Settings\GeneralSettings;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Settings Controller for API endpoints.
- *
- * Handles public access to application settings.
- */
 class SettingsController extends Controller
 {
     use ApiResponseTrait;
 
-    /**
-     * Get all general settings.
-     */
     public function index(Request $request): JsonResponse
     {
         try {
@@ -59,7 +52,7 @@ class SettingsController extends Controller
                 __('Settings retrieved successfully.')
             );
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to retrieve settings via API', [
                 'error' => $e->getMessage(),
                 'ip_address' => $request->ip(),

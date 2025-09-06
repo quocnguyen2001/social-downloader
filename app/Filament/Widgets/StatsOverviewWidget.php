@@ -6,6 +6,7 @@ use App\Enums\DownloadSessionStatus;
 use App\Models\ApiKey;
 use App\Models\ApiRequest;
 use App\Models\DownloadSession;
+use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -22,12 +23,14 @@ class StatsOverviewWidget extends BaseWidget
         $todaySuccessfulRequests = ApiRequest::today()->successful()->count();
         $todaySuccessRate = $todayRequests > 0 ? round(($todaySuccessfulRequests / $todayRequests) * 100, 1) : 0;
 
-        // Get this month's revenue
-        $thisMonthRevenue = ApiRequest::thisMonth()->where('billed', true)->sum('cost');
-        $lastMonthRevenue = ApiRequest::whereMonth('created_at', now()->subMonth()->month)
+        $thisMonthRevenue = Transaction::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->where('status', 'completed')
+            ->sum('amount');
+        $lastMonthRevenue = Transaction::whereMonth('created_at', now()->subMonth()->month)
             ->whereYear('created_at', now()->subMonth()->year)
-            ->where('billed', true)
-            ->sum('cost');
+            ->where('status', 'completed')
+            ->sum('amount');
         $revenueChange = $lastMonthRevenue > 0 ? round((($thisMonthRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100, 1) : 0;
 
         $downloadSessions = DownloadSession::all();

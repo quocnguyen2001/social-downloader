@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Settings\PaymentGatewaySettings;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -161,26 +162,24 @@ class PaymentService
             $settings = app(PaymentGatewaySettings::class);
             $vietQRService = app(VietQRService::class);
 
-            // Check if bank transfer is properly configured
             if (! $settings->isBankTransferConfigured()) {
-                throw new \Exception(__('messages.payment.bank_transfer_not_configured'));
+                throw new Exception(__('messages.payment.bank_transfer_not_configured'));
             }
 
-            // Get order and user information for transfer content
+            $transaction->loadMissing(['order', 'user']);
+
             $order = $transaction->order;
             $user = $transaction->user;
 
-            // Generate transfer content with placeholders
             $transferContent = $settings->getBankTransferContent([
                 'order_id' => $order->id,
                 'user_name' => $user->name,
                 'transaction_id' => $transaction->id,
+                'charge_id' => $transaction->charge_id,
             ]);
 
-            // Extract bank code from bank name (format: "VCB - Vietcombank")
             $bankCode = explode(' - ', $settings->bank_name)[0] ?? 'VCB';
 
-            // Generate QR code URL
             $qrCodeUrl = $vietQRService->getQRCodeImageURL(
                 bankId: $bankCode,
                 accountNo: $settings->bank_account_number,
@@ -190,10 +189,8 @@ class PaymentService
                 accountName: $settings->bank_account
             );
 
-            // Generate bank logo URL
             $bankLogoUrl = $vietQRService->getBankLogoImageURL($bankCode);
 
-            // Prepare bank information
             $bankInfo = [
                 'bank_name' => $settings->bank_name,
                 'bank_logo' => $bankLogoUrl,
@@ -205,7 +202,6 @@ class PaymentService
                 'currency' => $transaction->currency,
             ];
 
-            // Log bank transfer initiation
             $transaction->addPaymentLog('bank_transfer_initiated', [
                 'bank_info' => $bankInfo,
                 'verification_required' => true,
@@ -218,7 +214,7 @@ class PaymentService
                 'bank_info' => $bankInfo,
             ];
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Bank transfer processing failed', [
                 'transaction_id' => $transaction->id,
                 'error' => $e->getMessage(),
@@ -243,7 +239,7 @@ class PaymentService
 
             // Check if PayPal is properly configured
             if (! $settings->isPayPalConfigured()) {
-                throw new \Exception(__('messages.payment.paypal_not_configured'));
+                throw new Exception(__('messages.payment.paypal_not_configured'));
             }
 
             // Get order and user information
@@ -265,7 +261,7 @@ class PaymentService
             $paypalResult = $paypalService->createOrder($orderData);
 
             if (! $paypalResult['success']) {
-                throw new \Exception($paypalResult['error'] ?? 'PayPal order creation failed');
+                throw new Exception($paypalResult['error'] ?? 'PayPal order creation failed');
             }
 
             $transaction->addPaymentLog('paypal_order_created', [
@@ -282,7 +278,7 @@ class PaymentService
                 'paypal_order_id' => $paypalResult['paypal_order_id'],
             ];
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('PayPal payment processing failed', [
                 'transaction_id' => $transaction->id,
                 'error' => $e->getMessage(),

@@ -157,9 +157,6 @@ class PaymentGatewaySettings extends Settings
         ];
     }
 
-    /**
-     * Check if bank transfer is properly configured.
-     */
     public function isBankTransferConfigured(): bool
     {
         return $this->bank_transfer_enabled &&
@@ -168,9 +165,6 @@ class PaymentGatewaySettings extends Settings
                ! empty($this->bank_account_number);
     }
 
-    /**
-     * Check if PayPal is properly configured.
-     */
     public function isPayPalConfigured(): bool
     {
         return $this->paypal_enabled &&
@@ -178,9 +172,6 @@ class PaymentGatewaySettings extends Settings
                ! empty($this->paypal_client_secret);
     }
 
-    /**
-     * Get configured payment methods.
-     */
     public function getConfiguredPaymentMethods(): array
     {
         $methods = [];
@@ -196,12 +187,9 @@ class PaymentGatewaySettings extends Settings
         return $methods;
     }
 
-    /**
-     * Get bank transfer content with placeholders replaced.
-     */
     public function getBankTransferContent(array $placeholders = []): string
     {
-        $template = $this->money_transfer_content_template ?? 'Payment for order #{order_id} - {user_name}';
+        $template = $this->money_transfer_content_template ?? '{charge_id}';
 
         foreach ($placeholders as $key => $value) {
             $template = str_replace('{'.$key.'}', $value, $template);
