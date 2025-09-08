@@ -51,6 +51,7 @@ return [
             'billed' => 'Billed',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
+            'total_requests' => 'Total Requests',
         ],
     ],
 
@@ -160,4 +161,10 @@ return [
             'updated_at' => 'Updated At',
         ],
     ],
+
+    'monthly_billing' => [
+        'fields' => [
+            'total_cost' => 'Total Cost',
+        ],
+    ]
 ];
