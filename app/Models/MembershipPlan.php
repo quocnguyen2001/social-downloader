@@ -192,7 +192,7 @@ class MembershipPlan extends Model
             return 'Free';
         }
 
-        return $this->currency.' '.number_format($this->price, 2);
+        return format_currency($this->price, $this->currency);
     }
 
     /**

@@ -161,7 +161,7 @@ class ApiKey extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        return number_format($this->price_per_request, 4).' VND';
+        return format_currency($this->price_per_request, 'VND');
     }
 
     /**

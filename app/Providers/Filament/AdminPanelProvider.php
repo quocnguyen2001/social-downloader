@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\AuthenticatedUserApiLimitsSettings;
+use App\Filament\Pages\CookieSettings;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\GeneralSettings;
+use App\Filament\Pages\GuestUserApiLimitsSettings;
+use App\Filament\Pages\PaymentGatewayConfiguration;
 use App\Filament\Resources\ApiKeyResource;
 use App\Filament\Resources\ApiRequestResource;
 use App\Filament\Resources\DownloadSessionResource;
@@ -12,10 +17,6 @@ use App\Filament\Resources\MembershipPlanResource;
 use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\TransactionResource;
 use App\Filament\Resources\UserResource;
-use App\Filament\Pages\GeneralSettings;
-use App\Filament\Pages\CookieSettings;
-use App\Filament\Pages\AuthenticatedUserApiLimitsSettings;
-use App\Filament\Pages\PaymentGatewayConfiguration;
 use App\Http\Middleware\SetLocale;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -81,6 +82,7 @@ class AdminPanelProvider extends PanelProvider
                             ...GeneralSettings::getNavigationItems(),
                             ...CookieSettings::getNavigationItems(),
                             ...AuthenticatedUserApiLimitsSettings::getNavigationItems(),
+                            ...GuestUserApiLimitsSettings::getNavigationItems(),
                             ...PaymentGatewayConfiguration::getNavigationItems(),
                         ]),
                 ]);

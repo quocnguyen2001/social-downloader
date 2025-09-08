@@ -80,7 +80,7 @@ class MembershipPlanResource extends Resource
                             ->required()
                             ->numeric()
                             ->default(0)
-                            ->prefix('$')
+                            ->prefix('VND')
                             ->step(0.01),
 
                         Forms\Components\Select::make('currency')
@@ -180,7 +180,7 @@ class MembershipPlanResource extends Resource
 
                 Tables\Columns\TextColumn::make('price')
                     ->label(__('filament.resources.membership_plan.columns.price'))
-                    ->money('USD')
+                    ->money('VND')
                     ->sortable()
                     ->alignEnd(),
 

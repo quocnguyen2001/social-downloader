@@ -138,3 +138,71 @@ if (! function_exists('getApiLimitsCacheInfo')) {
         return $info;
     }
 }
+
+if (! function_exists('format_currency')) {
+    function format_currency(float $amount, string $currency = 'VND'): string
+    {
+        if (is_nan($amount) || is_infinite($amount)) {
+            return '0';
+        }
+
+        $cacheKey = "currency_formatter_{$currency}";
+
+        try {
+            $formatter = Cache::remember(
+                $cacheKey,
+                now()->addHours(24),
+                function () use ($currency): NumberFormatter {
+                    $locale = match ($currency) {
+                        'VND' => 'vi_VN',
+                        'EUR' => 'de_DE',
+                        'GBP' => 'en_GB',
+                        'JPY' => 'ja_JP',
+                        'CNY' => 'zh_CN',
+                        'KRW' => 'ko_KR',
+                        'THB' => 'th_TH',
+                        default => 'en_US',
+                    };
+
+                    $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
+
+                    $formatter->setTextAttribute(NumberFormatter::CURRENCY_CODE, $currency);
+
+                    if ($currency === 'VND') {
+                        $formatter->setAttribute(NumberFormatter::FRACTION_DIGITS, 0);
+                    }
+
+                    return $formatter;
+                }
+            );
+
+            $formatted = $formatter->formatCurrency($amount, $currency);
+
+            if ($formatted === false) {
+                return $currency.' '.number_format($amount, $currency === 'VND' ? 0 : 2);
+            }
+
+            return $formatted;
+
+        } catch (Exception $e) {
+            $symbol = match ($currency) {
+                'VND' => '₫',
+                'USD' => '$',
+                'EUR' => '€',
+                'GBP' => '£',
+                'JPY', 'CNY' => '¥',
+                'KRW' => '₩',
+                'THB' => '฿',
+                default => $currency.' ',
+            };
+
+            $decimals = $currency === 'VND' ? 0 : 2;
+            $formatted = number_format($amount, $decimals);
+
+            return match ($currency) {
+                'VND', 'EUR' => $formatted.' '.$symbol,
+                default => $symbol.$formatted,
+            };
+        }
+    }
+}

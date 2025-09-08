@@ -145,7 +145,7 @@ class Order extends Model
      */
     public function getFormattedTotalAttribute(): string
     {
-        return number_format((float) $this->total, 2).' VND';
+        return format_currency((float) $this->total, 'VND');
     }
 
     /**
@@ -153,7 +153,7 @@ class Order extends Model
      */
     public function getFormattedSubtotalAttribute(): string
     {
-        return number_format((float) $this->subtotal, 2).' VND';
+        return format_currency((float) $this->subtotal, 'VND');
     }
 
     /**
@@ -161,7 +161,7 @@ class Order extends Model
      */
     public function getFormattedDiscountAttribute(): string
     {
-        return number_format((float) $this->discount, 2).' VND';
+        return format_currency((float) $this->discount, 'VND');
     }
 
     /**

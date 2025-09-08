@@ -22,6 +22,9 @@ return [
         'failed_sessions_retried' => 'Đã xếp hàng :count phiên thất bại để thử lại',
         'download_triggered' => 'Tải xuống video đã được kích hoạt và sẽ được xử lý trong nền',
         'download_ready' => 'Tải xuống video đã sẵn sàng để truy cập',
+        'order_created' => 'Đơn hàng đã được tạo thành công',
+        'orders_retrieved' => 'Đơn hàng đã được lấy thành công',
+        'order_retrieved' => 'Đơn hàng đã được lấy thành công',
     ],
 
     'warnings' => [
@@ -362,5 +365,11 @@ return [
         'missing_origin_url' => 'Thiếu URL gốc từ phiên tải xuống',
         'download_failed' => 'Tải xuống video đã thất bại',
         'internal_server_error' => 'Đã xảy ra lỗi máy chủ nội bộ',
+        'authentication_required' => 'Yêu cầu xác thực',
+        'membership_plan_not_found' => 'Không tìm thấy gói thành viên hoặc không hoạt động',
+        'order_creation_failed' => 'Không thể tạo đơn hàng',
+        'orders_retrieval_failed' => 'Không thể lấy đơn hàng',
+        'order_retrieval_failed' => 'Không thể lấy đơn hàng',
+        'order_not_found' => 'Không tìm thấy đơn hàng',
     ],
 ];

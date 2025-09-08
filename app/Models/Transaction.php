@@ -134,7 +134,7 @@ class Transaction extends Model
             return 'N/A';
         }
 
-        return number_format((float) $this->amount, 2).' '.strtoupper($this->currency);
+        return format_currency((float) $this->amount, strtoupper($this->currency));
     }
 
     public function getStatusBadgeColorAttribute(): string

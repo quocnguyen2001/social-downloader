@@ -52,7 +52,7 @@ class StatsOverviewWidget extends BaseWidget
                 ->color($todaySuccessRate >= 95 ? 'success' : ($todaySuccessRate >= 80 ? 'warning' : 'danger'))
                 ->chart([12, 15, 8, 22, 18, 25, $todayRequests]),
 
-            Stat::make(trans('messages.widgets.stats_overview.this_months_revenue'), number_format($thisMonthRevenue, 2).' VND')
+            Stat::make(trans('messages.widgets.stats_overview.this_months_revenue'), format_currency($thisMonthRevenue, 'VND'))
                 ->description(trans('messages.info.revenue_change', ['change' => ($revenueChange >= 0 ? '+' : '').$revenueChange]))
                 ->descriptionIcon($revenueChange >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
                 ->color($revenueChange >= 0 ? 'success' : 'danger')

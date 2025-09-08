@@ -146,7 +146,7 @@ class ApiRequest extends Model
      */
     public function getFormattedCostAttribute(): string
     {
-        return number_format($this->cost, 4).' VND';
+        return format_currency($this->cost, 'VND');
     }
 
     /**
