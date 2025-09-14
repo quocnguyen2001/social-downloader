@@ -370,6 +370,7 @@ return [
         'order_creation_failed' => 'Không thể tạo đơn hàng',
         'orders_retrieval_failed' => 'Không thể lấy đơn hàng',
         'order_retrieval_failed' => 'Không thể lấy đơn hàng',
+        'already_subscribed_to_plan' => 'Bạn đã đăng ký gói này rồi.',
         'order_not_found' => 'Không tìm thấy đơn hàng',
     ],
 ];

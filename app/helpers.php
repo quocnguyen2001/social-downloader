@@ -53,7 +53,7 @@ if (! function_exists('getUserApiLimits')) {
             now()->addMinutes(5), // Shorter cache for user-specific data
             function () use ($user): array {
                 // Check if user has an active membership plan
-                if ($user->membershipPlan && $user->hasActiveMembership()) {
+                if ($user->membershipPlan && $user->hasMembershipActive()) {
                     $plan = $user->membershipPlan;
 
                     return [

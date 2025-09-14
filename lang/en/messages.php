@@ -371,5 +371,6 @@ return [
         'orders_retrieval_failed' => 'Failed to retrieve orders',
         'order_retrieval_failed' => 'Failed to retrieve order',
         'order_not_found' => 'Order not found',
+        'already_subscribed_to_plan' => 'You have already subscribed to this plan.',
     ],
 ];

@@ -84,6 +84,11 @@ class OrderController extends Controller
 
             $validatedData = $request->validated();
 
+            // Check if user has active membership with the same plan
+            if ($user->hasMembershipActive() && $user->membership_plan_id == $validatedData['membership_plan_id']) {
+                return $this->errorResponse(__('messages.error.already_subscribed_to_plan'));
+            }
+
             if (!$this->paymentService->validatePaymentMethod($validatedData['payment_method'])) {
                 return $this->errorResponse(__('payment_gateway.validation.invalid_payment_method'));
             }

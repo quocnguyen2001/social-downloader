@@ -41,6 +41,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [UserController::class, 'me'])->name('api.user.me');
         Route::post('/me', [UserController::class, 'updateProfile'])->name('api.user.update-profile');
+        Route::get('/recent-downloads', [UserController::class, 'recentDownloads'])->name('api.user.recent-downloads');
     });
 
     Route::middleware('auth:sanctum')->prefix('orders')->group(function () {

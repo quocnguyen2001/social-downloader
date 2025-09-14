@@ -54,7 +54,7 @@ class AuthenticatedApiRateLimit
             }
 
             // Check membership plan expiration
-            if ($user->membershipPlan && ! $user->hasActiveMembership()) {
+            if ($user->membershipPlan && ! $user->hasMembershipActive()) {
                 return $this->membershipExpiredResponse($user);
             }
 
