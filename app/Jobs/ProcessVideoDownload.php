@@ -122,6 +122,8 @@ class ProcessVideoDownload implements ShouldQueue
                 $uploadResult['file_size']
             );
 
+            $downloadSession->markAsReadyForDownload();
+
             $processingTime = microtime(true) - $startTime;
 
             Log::info('Video download job completed successfully', [
