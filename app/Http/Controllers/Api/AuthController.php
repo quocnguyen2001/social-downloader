@@ -16,6 +16,7 @@ use App\Mail\WelcomeEmail;
 use App\Models\User;
 use App\Services\OTPService;
 use App\Services\RateLimitService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -24,12 +25,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 
-/**
- * Authentication Controller for API endpoints.
- *
- * Handles user registration, login, password reset, and token management
- * using Laravel Sanctum for API authentication.
- */
 class AuthController extends Controller
 {
     use ApiResponseTrait;
@@ -86,7 +81,7 @@ class AuthController extends Controller
             try {
                 Mail::to($user)->send(new WelcomeEmail($user));
                 Log::info('Welcome email sent', ['user_id' => $user->id]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to send welcome email', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage(),
@@ -107,7 +102,7 @@ class AuthController extends Controller
                 'expires_at' => $token->accessToken->expires_at,
             ], trans('auth.messages.registration_success'));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Hit rate limiter on registration failure
             $config = config('api_rate_limits.authentication.registration');
             $this->rateLimitService->hit($rateLimitCheck['key'], $config['decay_minutes']);
@@ -181,7 +176,7 @@ class AuthController extends Controller
                 try {
                     // TODO: Create LoginNotificationEmail if needed
                     Log::info('Login notification email would be sent', ['user_id' => $user->id]);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Failed to send login notification email', [
                         'user_id' => $user->id,
                         'error' => $e->getMessage(),
@@ -202,7 +197,7 @@ class AuthController extends Controller
                 'expires_at' => $token->accessToken->expires_at,
             ], trans('auth.messages.login_success'));
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Login failed', [
                 'error' => $e->getMessage(),
                 'email' => $request->email ?? 'unknown',
@@ -268,7 +263,7 @@ class AuthController extends Controller
                 __('If an account with that email exists, we have sent a password reset OTP.')
             );
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Hit rate limiter on failure
             RateLimiter::hit($key, $decayMinutes * 60);
 
@@ -322,7 +317,7 @@ class AuthController extends Controller
                         Mail::to($user)->send(new PasswordChangedEmail($user));
                         Log::info('Password changed email sent', ['user_id' => $user->id]);
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Failed to send password changed email', [
                         'email' => $request->email,
                         'error' => $e->getMessage(),
@@ -345,7 +340,7 @@ class AuthController extends Controller
 
             return $this->errorResponse($message, [], 400);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Password reset failed', [
                 'error' => $e->getMessage(),
                 'email' => $request->email ?? 'unknown',
@@ -409,7 +404,7 @@ class AuthController extends Controller
             try {
                 Mail::to($user)->send(new PasswordChangedEmail($user));
                 Log::info('Password changed email sent', ['user_id' => $user->id]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error('Failed to send password changed email', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage(),
@@ -422,7 +417,7 @@ class AuthController extends Controller
                 __('Password has been reset successfully.')
             );
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Password reset with OTP failed', [
                 'error' => $e->getMessage(),
                 'email' => $request->email ?? 'unknown',
@@ -472,7 +467,7 @@ class AuthController extends Controller
 
             return $this->successResponse([], $message);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Logout failed', [
                 'error' => $e->getMessage(),
                 'user_id' => $request->user()?->id,
@@ -523,7 +518,7 @@ class AuthController extends Controller
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get user information', [
                 'error' => $e->getMessage(),
                 'user_id' => $request->user()?->id,
@@ -535,6 +530,71 @@ class AuthController extends Controller
                 [],
                 500
             );
+        }
+    }
+
+    /**
+     * Change password for the authenticated user.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        try {
+            // Validate input
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'current_password' => ['required', 'string'],
+                'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
+            ]);
+
+            if ($validator->fails()) {
+                return $this->validationErrorResponse($validator->errors(), 'Validation failed');
+            }
+
+            /** @var \App\Models\User $user */
+            $user = $request->user();
+
+            // Verify current password
+            if (! Hash::check($request->input('current_password'), $user->password)) {
+                return $this->errorResponse('Current password is incorrect.', [], 422);
+            }
+
+            // Update password
+            $user->forceFill([
+                'password' => Hash::make($request->input('password')),
+            ])->save();
+
+            // Revoke all existing tokens for security
+            $user->tokens()->delete();
+
+            // Log the password change
+            Log::info('Password changed successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            // Send password changed confirmation email
+            try {
+                Mail::to($user)->send(new PasswordChangedEmail($user));
+                Log::info('Password changed email sent', ['user_id' => $user->id]);
+            } catch (Exception $e) {
+                Log::error('Failed to send password changed email', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Do not fail the operation if email fails
+            }
+
+            return $this->successResponse([], 'Password changed successfully. Please log in again.');
+
+        } catch (Exception $e) {
+            Log::error('Change password failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user()?->id,
+                'ip_address' => $request->ip(),
+            ]);
+
+            return $this->serverErrorResponse('Failed to change password. Please try again later.');
         }
     }
 }

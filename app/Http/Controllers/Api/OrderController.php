@@ -10,6 +10,7 @@ use App\Http\Traits\ApiResponseTrait;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\PaymentService;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -24,9 +25,7 @@ class OrderController extends Controller
     public function __construct(
         private readonly OrderService   $orderService,
         private readonly PaymentService $paymentService
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -109,7 +108,7 @@ class OrderController extends Controller
 
         } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse($e->getMessage());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Order creation failed', [
                 'user_id' => auth()->id(),
                 'request_data' => $request->validated(),
@@ -141,7 +140,7 @@ class OrderController extends Controller
 
         } catch (ModelNotFoundException $e) {
             return $this->notFoundResponse(__('messages.error.order_not_found'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to retrieve order', [
                 'user_id' => auth()->id(),
                 'order_id' => $id,
