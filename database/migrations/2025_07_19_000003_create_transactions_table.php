@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('customer_name');
             $table->string('customer_email');
             $table->string('charge_id')->unique();
-            $table->string('order_id');
+            $table->string('subscription_id');
             $table->string('payment_method');
             $table->string('currency', 3)->default('VND');
             $table->text('payment_logs')->nullable();
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['user_id', 'created_at']);
-            $table->index(['order_id', 'status']);
+            $table->index(['subscription_id', 'status']);
             $table->index(['status', 'created_at']);
         });
     }

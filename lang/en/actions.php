@@ -29,7 +29,7 @@ return [
     'monthly_billing' => [
         'mark_as_paid' => 'Mark as Paid',
         'mark_as_unpaid' => 'Mark as Unpaid',
-        'send_order' => 'Send Order',
+        'send_subscription' => 'Send Subscription',
         'recalculate' => 'Recalculate',
     ],
 

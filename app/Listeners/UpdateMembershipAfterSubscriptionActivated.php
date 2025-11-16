@@ -4,29 +4,29 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Events\OrderCompletedEvent;
-use App\Services\OrderService;
+use App\Events\SubscriptionActivatedEvent;
+use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-readonly class UpdateMemberShipToUserWhenOrderCompleted
+readonly class UpdateMembershipAfterSubscriptionActivated
 {
     public function __construct(
-        private OrderService $orderService
+        private SubscriptionService $subscriptionService
     ) {}
 
-    public function handle(OrderCompletedEvent $event): void
+    public function handle(SubscriptionActivatedEvent $event): void
     {
-        Log::info('Processing order completion for membership assignment', [
-            'order_id' => $event->getOrderId(),
+        Log::info('Processing subscription activation for membership assignment', [
+            'subscription_id' => $event->getSubscriptionId(),
             'user_id' => $event->getUserId(),
             'membership_plan_id' => $event->getMembershipPlanId(),
         ]);
 
         try {
             if (! $event->hasMembershipPlan()) {
-                Log::info('Order has no membership plan, skipping membership assignment', [
-                    'order_id' => $event->getOrderId(),
+                Log::info('Subscription has no membership plan, skipping membership assignment', [
+                    'subscription_id' => $event->getSubscriptionId(),
                 ]);
 
                 return;
@@ -36,26 +36,26 @@ readonly class UpdateMemberShipToUserWhenOrderCompleted
             $membershipPlan = $event->getMembershipPlan();
 
             if (! $membershipPlan) {
-                Log::warning('Membership plan not found for order', [
-                    'order_id' => $event->getOrderId(),
+                Log::warning('Membership plan not found for subscription', [
+                    'subscription_id' => $event->getSubscriptionId(),
                     'membership_plan_id' => $event->getMembershipPlanId(),
                 ]);
 
                 return;
             }
 
-            $this->orderService->assignMembershipToUser($user, $membershipPlan);
+            $this->subscriptionService->assignMembershipToUser($user, $membershipPlan);
 
             Log::info('Membership successfully assigned to user', [
-                'order_id' => $event->getOrderId(),
+                'subscription_id' => $event->getSubscriptionId(),
                 'user_id' => $event->getUserId(),
                 'membership_plan_id' => $event->getMembershipPlanId(),
                 'membership_plan_name' => $membershipPlan->name ?? 'Unknown',
             ]);
 
         } catch (Throwable $exception) {
-            Log::error('Failed to assign membership to user after order completion', [
-                'order_id' => $event->getOrderId(),
+            Log::error('Failed to assign membership to user after subscription activation', [
+                'subscription_id' => $event->getSubscriptionId(),
                 'user_id' => $event->getUserId(),
                 'membership_plan_id' => $event->getMembershipPlanId(),
                 'exception' => $exception->getMessage(),

@@ -8,7 +8,7 @@ This document summarizes all changes made to modify the `transactions` database 
 ### Modified Migration: `database/migrations/2025_07_19_000003_create_transactions_table.php`
 
 **Removed Columns:**
-- `invoice_id` (foreign key to orders table)
+- `invoice_id` (foreign key to subscriptions table)
 - `processed_at` (timestamp)
 - `transaction_id` (external transaction ID)
 - `email` (user's email)
@@ -17,10 +17,10 @@ This document summarizes all changes made to modify the `transactions` database 
 - `customer_name` (string) - Customer's name
 - `customer_email` (string) - Customer's email address
 - `charge_id` (string) - Payment provider charge ID
-- `order_id` (string) - Order identifier
+- `subscription_id` (string) - Subscription identifier
 
 **Updated Indexes:**
-- Replaced `['invoice_id', 'status']` with `['order_id', 'status']`
+- Replaced `['invoice_id', 'status']` with `['subscription_id', 'status']`
 - Added new index on `['charge_id']`
 - Kept existing indexes: `['user_id', 'created_at']` and `['status', 'created_at']`
 
@@ -35,21 +35,21 @@ This document summarizes all changes made to modify the `transactions` database 
 
 **Fillable Array Changes:**
 - Removed: `'invoice_id'`, `'processed_at'`, `'transaction_id'`, `'email'`
-- Added: `'customer_name'`, `'customer_email'`, `'charge_id'`, `'order_id'`
+- Added: `'customer_name'`, `'customer_email'`, `'charge_id'`, `'subscription_id'`
 
 **Casts Changes:**
 - Removed: `'processed_at' => 'datetime'`
 - Kept: `'amount' => 'decimal:2'`, `'payment_logs' => 'array'`
 
 **Relationship Changes:**
-- Removed: `order()` relationship method (no longer using foreign key)
+- Removed: `subscription()` relationship method (no longer using foreign key)
 
 **Method Updates:**
 - `markAsCompleted()`: Now accepts `$chargeId` parameter instead of `$transactionId`, removes `processed_at` timestamp
 - `markAsFailed()`: Removed `processed_at` timestamp setting
-- `scopeForOrder()`: Updated to use `order_id` column instead of `invoice_id`
+- `scopeForSubscription()`: Updated to use `subscription_id` column instead of `invoice_id`
 
-### Updated: `app/Models/Order.php`
+### Updated: `app/Models/Subscription.php`
 
 **Relationship Changes:**
 - Removed: `transactions()` relationship method since we're no longer using foreign key relationships
@@ -60,8 +60,8 @@ This document summarizes all changes made to modify the `transactions` database 
 
 **Definition Array Changes:**
 - Removed: `'invoice_id'`, `'email'`, `'transaction_id'`, `'processed_at'`
-- Added: `'customer_name'`, `'customer_email'`, `'charge_id'`, `'order_id'`
-- Removed dependency on `Order::factory()`
+- Added: `'customer_name'`, `'customer_email'`, `'charge_id'`, `'subscription_id'`
+- Removed dependency on `Subscription::factory()`
 
 **State Method Updates:**
 - `pending()`: Removed `processed_at` null setting
@@ -79,13 +79,13 @@ This document summarizes all changes made to modify the `transactions` database 
 **Configuration:**
 - Navigation Group: "Billing & Revenue"
 - Navigation Icon: `heroicon-o-credit-card`
-- Navigation Sort: 2 (after Orders)
+- Navigation Sort: 2 (after Subscriptions)
 - Read-only resource (no create, edit, or delete capabilities)
 
 **Table View Features:**
-- Displays: customer_name, customer_email, amount, currency, status, payment_method, charge_id, order_id, timestamps
+- Displays: customer_name, customer_email, amount, currency, status, payment_method, charge_id, subscription_id, timestamps
 - Filters: status, payment_method, currency, amount range, date range
-- Searchable columns: customer_name, customer_email, charge_id, order_id
+- Searchable columns: customer_name, customer_email, charge_id, subscription_id
 - Sortable columns with appropriate defaults
 - Status badges with color coding (pending=warning, completed=success, failed=danger)
 
@@ -104,8 +104,8 @@ This document summarizes all changes made to modify the `transactions` database 
 ## Key Architectural Changes
 
 ### Data Relationship Changes
-- **Before:** Transactions had a foreign key relationship with Orders (`invoice_id`)
-- **After:** Transactions store a simple string reference to orders (`order_id`)
+- **Before:** Transactions had a foreign key relationship with Subscriptions (`invoice_id`)
+- **After:** Transactions store a simple string reference to subscriptions (`subscription_id`)
 - This change makes transactions more independent and suitable for external payment system integration
 
 ### Payment Processing Changes
@@ -122,9 +122,9 @@ This document summarizes all changes made to modify the `transactions` database 
 
 ### ⚠️ Breaking Changes
 1. **Database Schema:** Complete restructure of transactions table
-2. **Model Relationships:** Removed Order->transactions relationship
+2. **Model Relationships:** Removed Subscription->transactions relationship
 3. **Method Signatures:** `markAsCompleted()` now takes `$chargeId` instead of `$transactionId`
-4. **Factory Dependencies:** TransactionFactory no longer depends on OrderFactory
+4. **Factory Dependencies:** TransactionFactory no longer depends on SubscriptionFactory
 
 ### 🔄 Migration Considerations
 - This is a consolidation into the original migration file (no production data exists)
@@ -133,7 +133,7 @@ This document summarizes all changes made to modify the `transactions` database 
 
 ### 🎯 Usage Guidelines
 1. **Creating Transactions:** Use new column names in factory and manual creation
-2. **Querying Transactions:** Use `scopeForOrder($orderId)` with string order IDs
+2. **Querying Transactions:** Use `scopeForSubscription($subscriptionId)` with string subscription IDs
 3. **Payment Processing:** Use `markAsCompleted($chargeId)` for successful payments
 4. **Admin Interface:** Access via "Billing & Revenue" → "Transactions" (read-only)
 

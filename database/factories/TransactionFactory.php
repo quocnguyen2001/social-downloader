@@ -39,7 +39,7 @@ class TransactionFactory extends Factory
             'customer_name' => fake()->name(),
             'customer_email' => fake()->email(),
             'charge_id' => fake()->regexify('[A-Z0-9]{10,20}'),
-            'order_id' => fake()->regexify('[A-Z0-9]{8,12}'),
+            'subscription_id' => fake()->regexify('[A-Z0-9]{8,12}'),
             'payment_method' => fake()->randomElement($paymentMethods),
             'currency' => fake()->randomElement($currencies),
             'payment_logs' => fake()->optional()->randomElements([

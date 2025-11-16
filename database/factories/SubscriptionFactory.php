@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\MembershipPlan;
+use App\Models\Subscription;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-class OrderFactory extends Factory
+class SubscriptionFactory extends Factory
 {
+    protected $model = Subscription::class;
+
     /**
      * Define the model's default state.
      *
@@ -31,9 +34,6 @@ class OrderFactory extends Factory
         ];
     }
 
-    /**
-     * Indicate that the order is pending.
-     */
     public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -41,9 +41,6 @@ class OrderFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the order is processing.
-     */
     public function processing(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -51,9 +48,6 @@ class OrderFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the order is completed.
-     */
     public function completed(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -61,15 +55,12 @@ class OrderFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the order has a discount.
-     */
-    public function withDiscount(float $discountAmount = null): static
+    public function withDiscount(?float $discountAmount = null): static
     {
         return $this->state(function (array $attributes) use ($discountAmount) {
             $subtotal = $attributes['subtotal'] ?? 100.00;
             $discount = $discountAmount ?? fake()->randomFloat(2, 10.00, $subtotal * 0.3);
-            
+
             return [
                 'discount' => $discount,
                 'total' => $subtotal - $discount,
@@ -77,14 +68,11 @@ class OrderFactory extends Factory
         });
     }
 
-    /**
-     * Indicate that the order has no discount.
-     */
     public function withoutDiscount(): static
     {
         return $this->state(function (array $attributes) {
             $subtotal = $attributes['subtotal'] ?? 100.00;
-            
+
             return [
                 'discount' => 0,
                 'total' => $subtotal,

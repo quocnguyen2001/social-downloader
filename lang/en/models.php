@@ -55,9 +55,9 @@ return [
         ],
     ],
 
-    'order' => [
-        'singular' => 'Order',
-        'plural' => 'Orders',
+    'subscription' => [
+        'singular' => 'Subscription',
+        'plural' => 'Subscriptions',
         'fields' => [
             'id' => 'ID',
             'user_id' => 'User',
@@ -83,7 +83,7 @@ return [
             'customer_name' => 'Customer Name',
             'customer_email' => 'Customer Email',
             'charge_id' => 'Charge ID',
-            'order_id' => 'Order ID',
+            'subscription_id' => 'Subscription ID',
             'payment_method' => 'Payment Method',
             'currency' => 'Currency',
             'amount' => 'Amount',
@@ -166,5 +166,5 @@ return [
         'fields' => [
             'total_cost' => 'Total Cost',
         ],
-    ]
+    ],
 ];

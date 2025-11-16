@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\PaymentMethod;
-use App\Models\Order;
+use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Settings\PaymentGatewaySettings;
@@ -19,11 +19,11 @@ use Illuminate\Support\Str;
 class PaymentService
 {
     /**
-     * Create a payment transaction for an order.
+     * Create a payment transaction for a subscription.
      */
     public function createTransaction(
         User $user,
-        Order $order,
+        Subscription $subscription,
         PaymentMethod $paymentMethod,
         float $amount
     ): Transaction {
@@ -32,7 +32,7 @@ class PaymentService
             'customer_name' => $user->name,
             'customer_email' => $user->email,
             'charge_id' => $this->generateChargeId($paymentMethod),
-            'order_id' => $order->id,
+            'subscription_id' => $subscription->id,
             'payment_method' => $paymentMethod->value,
             'currency' => 'VND',
             'amount' => $amount,
@@ -49,7 +49,7 @@ class PaymentService
 
         Log::info('Payment transaction created', [
             'transaction_id' => $transaction->id,
-            'order_id' => $order->id,
+            'subscription_id' => $subscription->id,
             'user_id' => $user->id,
             'payment_method' => $paymentMethod->value,
             'amount' => $amount,
@@ -130,7 +130,7 @@ class PaymentService
 
         Log::info('Payment transaction completed', [
             'transaction_id' => $transaction->id,
-            'order_id' => $transaction->order_id,
+            'subscription_id' => $transaction->subscription_id,
             'external_charge_id' => $externalChargeId,
         ]);
 
@@ -146,7 +146,7 @@ class PaymentService
 
         Log::warning('Payment transaction failed', [
             'transaction_id' => $transaction->id,
-            'order_id' => $transaction->order_id,
+            'subscription_id' => $transaction->subscription_id,
             'reason' => $reason,
         ]);
 
@@ -166,13 +166,13 @@ class PaymentService
                 throw new Exception(__('messages.payment.bank_transfer_not_configured'));
             }
 
-            $transaction->loadMissing(['order', 'user']);
+            $transaction->loadMissing(['subscription', 'user']);
 
-            $order = $transaction->order;
+            $subscription = $transaction->subscription;
             $user = $transaction->user;
 
             $transferContent = $settings->getBankTransferContent([
-                'order_id' => $order->id,
+                'subscription_id' => $subscription->id,
                 'user_name' => $user->name,
                 'transaction_id' => $transaction->id,
                 'charge_id' => $transaction->charge_id,
@@ -242,16 +242,16 @@ class PaymentService
                 throw new Exception(__('messages.payment.paypal_not_configured'));
             }
 
-            // Get order and user information
-            $order = $transaction->order;
+            $transaction->loadMissing(['subscription', 'user']);
+
+            $subscription = $transaction->subscription;
             $user = $transaction->user;
 
-            // Prepare PayPal order data
             $orderData = [
                 'reference_id' => $transaction->id,
                 'amount' => $transaction->amount,
                 'currency' => $settings->paypal_currency,
-                'description' => "Payment for Order #{$order->id}",
+                'description' => "Payment for Subscription #{$subscription->id}",
                 'brand_name' => config('app.name'),
                 'cancel_url' => url("/payment/cancel/{$transaction->id}"),
                 'return_url' => url("/payment/success/{$transaction->id}"),

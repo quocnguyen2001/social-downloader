@@ -2,75 +2,75 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\OrderResource\Pages;
+namespace App\Filament\Resources\SubscriptionResource\Pages;
 
-use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\SubscriptionResource;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewOrder extends ViewRecord
+class ViewSubscription extends ViewRecord
 {
-    protected static string $resource = OrderResource::class;
+    protected static string $resource = SubscriptionResource::class;
 
     public function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Order Information')
+                Infolists\Components\Section::make(__('filament.resources.subscription.sections.subscription_information'))
                     ->schema([
                         Infolists\Components\TextEntry::make('membershipPlan.name')
-                            ->label('Membership Plan')
+                            ->label(__('filament.resources.subscription.fields.membership_plan'))
                             ->badge()
                             ->color('info')
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('status')
-                            ->label('Status')
+                            ->label(__('filament.resources.subscription.fields.status'))
                             ->badge()
                             ->color(fn ($state) => $state->getColor()),
 
                         Infolists\Components\TextEntry::make('created_at')
-                            ->label('Created At')
+                            ->label(__('filament.common.fields.created_at'))
                             ->dateTime(),
 
                         Infolists\Components\TextEntry::make('updated_at')
-                            ->label('Updated At')
+                            ->label(__('filament.common.fields.updated_at'))
                             ->dateTime(),
                     ])
                     ->columns(2),
 
-                Infolists\Components\Section::make('Pricing Information')
+                Infolists\Components\Section::make(__('filament.resources.subscription.sections.pricing_information'))
                     ->schema([
                         Infolists\Components\TextEntry::make('subtotal')
-                            ->label('Subtotal')
+                            ->label(__('filament.resources.subscription.fields.subtotal'))
                             ->money('VND')
                             ->badge()
                             ->color('gray'),
 
                         Infolists\Components\TextEntry::make('discount')
-                            ->label('Discount')
+                            ->label(__('filament.resources.subscription.fields.discount'))
                             ->money('VND')
                             ->badge()
                             ->color('warning')
                             ->placeholder('No discount'),
 
                         Infolists\Components\TextEntry::make('total')
-                            ->label('Total')
+                            ->label(__('filament.resources.subscription.fields.total'))
                             ->money('VND')
                             ->badge()
                             ->color('success'),
                     ])
                     ->columns(3),
 
-                Infolists\Components\Section::make('Transaction Details')
+                Infolists\Components\Section::make(__('filament.resources.subscription.sections.transaction_details'))
                     ->schema([
                         Infolists\Components\TextEntry::make('transaction.id')
-                            ->label('Transaction ID')
+                            ->label(__('filament.resources.transaction.fields.id'))
                             ->placeholder('No transaction associated'),
 
                         Infolists\Components\TextEntry::make('transaction.status')
-                            ->label('Transaction Status')
+                            ->label(__('filament.resources.transaction.fields.status'))
                             ->badge()
                             ->color(fn (?string $state): string => match ($state) {
                                 'pending' => 'warning',
@@ -82,78 +82,78 @@ class ViewOrder extends ViewRecord
                             ->placeholder('No transaction'),
 
                         Infolists\Components\TextEntry::make('transaction.amount')
-                            ->label('Transaction Amount')
+                            ->label(__('filament.resources.transaction.fields.amount'))
                             ->money('VND')
                             ->placeholder('No transaction'),
 
                         Infolists\Components\TextEntry::make('transaction.payment_method')
-                            ->label('Payment Method')
+                            ->label(__('filament.resources.transaction.fields.payment_method'))
                             ->badge()
                             ->color('info')
                             ->formatStateUsing(fn (?string $state): string => $state ? ucfirst($state) : 'N/A')
                             ->placeholder('No transaction'),
 
                         Infolists\Components\TextEntry::make('transaction.customer_name')
-                            ->label('Customer Name')
+                            ->label(__('filament.resources.transaction.fields.customer_name'))
                             ->placeholder('No transaction'),
 
                         Infolists\Components\TextEntry::make('transaction.customer_email')
-                            ->label('Customer Email')
+                            ->label(__('filament.resources.transaction.fields.customer_email'))
                             ->placeholder('No transaction'),
                     ])
                     ->columns(2)
                     ->collapsible(),
 
-                Infolists\Components\Section::make('Membership Plan Details')
+                Infolists\Components\Section::make(__('filament.resources.subscription.sections.membership_details'))
                     ->schema([
                         Infolists\Components\TextEntry::make('membershipPlan.name')
-                            ->label('Plan Name')
+                            ->label(__('filament.resources.membership_plan.fields.name'))
                             ->badge()
                             ->color('primary')
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('membershipPlan.description')
-                            ->label('Description')
+                            ->label(__('filament.resources.membership_plan.fields.description'))
                             ->placeholder('No description available')
                             ->columnSpanFull(),
 
                         Infolists\Components\TextEntry::make('membershipPlan.price')
-                            ->label('Plan Price')
+                            ->label(__('filament.resources.membership_plan.fields.price'))
                             ->money('VND')
                             ->badge()
                             ->color('success')
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('membershipPlan.billing_cycle')
-                            ->label('Billing Cycle')
+                            ->label(__('filament.resources.membership_plan.fields.billing_cycle'))
                             ->badge()
                             ->color('info')
                             ->formatStateUsing(fn (?string $state): string => $state ? ucfirst($state) : 'N/A')
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('membershipPlan.daily_request_limit')
-                            ->label('Daily Request Limit')
+                            ->label(__('filament.resources.membership_plan.fields.daily_request_limit'))
                             ->badge()
                             ->color('warning')
                             ->formatStateUsing(fn (?int $state): string => $state === 0 ? 'Unlimited' : number_format($state))
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('membershipPlan.total_request_download')
-                            ->label('Total Request Limit')
+                            ->label(__('filament.resources.membership_plan.fields.total_request_download'))
                             ->badge()
                             ->color('warning')
                             ->formatStateUsing(fn (?int $state): string => $state === 0 ? 'Unlimited' : number_format($state))
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('membershipPlan.priority_processing')
-                            ->label('Priority Processing')
+                            ->label(__('filament.resources.membership_plan.fields.priority_processing'))
                             ->badge()
                             ->color(fn (?bool $state): string => $state ? 'success' : 'gray')
                             ->formatStateUsing(fn (?bool $state): string => $state ? 'Yes' : 'No')
                             ->placeholder('No membership plan'),
 
                         Infolists\Components\TextEntry::make('membershipPlan.is_active')
-                            ->label('Plan Status')
+                            ->label(__('filament.resources.membership_plan.fields.is_active'))
                             ->badge()
                             ->color(fn (?bool $state): string => $state ? 'success' : 'danger')
                             ->formatStateUsing(fn (?bool $state): string => $state ? 'Active' : 'Inactive')

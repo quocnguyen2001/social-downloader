@@ -28,11 +28,11 @@ Configure the following settings in the admin panel under Payment Gateway Config
 
 The template supports the following placeholders:
 - `{code}` - Replaced with transaction charge_id
-- `{order_id}` - Replaced with order ID
+- `{subscription_id}` - Replaced with subscription ID
 - `{user_name}` - Replaced with customer name
 - `{amount}` - Replaced with formatted amount
 
-Example template: `"Payment for order #{code} - {user_name}"`
+Example template: `"Payment for subscription #{subscription_id} - {user_name}"`
 
 ## Command Usage
 
@@ -114,7 +114,7 @@ Expected bank API response structure:
         {
             "transactionID": "unique_id",
             "amount": 99000,
-            "description": "Payment for order #TEST-ABC123",
+            "description": "Payment for subscription #TEST-ABC123",
             "transactionDate": "17/08/2025",
             "type": "IN"
         }

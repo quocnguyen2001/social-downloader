@@ -15,7 +15,7 @@ return [
             'api_keys' => 'API Keys',
             'api_requests' => 'API Requests',
             'download_sessions' => 'Download Sessions',
-            'orders' => 'Orders',
+            'subscriptions' => 'Subscriptions',
             'transactions' => 'Transactions',
             'membership_plans' => 'Membership Plans',
             'general_settings' => 'General Settings',
@@ -245,7 +245,7 @@ return [
                 'users' => 'Users',
                 'active' => 'Active',
                 'featured' => 'Featured',
-                'order' => 'Order',
+                'sort_order' => 'Sort Order',
             ],
             'filters' => [
                 'active_plans' => 'Active Plans',
@@ -274,12 +274,14 @@ return [
             ],
         ],
 
-        'order' => [
-            'label' => 'Order',
-            'plural_label' => 'Orders',
+        'subscription' => [
+            'label' => 'Subscription',
+            'plural_label' => 'Subscriptions',
             'sections' => [
-                'order_information' => 'Order Information',
+                'subscription_information' => 'Subscription Information',
                 'pricing_information' => 'Pricing Information',
+                'transaction_details' => 'Transaction Details',
+                'membership_details' => 'Membership Details',
             ],
             'fields' => [
                 'membership_plan' => 'Membership Plan',
@@ -287,6 +289,8 @@ return [
                 'subtotal' => 'Subtotal',
                 'discount' => 'Discount',
                 'total' => 'Total',
+                'payment_method' => 'Payment Method',
+                'coupon_code' => 'Coupon Code',
             ],
             'columns' => [
                 'membership_plan' => 'Membership Plan',
@@ -300,10 +304,10 @@ return [
                 'mark_as_completed' => 'Mark as Completed',
             ],
             'messages' => [
-                'order_marked_processing' => 'Order marked as processing',
-                'order_marked_completed' => 'Order marked as completed',
-                'marked_orders_processing' => 'Marked :count orders as processing',
-                'marked_orders_completed' => 'Marked :count orders as completed',
+                'subscription_marked_processing' => 'Subscription marked as processing',
+                'subscription_marked_completed' => 'Subscription marked as completed',
+                'marked_subscriptions_processing' => 'Marked :count subscriptions as processing',
+                'marked_subscriptions_completed' => 'Marked :count subscriptions as completed',
             ],
         ],
 
@@ -325,7 +329,7 @@ return [
                 'status' => 'Status',
                 'payment_method' => 'Payment Method',
                 'charge_id' => 'Charge ID',
-                'order_id' => 'Order ID',
+                'subscription_id' => 'Subscription ID',
             ],
             'columns' => [
                 'customer_name' => 'Customer Name',
@@ -335,7 +339,7 @@ return [
                 'status' => 'Status',
                 'payment_method' => 'Payment Method',
                 'charge_id' => 'Charge ID',
-                'order_id' => 'Order ID',
+                'subscription_id' => 'Subscription ID',
                 'created_at' => 'Created At',
                 'updated_at' => 'Updated At',
             ],

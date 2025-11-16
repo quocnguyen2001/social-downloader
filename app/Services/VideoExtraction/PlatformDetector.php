@@ -41,15 +41,13 @@ class PlatformDetector
 
     /**
      * Detect platform from URL.
-     *
-     * @return Platform|null
      */
-    public function detectPlatform(string $url): Platform|int|null
+    public function detectPlatform(string $url): ?Platform
     {
         foreach (self::PLATFORM_PATTERNS as $platform => $patterns) {
             foreach ($patterns as $pattern) {
                 if (preg_match($pattern, $url)) {
-                    return $platform instanceof Platform ? $platform : Platform::tryFrom($platform);
+                    return Platform::tryFrom($platform);
                 }
             }
         }
@@ -64,7 +62,10 @@ class PlatformDetector
      */
     public function getSupportedPlatforms(): array
     {
-        return array_keys(self::PLATFORM_PATTERNS);
+        return array_map(
+            fn (string $platformValue) => Platform::from($platformValue),
+            array_keys(self::PLATFORM_PATTERNS)
+        );
     }
 
     /**

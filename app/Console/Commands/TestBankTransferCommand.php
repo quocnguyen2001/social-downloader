@@ -125,7 +125,7 @@ class TestBankTransferCommand extends Command
                 'customer_name' => $user->name,
                 'customer_email' => $user->email,
                 'charge_id' => $chargeId,
-                'order_id' => 'ORDER-'.$i,
+                'subscription_id' => 'SUBSCRIPTION-'.$i,
                 'payment_method' => 'bank_transfer',
                 'currency' => 'VND',
                 'amount' => 99000 + ($i * 1000), // 99000, 100000, 101000

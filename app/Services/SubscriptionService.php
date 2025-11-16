@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\SubscriptionStatus;
 use App\Models\MembershipPlan;
-use App\Models\Order;
+use App\Models\Subscription;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,13 +15,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-readonly class OrderService
+readonly class SubscriptionService
 {
     public function __construct(
         private PaymentService $paymentService
     ) {}
 
-    public function createOrder(User $user, array $data): Order
+    public function createSubscription(User $user, array $data): Subscription
     {
         return DB::transaction(function () use ($user, $data) {
             $membershipPlan = $this->validateMembershipPlan($data['membership_plan_id']);
@@ -30,40 +30,40 @@ readonly class OrderService
             $discount = $this->calculateDiscount((float) $subtotal, $data['coupon_code'] ?? null);
             $total = $subtotal - $discount;
 
-            $order = Order::query()->create([
+            $subscription = Subscription::query()->create([
                 'user_id' => $user->id,
                 'membership_plan_id' => $membershipPlan->id,
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'total' => $total,
-                'status' => OrderStatus::PENDING,
+                'status' => SubscriptionStatus::PENDING,
             ]);
 
             $paymentMethod = PaymentMethod::from($data['payment_method']);
             $transaction = $this->paymentService->createTransaction(
                 $user,
-                $order,
+                $subscription,
                 $paymentMethod,
                 $total
             );
 
-            $order->update(['payment_id' => $transaction->id]);
+            $subscription->update(['payment_id' => $transaction->id]);
 
-            Log::info('Order created successfully', [
-                'order_id' => $order->id,
+            Log::info('Subscription created successfully', [
+                'subscription_id' => $subscription->id,
                 'user_id' => $user->id,
                 'membership_plan_id' => $membershipPlan->id,
                 'total' => $total,
                 'payment_method' => $paymentMethod->value,
             ]);
 
-            return $order->load(['membershipPlan', 'transaction', 'user']);
+            return $subscription->load(['membershipPlan', 'transaction', 'user']);
         });
     }
 
-    public function getUserOrders(User $user, array $filters = []): LengthAwarePaginator
+    public function getUserSubscriptions(User $user, array $filters = []): LengthAwarePaginator
     {
-        $query = $user->orders()
+        $query = $user->subscriptions()
             ->with(['membershipPlan', 'transaction'])
             ->orderBy('created_at', 'desc');
 
@@ -82,35 +82,35 @@ readonly class OrderService
         return $query->paginate($filters['per_page'] ?? 15);
     }
 
-    public function updateOrderStatus(Order $order, OrderStatus $status): Order
+    public function updateSubscriptionStatus(Subscription $subscription, SubscriptionStatus $status): Subscription
     {
-        $order->update(['status' => $status]);
+        $subscription->update(['status' => $status]);
 
-        Log::info('Order status updated', [
-            'order_id' => $order->id,
-            'old_status' => $order->getOriginal('status'),
+        Log::info('Subscription status updated', [
+            'subscription_id' => $subscription->id,
+            'old_status' => $subscription->getOriginal('status'),
             'new_status' => $status->value,
         ]);
 
-        return $order->fresh();
+        return $subscription->fresh();
     }
 
-    public function completeOrder(Order $order): Order
+    public function completeSubscription(Subscription $subscription): Subscription
     {
-        return DB::transaction(function () use ($order) {
-            $order = $this->updateOrderStatus($order, OrderStatus::COMPLETED);
+        return DB::transaction(function () use ($subscription) {
+            $subscription = $this->updateSubscriptionStatus($subscription, SubscriptionStatus::COMPLETED);
 
-            if ($order->membershipPlan) {
-                $this->assignMembershipToUser($order->user, $order->membershipPlan);
+            if ($subscription->membershipPlan) {
+                $this->assignMembershipToUser($subscription->user, $subscription->membershipPlan);
             }
 
-            Log::info('Order completed successfully', [
-                'order_id' => $order->id,
-                'user_id' => $order->user_id,
-                'membership_plan_id' => $order->membership_plan_id,
+            Log::info('Subscription completed successfully', [
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'membership_plan_id' => $subscription->membership_plan_id,
             ]);
 
-            return $order;
+            return $subscription;
         });
     }
 
@@ -133,8 +133,6 @@ readonly class OrderService
             return 0.0;
         }
 
-        // TODO: Implement coupon validation and discount calculation
-        // For now, return 0 as no coupon system is implemented
         Log::info('Coupon code provided but not processed', [
             'coupon_code' => $couponCode,
             'subtotal' => $subtotal,

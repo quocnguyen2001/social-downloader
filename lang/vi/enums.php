@@ -55,7 +55,7 @@ return [
         'DELETE' => 'DELETE',
     ],
 
-    'order_status' => [
+    'subscription_status' => [
         'pending' => 'Đang chờ',
         'processing' => 'Đang xử lý',
         'completed' => 'Hoàn thành',

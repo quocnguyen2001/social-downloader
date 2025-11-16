@@ -138,10 +138,18 @@ class YtDlpService
             $cookieFilePath = $this->resolveCookieFilePath();
 
             if ($cookieFilePath) {
-                $resolvedCookiePath =
-                    (File::exists(base_path($cookieFilePath)) ? base_path($cookieFilePath) : Storage::disk('local')->exists($cookieFilePath)) ? Storage::disk('local')->path($cookieFilePath) : null;
+                $resolvedCookiePath = null;
 
-                if (file_exists($resolvedCookiePath)) {
+                $absoluteFromBase = base_path($cookieFilePath);
+                if (File::exists($absoluteFromBase)) {
+                    $resolvedCookiePath = $absoluteFromBase;
+                } elseif (Storage::disk('local')->exists($cookieFilePath)) {
+                    $resolvedCookiePath = Storage::disk('local')->path($cookieFilePath);
+                } elseif (File::exists($cookieFilePath)) {
+                    $resolvedCookiePath = $cookieFilePath;
+                }
+
+                if ($resolvedCookiePath && file_exists($resolvedCookiePath)) {
                     $command[] = '--cookies';
                     $command[] = $resolvedCookiePath;
 

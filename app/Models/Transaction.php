@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\OrderStatus;
-use App\Events\OrderCompletedEvent;
+use App\Enums\SubscriptionStatus;
+use App\Events\SubscriptionActivatedEvent;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +23,7 @@ class Transaction extends Model
         'customer_name',
         'customer_email',
         'charge_id',
-        'order_id',
+        'subscription_id',
         'payment_method',
         'currency',
         'payment_logs',
@@ -42,7 +42,7 @@ class Transaction extends Model
 
         static::updated(function (Transaction $transaction) {
             if ($transaction->isDirty('status') && $transaction->status === 'completed') {
-                $transaction->handleOrderCompletion();
+                $transaction->handleSubscriptionActivation();
             }
         });
     }
@@ -52,9 +52,9 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function order(): BelongsTo
+    public function subscription(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Subscription::class);
     }
 
     public function markAsCompleted(?string $chargeId = null): void
@@ -123,9 +123,9 @@ class Transaction extends Model
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForOrder($query, $orderId)
+    public function scopeForSubscription($query, $subscriptionId)
     {
-        return $query->where('order_id', $orderId);
+        return $query->where('subscription_id', $subscriptionId);
     }
 
     public function getFormattedAmountAttribute(): string
@@ -169,44 +169,44 @@ class Transaction extends Model
         return empty($logs) ? null : end($logs);
     }
 
-    protected function handleOrderCompletion(): void
+    protected function handleSubscriptionActivation(): void
     {
         try {
-            $order = $this->order;
+            $subscription = $this->subscription;
 
-            if (! $order) {
-                Log::warning('Transaction completed but no associated order found', [
+            if (! $subscription) {
+                Log::warning('Transaction completed but no associated subscription found', [
                     'transaction_id' => $this->id,
                 ]);
 
                 return;
             }
 
-            $order->update(['status' => OrderStatus::COMPLETED]);
+            $subscription->update(['status' => SubscriptionStatus::COMPLETED]);
 
-            if ($order->completed_at === null) {
-                $order->update(['completed_at' => now()]);
+            if ($subscription->completed_at === null) {
+                $subscription->update(['completed_at' => now()]);
 
-                OrderCompletedEvent::dispatch($order, [
+                SubscriptionActivatedEvent::dispatch($subscription, [
                     'transaction_id' => $this->id,
                     'completed_via' => 'transaction_status_change',
                 ]);
 
-                Log::info('Order marked as completed and event dispatched', [
-                    'order_id' => $order->id,
+                Log::info('Subscription marked as completed and event dispatched', [
+                    'subscription_id' => $subscription->id,
                     'transaction_id' => $this->id,
-                    'user_id' => $order->user_id,
+                    'user_id' => $subscription->user_id,
                 ]);
             } else {
-                Log::info('Order already completed, skipping event dispatch', [
-                    'order_id' => $order->id,
+                Log::info('Subscription already completed, skipping event dispatch', [
+                    'subscription_id' => $subscription->id,
                     'transaction_id' => $this->id,
-                    'completed_at' => $order->completed_at->toISOString(),
+                    'completed_at' => $subscription->completed_at->toISOString(),
                 ]);
             }
 
         } catch (Throwable $exception) {
-            Log::error('Failed to handle order completion', [
+            Log::error('Failed to handle subscription activation', [
                 'transaction_id' => $this->id,
                 'exception' => $exception->getMessage(),
                 'exception_trace' => $exception->getTraceAsString(),

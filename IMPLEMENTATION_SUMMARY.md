@@ -78,7 +78,7 @@ This implementation addresses two main objectives:
 
 ### 1. Complete Resource Internationalization
 - `app/Filament/Resources/DownloadSessionResource.php`
-- `app/Filament/Resources/OrderResource.php`
+- `app/Filament/Resources/SubscriptionResource.php`
 - `app/Filament/Resources/TransactionResource.php`
 - `app/Filament/Resources/MembershipPlanResource.php`
 

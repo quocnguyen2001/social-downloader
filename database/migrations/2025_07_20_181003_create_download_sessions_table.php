@@ -33,7 +33,7 @@ return new class extends Migration
             $table->index(['user_id', 'created_at']);
         });
 
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('subscriptions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('membership_plan_id')->nullable()->constrained('membership_plans')->onDelete('set null');
@@ -53,7 +53,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('subscriptions');
         Schema::dropIfExists('download_sessions');
     }
 };

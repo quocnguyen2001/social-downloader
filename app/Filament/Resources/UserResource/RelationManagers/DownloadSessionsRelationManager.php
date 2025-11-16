@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\UserResource\RelationManagers;
 
+use App\Enums\DownloadSessionStatus;
+use App\Enums\Platform;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -38,24 +40,13 @@ class DownloadSessionsRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('platform')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'youtube' => 'danger',
-                        'tiktok' => 'gray',
-                        'instagram' => 'warning',
-                        'facebook' => 'info',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (?Platform $state): ?string => $state?->getLabel())
+                    ->color(fn (?Platform $state): string => $state?->getBadgeColor() ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'processing' => 'info',
-                        'completed' => 'success',
-                        'failed' => 'danger',
-                        'expired' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (?DownloadSessionStatus $state): ?string => $state?->getLabel())
+                    ->color(fn (?DownloadSessionStatus $state): string => $state?->getBadgeColor() ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('quality')
                     ->badge(),
@@ -81,20 +72,9 @@ class DownloadSessionsRelationManager extends RelationManager
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('platform')
-                    ->options([
-                        'youtube' => 'YouTube',
-                        'tiktok' => 'TikTok',
-                        'instagram' => 'Instagram',
-                        'facebook' => 'Facebook',
-                    ]),
+                    ->options(Platform::getOptions()),
                 Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'completed' => 'Completed',
-                        'failed' => 'Failed',
-                        'expired' => 'Expired',
-                    ]),
+                    ->options(DownloadSessionStatus::getOptions()),
                 Tables\Filters\SelectFilter::make('quality')
                     ->options([
                         '144p' => '144p',

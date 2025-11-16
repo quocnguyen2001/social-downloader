@@ -22,6 +22,7 @@ class PublicController
                 'value' => $method,
             ];
         }
+
         return response()->json([
             'success' => true,
             'data' => $data,
@@ -31,7 +32,7 @@ class PublicController
     public function checkBankTransferStatus(string $chargeId)
     {
         $transaction = Transaction::query()
-            ->with('order')
+            ->with('subscription')
             ->where('charge_id', $chargeId)
             ->first();
 
@@ -45,7 +46,7 @@ class PublicController
             return $this->successResponse(
                 [
                     'transaction' => $transaction,
-                    'order' => $transaction->order,
+                    'subscription' => $transaction->subscription,
                 ],
                 __('messages.payment.transaction_completed')
             );

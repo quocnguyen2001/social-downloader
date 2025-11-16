@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\OrderResource\Pages;
+namespace App\Filament\Resources\SubscriptionResource\Pages;
 
-use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\SubscriptionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditOrder extends EditRecord
+class EditSubscription extends EditRecord
 {
-    protected static string $resource = OrderResource::class;
+    protected static string $resource = SubscriptionResource::class;
 
     protected function getHeaderActions(): array
     {

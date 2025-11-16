@@ -95,11 +95,11 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Get the orders for the user.
+     * Get the subscriptions for the user.
      */
-    public function orders(): HasMany
+    public function subscriptions(): HasMany
     {
-        return $this->hasMany(Order::class);
+        return $this->hasMany(Subscription::class);
     }
 
     /**

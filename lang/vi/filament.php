@@ -15,7 +15,7 @@ return [
             'api_keys' => 'Khóa API',
             'api_requests' => 'Yêu cầu API',
             'download_sessions' => 'Phiên tải xuống',
-            'orders' => 'Đơn hàng',
+            'subscriptions' => 'Đăng ký',
             'transactions' => 'Giao dịch',
             'membership_plans' => 'Gói thành viên',
             'general_settings' => 'Cài đặt chung',
@@ -245,7 +245,7 @@ return [
                 'users' => 'Người dùng',
                 'active' => 'Đang hoạt động',
                 'featured' => 'Nổi bật',
-                'order' => 'Thứ tự',
+                'sort_order' => 'Thứ tự',
             ],
             'filters' => [
                 'active_plans' => 'Gói đang hoạt động',
@@ -274,12 +274,14 @@ return [
             ],
         ],
 
-        'order' => [
-            'label' => 'Đơn hàng',
-            'plural_label' => 'Đơn hàng',
+        'subscription' => [
+            'label' => 'Đăng ký',
+            'plural_label' => 'Đăng ký',
             'sections' => [
-                'order_information' => 'Thông tin đơn hàng',
-                'pricing_information' => 'Thông tin giá cả',
+                'subscription_information' => 'Thông tin đăng ký',
+                'pricing_information' => 'Thông tin giá trị',
+                'transaction_details' => 'Chi tiết giao dịch',
+                'membership_details' => 'Chi tiết gói thành viên',
             ],
             'fields' => [
                 'membership_plan' => 'Gói thành viên',
@@ -287,6 +289,8 @@ return [
                 'subtotal' => 'Tổng phụ',
                 'discount' => 'Giảm giá',
                 'total' => 'Tổng cộng',
+                'payment_method' => 'Phương thức thanh toán',
+                'coupon_code' => 'Mã giảm giá',
             ],
             'columns' => [
                 'membership_plan' => 'Gói thành viên',
@@ -300,10 +304,10 @@ return [
                 'mark_as_completed' => 'Đánh dấu hoàn thành',
             ],
             'messages' => [
-                'order_marked_processing' => 'Đơn hàng đã được đánh dấu đang xử lý',
-                'order_marked_completed' => 'Đơn hàng đã được đánh dấu hoàn thành',
-                'marked_orders_processing' => 'Đã đánh dấu :count đơn hàng đang xử lý',
-                'marked_orders_completed' => 'Đã đánh dấu :count đơn hàng hoàn thành',
+                'subscription_marked_processing' => 'Đăng ký đã được đánh dấu đang xử lý',
+                'subscription_marked_completed' => 'Đăng ký đã được đánh dấu hoàn thành',
+                'marked_subscriptions_processing' => 'Đã đánh dấu :count đăng ký đang xử lý',
+                'marked_subscriptions_completed' => 'Đã đánh dấu :count đăng ký hoàn thành',
             ],
         ],
         'transaction' => [
@@ -324,7 +328,7 @@ return [
                 'status' => 'Trạng thái',
                 'payment_method' => 'Phương thức thanh toán',
                 'charge_id' => 'ID phí',
-                'order_id' => 'ID đơn hàng',
+                'subscription_id' => 'ID đăng ký',
             ],
             'columns' => [
                 'customer_name' => 'Tên khách hàng',
@@ -334,7 +338,7 @@ return [
                 'status' => 'Trạng thái',
                 'payment_method' => 'Phương thức thanh toán',
                 'charge_id' => 'ID phí',
-                'order_id' => 'ID đơn hàng',
+                'subscription_id' => 'ID đăng ký',
                 'created_at' => 'Tạo lúc',
                 'updated_at' => 'Cập nhật lúc',
             ],

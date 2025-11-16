@@ -55,9 +55,9 @@ return [
         ],
     ],
 
-    'order' => [
-        'singular' => 'Đơn hàng',
-        'plural' => 'Đơn hàng',
+    'subscription' => [
+        'singular' => 'Đăng ký',
+        'plural' => 'Đăng ký',
         'fields' => [
             'id' => 'ID',
             'user_id' => 'Người dùng',
@@ -83,7 +83,7 @@ return [
             'customer_name' => 'Tên khách hàng',
             'customer_email' => 'Email khách hàng',
             'charge_id' => 'ID Charge',
-            'order_id' => 'ID Đơn hàng',
+            'subscription_id' => 'ID Đăng ký',
             'payment_method' => 'Phương thức thanh toán',
             'currency' => 'Tiền tệ',
             'amount' => 'Số tiền',

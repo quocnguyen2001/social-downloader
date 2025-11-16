@@ -108,8 +108,8 @@ class TransactionResource extends Resource
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('order_id')
-                    ->label(__('filament.resources.transaction.columns.order_id'))
+                Tables\Columns\TextColumn::make('subscription_id')
+                    ->label(__('filament.resources.transaction.columns.subscription_id'))
                     ->searchable()
                     ->toggleable(),
 
@@ -257,8 +257,8 @@ class TransactionResource extends Resource
                             ->schema([
                                 Infolists\Components\TextEntry::make('charge_id')
                                     ->label(__('filament.resources.transaction.fields.charge_id')),
-                                Infolists\Components\TextEntry::make('order_id')
-                                    ->label(__('filament.resources.transaction.fields.order_id')),
+                                Infolists\Components\TextEntry::make('subscription_id')
+                                    ->label(__('filament.resources.transaction.fields.subscription_id')),
                             ]),
                     ]),
 

@@ -104,7 +104,7 @@ class PaymentGatewaySettings extends Settings
             'bank_name' => null,
             'bank_account' => null,
             'bank_account_number' => null,
-            'money_transfer_content_template' => 'Payment for order #{order_id} - {user_name}',
+            'money_transfer_content_template' => 'Payment for subscription #{subscription_id} - {user_name}',
             'api_transactions_api' => null,
             'bank_transfer_enabled' => false,
             'bank_transfer_currency' => 'VND',

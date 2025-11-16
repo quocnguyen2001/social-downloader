@@ -1,12 +1,12 @@
-# Order Management API Documentation
+# Subscription Management API Documentation
 
 ## Overview
 
-The Order Management API provides comprehensive functionality for handling order creation and retrieval in the social-downloader system. This API allows authenticated users to purchase membership plans and track their order history.
+The Subscription Management API provides comprehensive functionality for handling subscription creation and retrieval in the social-downloader system. This API allows authenticated users to purchase membership plans and track their subscription history.
 
 ## Authentication
 
-All order management endpoints require Sanctum authentication. Include the bearer token in the Authorization header:
+All subscription management endpoints require Sanctum authentication. Include the bearer token in the Authorization header:
 
 ```
 Authorization: Bearer {your-token}
@@ -14,11 +14,11 @@ Authorization: Bearer {your-token}
 
 ## Endpoints
 
-### 1. Create Order
+### 1. Create Subscription
 
-**Endpoint:** `POST /api/v1/orders`
+**Endpoint:** `POST /api/v1/subscriptions`
 
-Creates a new order for a membership plan with the specified payment method.
+Creates a new subscription for a membership plan with the specified payment method.
 
 #### Request Body
 
@@ -45,7 +45,7 @@ Creates a new order for a membership plan with the specified payment method.
 ```json
 {
     "success": true,
-    "message": "Order created successfully",
+    "message": "Subscription created successfully",
     "data": {
         "id": "9d1e8c2a-4b5f-4c6d-8e9f-1a2b3c4d5e6f",
         "user_id": 1,
@@ -64,7 +64,7 @@ Creates a new order for a membership plan with the specified payment method.
         "transaction": {
             "id": "9d1e8c2a-4b5f-4c6d-8e9f-1a2b3c4d5e6g",
             "charge_id": "BT_20250817_ABC12345",
-            "order_id": "9d1e8c2a-4b5f-4c6d-8e9f-1a2b3c4d5e6f",
+            "subscription_id": "9d1e8c2a-4b5f-4c6d-8e9f-1a2b3c4d5e6f",
             "customer_name": "John Doe",
             "customer_email": "john@example.com",
             "payment_method": {
@@ -109,7 +109,7 @@ Creates a new order for a membership plan with the specified payment method.
         "success": true,
         "message": "Bank transfer payment initiated. Please complete the transfer using the provided instructions.",
         "requires_verification": true,
-        "instructions": "Please transfer the exact amount to the bank account details provided in your order confirmation email."
+        "instructions": "Please transfer the exact amount to the bank account details provided in your subscription confirmation email."
     }
 }
 ```
@@ -136,20 +136,20 @@ Creates a new order for a membership plan with the specified payment method.
 }
 ```
 
-### 2. Get Customer Orders
+### 2. Get Customer Subscriptions
 
-**Endpoint:** `GET /api/v1/orders` or `GET /api/v1/customer/orders`
+**Endpoint:** `GET /api/v1/subscriptions` or `GET /api/v1/customer/subscriptions`
 
-Retrieves paginated list of orders for the authenticated user.
+Retrieves paginated list of subscriptions for the authenticated user.
 
 #### Query Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `status` | string | No | Filter by order status: `pending`, `processing`, `completed` |
-| `from_date` | date | No | Filter orders from this date (YYYY-MM-DD) |
-| `to_date` | date | No | Filter orders until this date (YYYY-MM-DD) |
-| `per_page` | integer | No | Number of orders per page (default: 15) |
+| `status` | string | No | Filter by subscription status: `pending`, `processing`, `completed` |
+| `from_date` | date | No | Filter subscriptions from this date (YYYY-MM-DD) |
+| `to_date` | date | No | Filter subscriptions until this date (YYYY-MM-DD) |
+| `per_page` | integer | No | Number of subscriptions per page (default: 15) |
 
 #### Response
 
@@ -158,7 +158,7 @@ Retrieves paginated list of orders for the authenticated user.
 ```json
 {
     "success": true,
-    "message": "Orders retrieved successfully",
+    "message": "Subscriptions retrieved successfully",
     "data": [
         {
             "id": "9d1e8c2a-4b5f-4c6d-8e9f-1a2b3c4d5e6f",
@@ -207,17 +207,17 @@ Retrieves paginated list of orders for the authenticated user.
 }
 ```
 
-### 3. Get Specific Order
+### 3. Get Specific Subscription
 
-**Endpoint:** `GET /api/v1/orders/{id}`
+**Endpoint:** `GET /api/v1/subscriptions/{id}`
 
-Retrieves details of a specific order belonging to the authenticated user.
+Retrieves details of a specific subscription belonging to the authenticated user.
 
 #### Path Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `id` | string | Yes | UUID of the order |
+| `id` | string | Yes | UUID of the subscription |
 
 #### Response
 
@@ -226,7 +226,7 @@ Retrieves details of a specific order belonging to the authenticated user.
 ```json
 {
     "success": true,
-    "message": "Order retrieved successfully",
+    "message": "Subscription retrieved successfully",
     "data": {
         "id": "9d1e8c2a-4b5f-4c6d-8e9f-1a2b3c4d5e6f",
         "user_id": 1,
@@ -289,15 +289,15 @@ Retrieves details of a specific order belonging to the authenticated user.
 ```json
 {
     "success": false,
-    "message": "Order not found"
+    "message": "Subscription not found"
 }
 ```
 
-## Order Status Flow
+## Subscription Status Flow
 
-Orders follow this status progression:
+Subscriptions follow this status progression:
 
-1. **pending** - Order created, payment not yet processed
+1. **pending** - Subscription created, payment not yet processed
 2. **processing** - Payment being verified/processed
 3. **completed** - Payment confirmed, membership plan activated
 
@@ -327,23 +327,23 @@ Orders follow this status progression:
 
 ## Service Layer Architecture
 
-The order management system follows a clean service layer architecture:
+The subscription management system follows a clean service layer architecture:
 
-### OrderService
-- `createOrder(User $user, array $data): Order` - Creates new orders
-- `getUserOrders(User $user, array $filters = [])` - Retrieves user orders
-- `updateOrderStatus(Order $order, OrderStatus $status): Order` - Updates order status
-- `completeOrder(Order $order): Order` - Completes order and assigns membership
+### SubscriptionService
+- `createSubscription(User $user, array $data): Subscription` - Creates new subscriptions
+- `getUserSubscriptions(User $user, array $filters = [])` - Retrieves user subscriptions
+- `updateSubscriptionStatus(Subscription $subscription, SubscriptionStatus $status): Subscription` - Updates subscription status
+- `completeSubscription(Subscription $subscription): Subscription` - Completes subscription and assigns membership
 
 ### PaymentService
-- `createTransaction(User $user, Order $order, PaymentMethod $method, float $amount): Transaction` - Creates payment transactions
+- `createTransaction(User $user, Subscription $subscription, PaymentMethod $method, float $amount): Transaction` - Creates payment transactions
 - `processPayment(Transaction $transaction): array` - Processes payments
 - `completeTransaction(Transaction $transaction, ?string $externalChargeId = null): Transaction` - Marks transactions as completed
 - `failTransaction(Transaction $transaction, string $reason): Transaction` - Marks transactions as failed
 
 ## Database Schema
 
-### Orders Table
+### Subscriptions Table
 - `id` (UUID, Primary Key)
 - `user_id` (Foreign Key to users)
 - `membership_plan_id` (Foreign Key to membership_plans)
@@ -361,7 +361,7 @@ The order management system follows a clean service layer architecture:
 - `customer_name` (String)
 - `customer_email` (String)
 - `charge_id` (String)
-- `order_id` (String)
+- `subscription_id` (String)
 - `payment_method` (String)
 - `currency` (String)
 - `amount` (Decimal)
@@ -374,9 +374,9 @@ The order management system follows a clean service layer architecture:
 
 Use the following curl commands to test the API:
 
-### Create Order
+### Create Subscription
 ```bash
-curl -X POST http://localhost:8000/api/v1/orders \
+curl -X POST http://localhost:8000/api/v1/subscriptions \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -386,25 +386,25 @@ curl -X POST http://localhost:8000/api/v1/orders \
   }'
 ```
 
-### Get Orders
+### Get Subscriptions
 ```bash
-curl -X GET "http://localhost:8000/api/v1/orders?status=pending&per_page=10" \
+curl -X GET "http://localhost:8000/api/v1/subscriptions?status=pending&per_page=10" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-### Get Specific Order
+### Get Specific Subscription
 ```bash
-curl -X GET http://localhost:8000/api/v1/orders/ORDER_UUID \
+curl -X GET http://localhost:8000/api/v1/subscriptions/ORDER_UUID \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## Implementation Notes
 
-1. **Coupon System**: Currently implemented as a placeholder. The `calculateDiscount()` method in OrderService returns 0 and logs the coupon code for future implementation.
+1. **Coupon System**: Currently implemented as a placeholder. The `calculateDiscount()` method in SubscriptionService returns 0 and logs the coupon code for future implementation.
 
 2. **PayPal Integration**: The PayPal payment processing is simulated. Actual PayPal SDK integration should be implemented in the `processPayPalPayment()` method.
 
-3. **Membership Assignment**: When an order is completed, the membership plan is automatically assigned to the user with appropriate expiration dates based on the billing cycle.
+3. **Membership Assignment**: When an subscription is completed, the membership plan is automatically assigned to the user with appropriate expiration dates based on the billing cycle.
 
 4. **Transaction Logging**: All payment events are logged in the `payment_logs` JSON field for audit purposes.
 
@@ -412,4 +412,4 @@ curl -X GET http://localhost:8000/api/v1/orders/ORDER_UUID \
 
 6. **Error Handling**: Comprehensive error handling with proper HTTP status codes and descriptive error messages.
 
-This implementation provides a solid foundation for order management that can be extended with additional features like refunds, order cancellation, and more sophisticated payment processing.
+This implementation provides a solid foundation for subscription management that can be extended with additional features like refunds, subscription cancellation, and more sophisticated payment processing.

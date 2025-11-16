@@ -14,7 +14,7 @@ use App\Filament\Resources\ApiKeyResource;
 use App\Filament\Resources\ApiRequestResource;
 use App\Filament\Resources\DownloadSessionResource;
 use App\Filament\Resources\MembershipPlanResource;
-use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\SubscriptionResource;
 use App\Filament\Resources\TransactionResource;
 use App\Filament\Resources\UserResource;
 use App\Http\Middleware\SetLocale;
@@ -29,7 +29,6 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -76,7 +75,7 @@ class AdminPanelProvider extends PanelProvider
                         ]),
                     NavigationGroup::make(__('filament.navigation.groups.billing_revenue'))
                         ->items([
-                            ...OrderResource::getNavigationItems(),
+                            ...SubscriptionResource::getNavigationItems(),
                             ...TransactionResource::getNavigationItems(),
                         ]),
                     NavigationGroup::make(__('filament.navigation.groups.settings'))

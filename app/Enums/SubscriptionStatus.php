@@ -8,7 +8,7 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum OrderStatus: string implements HasColor, HasIcon, HasLabel
+enum SubscriptionStatus: string implements HasColor, HasIcon, HasLabel
 {
     case PENDING = 'pending';
     case PROCESSING = 'processing';
@@ -16,7 +16,7 @@ enum OrderStatus: string implements HasColor, HasIcon, HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('enums.order_status.'.$this->value);
+        return trans('enums.subscription_status.'.$this->value);
     }
 
     public function getColor(): string|array|null

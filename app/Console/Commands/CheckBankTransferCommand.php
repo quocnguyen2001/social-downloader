@@ -354,7 +354,7 @@ class CheckBankTransferCommand extends Command
 
         $placeholders = [
             '{code}' => $transaction->charge_id,
-            '{order_id}' => $transaction->order_id,
+            '{subscription_id}' => $transaction->subscription_id,
             '{user_name}' => $transaction->user?->name ?? 'Unknown',
             '{amount}' => number_format((float) $transaction->amount, 0),
         ];

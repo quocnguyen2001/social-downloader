@@ -28,7 +28,7 @@ return [
             'pending' => 'warning',
             'failed' => 'danger',
         ],
-        'order' => [
+        'subscription' => [
             'pending' => 'warning',
             'processing' => 'info',
             'completed' => 'success',

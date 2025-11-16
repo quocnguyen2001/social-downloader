@@ -55,7 +55,7 @@ return [
         'DELETE' => 'DELETE',
     ],
 
-    'order_status' => [
+    'subscription_status' => [
         'pending' => 'Pending',
         'processing' => 'Processing',
         'completed' => 'Completed',

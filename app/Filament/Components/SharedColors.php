@@ -37,11 +37,11 @@ class SharedColors
     }
 
     /**
-     * Get order status colors.
+     * Get subscription status colors.
      */
-    public static function orderStatus(): array
+    public static function subscriptionStatus(): array
     {
-        return self::getConfig('status.order');
+        return self::getConfig('status.subscription');
     }
 
     /**

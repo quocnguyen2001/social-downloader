@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MembershipPlanController;
-use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\VideoDownloadController;
 use App\Http\Controllers\Api\VideoExtractionController;
@@ -44,14 +44,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/recent-downloads', [UserController::class, 'recentDownloads'])->name('api.user.recent-downloads');
     });
 
-    Route::middleware('auth:sanctum')->prefix('orders')->group(function () {
-        Route::post('/', [OrderController::class, 'store'])->name('api.orders.store');
-        Route::get('/', [OrderController::class, 'index'])->name('api.orders.index');
-        Route::get('/{id}', [OrderController::class, 'show'])->name('api.orders.show');
+    Route::middleware('auth:sanctum')->prefix('subscriptions')->group(function () {
+        Route::post('/', [SubscriptionController::class, 'store'])->name('api.subscriptions.store');
+        Route::get('/', [SubscriptionController::class, 'index'])->name('api.subscriptions.index');
+        Route::get('/{id}', [SubscriptionController::class, 'show'])->name('api.subscriptions.show');
     });
 
-    Route::middleware('auth:sanctum')->get('/customer/orders', [OrderController::class, 'index'])
-        ->name('api.customer.orders');
+    Route::middleware('auth:sanctum')->get('/customer/subscriptions', [SubscriptionController::class, 'index'])
+        ->name('api.customer.subscriptions');
 
     Route::get('/settings', [SettingsController::class, 'index'])
         ->name('api.settings.index');
@@ -81,10 +81,9 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::middleware(['auth:sanctum'])->group(function () {
-            Route::get('orders', [OrderController::class, 'index']);
-            Route::get('orders/{id}', [OrderController::class, 'show']);
+            Route::get('subscriptions', [SubscriptionController::class, 'index']);
+            Route::get('subscriptions/{id}', [SubscriptionController::class, 'show']);
         });
-
 
         Route::get('extract/status/{sessionId}', [VideoExtractionController::class, 'status'])
             ->name('api.extract.status');
