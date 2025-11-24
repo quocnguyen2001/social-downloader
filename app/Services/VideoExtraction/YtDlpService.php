@@ -172,11 +172,11 @@ class YtDlpService
         }
 
         // Add standard options
-        if (config('video-extraction.yt_dlp.no_warnings', true)) {
-            $command[] = '--no-warnings';
-        }
-
-        $command[] = '--no-playlist';
+//        if (config('video-extraction.yt_dlp.no_warnings', true)) {
+//            $command[] = '--no-warnings';
+//        }
+//
+//        $command[] = '--no-playlist';
 
         // Add additional options (including format selection) after authentication
         $command = array_merge($command, $additionalOptions);
@@ -198,10 +198,10 @@ class YtDlpService
             }
         }
 
-        if ($this->isYouTubeUrl($url)) {
-            $command[] = '--extractor-args';
-            $command[] = 'youtube:player-client=tv_embedded';
-        }
+//        if ($this->isYouTubeUrl($url)) {
+//            $command[] = '--extractor-args';
+//            $command[] = 'youtube:player-client=tv_embedded';
+//        }
 
         // Add URL last
         $command[] = $url;
