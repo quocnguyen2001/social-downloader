@@ -182,7 +182,8 @@ class YtDlpService
         $command = array_merge($command, $additionalOptions);
 
         // Add platform-specific options (includes user-agent for Instagram)
-        $platformOptions = $this->getPlatformSpecificOptions($url);
+//        $platformOptions = $this->getPlatformSpecificOptions($url);
+        $platformOptions = [];
         if (! empty($platformOptions)) {
             $command = array_merge($command, $platformOptions);
         }
