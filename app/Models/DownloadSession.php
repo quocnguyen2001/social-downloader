@@ -104,7 +104,7 @@ class DownloadSession extends Model
     public function markAsFailed(string $errorMessage): void
     {
         $this->update([
-            'status' => DownloadSessionStatus::PENDING, // Reset to pending for retry
+            'status' => DownloadSessionStatus::FAILED, // Reset to pending for retry
             'error_message' => $errorMessage,
             'expires_at' => now()->addHours(24), // Keep record for 24 hours
         ]);

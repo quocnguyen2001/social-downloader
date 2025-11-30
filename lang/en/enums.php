@@ -32,6 +32,7 @@ return [
         'fetching_metadata' => 'Fetching Metadata',
         'metadata_fetched' => 'Metadata Fetched',
         'ready_for_download' => 'Ready for Download',
+        'failed' => 'Failed',
     ],
 
     'download_option_status' => [

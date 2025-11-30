@@ -10,32 +10,38 @@ use App\Enums\Platform;
 class PlatformDetector
 {
     /**
+     * Platform host suffixes used for platform detection.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const array PLATFORM_HOST_SUFFIXES = [
+        Platform::YOUTUBE->value => ['youtube.com', 'youtube-nocookie.com', 'youtu.be'],
+        Platform::TIKTOK->value => ['tiktok.com'],
+        Platform::INSTAGRAM->value => ['instagram.com', 'instagr.am'],
+        Platform::FACEBOOK->value => ['facebook.com', 'fb.watch'],
+    ];
+
+    /**
      * Platform URL patterns.
+     *
+     * @var array<string, array<int, string>>
      */
     private const array PLATFORM_PATTERNS = [
         Platform::YOUTUBE->value => [
-            '/youtube\.com\/watch\?v=/',
-            '/youtu\.be\//',
-            '/youtube\.com\/embed\//',
-            '/youtube\.com\/v\//',
-            '/m\.youtube\.com\/watch\?v=/',
+            '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)*youtube\.com\//i',
+            '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)*youtube-nocookie\.com\//i',
+            '/(?:https?:\/\/)?(?:www\.)?youtu\.be\//i',
         ],
         Platform::TIKTOK->value => [
-            '/tiktok\.com\//',
-            '/vm\.tiktok\.com\//',
-            '/vt\.tiktok\.com\//',
+            '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)*tiktok\.com\//i',
         ],
         Platform::INSTAGRAM->value => [
-            '/instagram\.com\/p\//',
-            '/instagram\.com\/reel\//',
-            '/instagram\.com\/tv\//',
-            '/instagr\.am\/p\//',
+            '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)*instagram\.com\//i',
+            '/(?:https?:\/\/)?(?:www\.)?instagr\.am\//i',
         ],
         Platform::FACEBOOK->value => [
-            '/facebook\.com\/.*\/videos\//',
-            '/fb\.watch\//',
-            '/facebook\.com\/watch[\/?]/',
-            '/facebook\.com\/share\/v\//',
+            '/(?:https?:\/\/)?(?:[a-z0-9-]+\.)*facebook\.com\//i',
+            '/(?:https?:\/\/)?fb\.watch\//i',
         ],
     ];
 
@@ -44,9 +50,23 @@ class PlatformDetector
      */
     public function detectPlatform(string $url): ?Platform
     {
+        $normalizedUrl = $this->normalizeUrl($url);
+        if ($normalizedUrl === '') {
+            return null;
+        }
+
+        $host = $this->extractHost($normalizedUrl);
+
+        if ($host !== null) {
+            $platform = $this->detectPlatformFromHost($host);
+            if ($platform !== null) {
+                return $platform;
+            }
+        }
+
         foreach (self::PLATFORM_PATTERNS as $platform => $patterns) {
             foreach ($patterns as $pattern) {
-                if (preg_match($pattern, $url)) {
+                if (preg_match($pattern, $normalizedUrl)) {
                     return Platform::tryFrom($platform);
                 }
             }
@@ -82,5 +102,56 @@ class PlatformDetector
     public function getUrlPatterns(Platform $platform): array
     {
         return self::PLATFORM_PATTERNS[$platform->value] ?? [];
+    }
+
+    private function detectPlatformFromHost(string $host): ?Platform
+    {
+        foreach (self::PLATFORM_HOST_SUFFIXES as $platform => $suffixes) {
+            foreach ($suffixes as $suffix) {
+                if ($this->hostMatchesSuffix($host, $suffix)) {
+                    return Platform::tryFrom($platform);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeUrl(string $url): string
+    {
+        $trimmed = trim($url);
+
+        if ($trimmed === '') {
+            return '';
+        }
+
+        if (! preg_match('/^[a-z][a-z0-9+\-.]*:\/\//i', $trimmed)) {
+            return 'https://'.$trimmed;
+        }
+
+        return $trimmed;
+    }
+
+    private function extractHost(string $url): ?string
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+
+        if (is_string($host) && $host !== '') {
+            return strtolower($host);
+        }
+
+        return null;
+    }
+
+    private function hostMatchesSuffix(string $host, string $suffix): bool
+    {
+        $host = strtolower($host);
+        $suffix = strtolower($suffix);
+
+        if ($host === $suffix) {
+            return true;
+        }
+
+        return str_ends_with($host, '.'.$suffix);
     }
 }

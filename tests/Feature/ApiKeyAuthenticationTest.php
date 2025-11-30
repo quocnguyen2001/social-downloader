@@ -9,6 +9,7 @@ use App\Services\AuthenticatedApiKey;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -198,6 +199,41 @@ class ApiKeyAuthenticationTest extends TestCase
                 'success' => false,
                 'message' => 'Rate limit exceeded',
             ]);
+    }
+
+    /** @test */
+    public function extract_status_endpoint_is_exempt_from_rate_limits()
+    {
+        for ($i = 0; $i < 60; $i++) {
+            RateLimiter::hit('api_rate_limit:'.$this->apiKeyModel->id, 60);
+        }
+
+        $sessionId = (string) Str::uuid();
+
+        $response = $this->getJson("/api/v1/extract/status/{$sessionId}", [
+            'Authorization' => 'Bearer '.$this->testApiKey,
+        ]);
+
+        $response->assertStatus(404);
+    }
+
+    /** @test */
+    public function download_status_endpoint_is_exempt_from_rate_limits()
+    {
+        for ($i = 0; $i < 60; $i++) {
+            RateLimiter::hit('api_rate_limit:'.$this->apiKeyModel->id, 60);
+        }
+
+        $downloadOptionId = (string) Str::uuid();
+
+        $response = $this->getJson(
+            "/api/v1/download/status?download_option_id={$downloadOptionId}",
+            [
+                'Authorization' => 'Bearer '.$this->testApiKey,
+            ]
+        );
+
+        $response->assertStatus(422);
     }
 
     /** @test */

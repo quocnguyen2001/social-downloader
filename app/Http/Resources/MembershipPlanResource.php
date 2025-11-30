@@ -36,7 +36,6 @@ class MembershipPlanResource extends JsonResource
             'allowed_platforms' => $this->allowed_platforms,
             'allowed_qualities' => $this->allowed_qualities,
             'allowed_formats' => $this->allowed_formats,
-            'priority_processing' => $this->priority_processing,
             'is_active' => $this->is_active,
             'is_featured' => $this->is_featured,
             'sort_order' => $this->sort_order,

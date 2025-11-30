@@ -55,7 +55,6 @@ class MembershipPlanFactory extends Factory
             'allowed_formats' => fake()->randomElements($formats, fake()->numberBetween(1, 3)),
 
             // Additional features
-            'priority_processing' => fake()->boolean(30),
 
             // Plan status and ordering
             'is_active' => fake()->boolean(80),
@@ -75,7 +74,6 @@ class MembershipPlanFactory extends Factory
             'price' => 0.00,
             'daily_request_limit' => 100,
             'total_request_download' => 3000,
-            'priority_processing' => false,
             'is_active' => true,
             'is_featured' => false,
         ]);
@@ -92,7 +90,6 @@ class MembershipPlanFactory extends Factory
             'price' => 9.99,
             'daily_request_limit' => 500,
             'total_request_download' => 15000,
-            'priority_processing' => false,
             'is_active' => true,
             'is_featured' => false,
         ]);
@@ -109,7 +106,6 @@ class MembershipPlanFactory extends Factory
             'price' => 19.99,
             'daily_request_limit' => 1000,
             'total_request_download' => 30000,
-            'priority_processing' => true,
             'is_active' => true,
             'is_featured' => true,
         ]);
@@ -126,7 +122,6 @@ class MembershipPlanFactory extends Factory
             'price' => 49.99,
             'daily_request_limit' => 0, // unlimited
             'total_request_download' => 0, // unlimited
-            'priority_processing' => true,
             'is_active' => true,
             'is_featured' => true,
         ]);

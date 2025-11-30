@@ -138,14 +138,6 @@ class MembershipPlanResource extends Resource
                             ->columns(4),
                     ]),
 
-                Forms\Components\Section::make(__('filament.resources.membership_plan.sections.features_limits'))
-                    ->schema([
-                        Forms\Components\Toggle::make('priority_processing')
-                            ->label(__('filament.resources.membership_plan.fields.priority_processing'))
-                            ->helperText(__('filament.resources.membership_plan.descriptions.priority_processing')),
-                    ])
-                    ->columns(2),
-
                 Forms\Components\Section::make(__('filament.resources.membership_plan.sections.plan_settings'))
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
@@ -213,7 +205,7 @@ class MembershipPlanResource extends Resource
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label(__('filament.resources.membership_plan.columns.order'))
+                    ->label(__('filament.resources.membership_plan.columns.sort_order'))
                     ->sortable()
                     ->alignEnd(),
             ])
@@ -334,14 +326,6 @@ class MembershipPlanResource extends Resource
 
                 Infolists\Components\Section::make(__('filament.resources.membership_plan.sections.features_limits'))
                     ->schema([
-                        Infolists\Components\IconEntry::make('priority_processing')
-                            ->label(__('filament.resources.membership_plan.fields.priority_processing'))
-                            ->boolean()
-                            ->trueIcon('heroicon-o-check-circle')
-                            ->falseIcon('heroicon-o-x-circle')
-                            ->trueColor('success')
-                            ->falseColor('danger'),
-
                         Infolists\Components\IconEntry::make('is_active')
                             ->label(__('filament.resources.membership_plan.fields.is_active'))
                             ->boolean()

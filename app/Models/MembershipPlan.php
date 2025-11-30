@@ -23,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array|null $allowed_platforms
  * @property array|null $allowed_qualities
  * @property array|null $allowed_formats
- * @property bool $priority_processing
  * @property bool $is_active
  * @property bool $is_featured
  * @property int $sort_order
@@ -51,7 +50,6 @@ class MembershipPlan extends Model
         'allowed_platforms',
         'allowed_qualities',
         'allowed_formats',
-        'priority_processing',
         'is_active',
         'is_featured',
         'sort_order',
@@ -69,7 +67,6 @@ class MembershipPlan extends Model
         'allowed_platforms' => 'array',
         'allowed_qualities' => 'array',
         'allowed_formats' => 'array',
-        'priority_processing' => 'boolean',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'sort_order' => 'integer',

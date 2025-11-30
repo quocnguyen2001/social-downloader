@@ -22,6 +22,32 @@ use Symfony\Component\HttpFoundation\Response;
 class ApiKeyAuthentication
 {
     /**
+     * List of route names and URI patterns that should bypass rate limiting.
+     *
+     * These endpoints provide status or download functionality and shouldn't
+     * count toward per-minute API key limits.
+     *
+     * @var array<int, string>
+     */
+    private array $rateLimitExemptRoutes = [
+        'api.download.file',
+        'api.download.status',
+        'api.extract.status',
+    ];
+
+    /**
+     * URI patterns used as a fallback to detect exempt routes when route names
+     * are unavailable (e.g., during certain testing scenarios).
+     *
+     * @var array<int, string>
+     */
+    private array $rateLimitExemptPatterns = [
+        'api/v1/download-media/*',
+        'api/v1/download/status',
+        'api/v1/extract/status/*',
+    ];
+
+    /**
      * Create a new middleware instance.
      */
     public function __construct(
@@ -59,9 +85,13 @@ class ApiKeyAuthentication
                 'user_agent' => $request->userAgent(),
             ]);
 
-            $rateLimitResult = $this->checkRateLimit($apiKey, $request);
-            if ($rateLimitResult !== true) {
-                return $rateLimitResult;
+            $skipRateLimit = $this->shouldSkipRateLimit($request);
+
+            if (! $skipRateLimit) {
+                $rateLimitResult = $this->checkRateLimit($apiKey, $request);
+                if ($rateLimitResult !== true) {
+                    return $rateLimitResult;
+                }
             }
 
             $usageLimitResult = $this->checkUsageLimits($apiKey);
@@ -289,5 +319,23 @@ class ApiKeyAuthentication
         }
 
         return 'unknown';
+    }
+
+    private function shouldSkipRateLimit(Request $request): bool
+    {
+        $route = $request->route();
+        $routeName = is_object($route) && method_exists($route, 'getName') ? $route->getName() : null;
+
+        if ($routeName && in_array($routeName, $this->rateLimitExemptRoutes, true)) {
+            return true;
+        }
+
+        foreach ($this->rateLimitExemptPatterns as $pattern) {
+            if ($request->is($pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
