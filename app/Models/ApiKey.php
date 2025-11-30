@@ -102,11 +102,14 @@ class ApiKey extends Model
      */
     public function resetUsageIfNeeded(): void
     {
-        $today = now()->toDateString();
-        $currentMonth = now()->startOfMonth()->toDateString();
+        $now = now();
+        $today = $now->toDateString();
+        $currentMonth = $now->copy()->startOfMonth()->toDateString();
+        $lastDailyReset = $this->last_reset_daily?->toDateString();
+        $lastMonthlyReset = $this->last_reset_monthly?->toDateString();
 
         // Reset daily usage if needed
-        if ($this->last_reset_daily->toDateString() !== $today) {
+        if ($lastDailyReset !== $today) {
             $this->update([
                 'daily_usage' => 0,
                 'last_reset_daily' => $today,
@@ -114,7 +117,7 @@ class ApiKey extends Model
         }
 
         // Reset monthly usage if needed
-        if ($this->last_reset_monthly->toDateString() !== $currentMonth) {
+        if ($lastMonthlyReset !== $currentMonth) {
             $this->update([
                 'monthly_usage' => 0,
                 'last_reset_monthly' => $currentMonth,

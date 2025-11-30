@@ -41,11 +41,6 @@ class VideoExtractionController extends Controller
             $downloadSession = DownloadSession::find($sessionId);
 
             if (! $downloadSession) {
-                // Log failed API request for session not found
-                if ($apiKey) {
-                    $this->createStatusApiRequestRecord($request, $apiKey, $sessionId, 404);
-                }
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Session not found',
@@ -54,20 +49,10 @@ class VideoExtractionController extends Controller
 
             // Check if the session belongs to the authenticated API key
             if ($downloadSession->api_key_id !== $apiKey?->id) {
-                // Log failed API request for access denied
-                if ($apiKey) {
-                    $this->createStatusApiRequestRecord($request, $apiKey, $sessionId, 403);
-                }
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Access denied to this session',
                 ], 403);
-            }
-
-            // Log successful API request for status check
-            if ($apiKey) {
-                $this->createStatusApiRequestRecord($request, $apiKey, $sessionId, 200);
             }
 
             $data = [
@@ -143,11 +128,6 @@ class VideoExtractionController extends Controller
         } catch (\Exception $e) {
             // Get API key for error logging
             $apiKey = AuthenticatedApiKey::get();
-
-            // Log failed API request for server error
-            if ($apiKey) {
-                $this->createStatusApiRequestRecord($request, $apiKey, $sessionId, 500);
-            }
 
             Log::error('Failed to get extraction status', [
                 'session_id' => $sessionId,
@@ -248,36 +228,6 @@ class VideoExtractionController extends Controller
             'file_size' => null,
             'download_url' => null,
             'cost' => 0.0, // No cost for failed requests
-            'billed' => false,
-        ]);
-    }
-
-    /**
-     * Create API request record for status endpoint calls.
-     */
-    private function createStatusApiRequestRecord(
-        Request $request,
-        ApiKey $apiKey,
-        string $sessionId,
-        int $statusCode
-    ): ApiRequest {
-        return ApiRequest::create([
-            'api_key_id' => $apiKey->getKey(),
-            'user_id' => $apiKey->user_id,
-            'endpoint' => '/api/v1/extract/status/'.$sessionId,
-            'method' => HttpMethod::GET,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'original_url' => null, // No URL for status checks
-            'platform' => null, // No platform for status checks
-            'video_title' => null,
-            'requested_quality' => null,
-            'requested_format' => null,
-            'status_code' => $statusCode,
-            'response_time' => null,
-            'file_size' => null,
-            'download_url' => null,
-            'cost' => 0.0, // No cost for status checks
             'billed' => false,
         ]);
     }

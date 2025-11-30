@@ -38,6 +38,8 @@ class UserController extends Controller
             // Load membership plan relationship
             $user->load('membershipPlan');
 
+            $now = now();
+
             // Calculate download statistics
             $totalDownloads = DownloadSession::query()
                 ->where('user_id', $user->id)
@@ -56,14 +58,47 @@ class UserController extends Controller
 
             $successRate = $totalDownloads > 0 ? round(($successfulDownloads / $totalDownloads) * 100, 2) : 0;
 
+            $dailyRequestLimit = $user->membershipPlan?->daily_request_limit;
+            $totalRequestLimit = $user->membershipPlan?->total_request_download;
+
+            $dailySuccessfulRequests = DownloadSession::query()
+                ->where('user_id', $user->id)
+                ->where('status', DownloadSessionStatus::READY_FOR_DOWNLOAD)
+                ->whereDate('created_at', $now->toDateString())
+                ->count();
+
+            $membershipStartDate = $user->membership_started_at
+                ? $user->membership_started_at->copy()->startOfDay()
+                : null;
+
+            $totalSuccessfulRequests = DownloadSession::query()
+                ->where('user_id', $user->id)
+                ->where('status', DownloadSessionStatus::READY_FOR_DOWNLOAD)
+                ->when($membershipStartDate, function ($query) use ($membershipStartDate) {
+                    $query->where('created_at', '>=', $membershipStartDate);
+                })
+                ->count();
+
+            $dailyRequestsRemaining = $dailyRequestLimit && $dailyRequestLimit > 0
+                ? max(0, $dailyRequestLimit - $dailySuccessfulRequests)
+                : null;
+
+            $totalRequestsRemaining = $totalRequestLimit && $totalRequestLimit > 0 && $membershipStartDate
+                ? max(0, $totalRequestLimit - $totalSuccessfulRequests)
+                : null;
+
+            $downloadStatistics = [
+                'total_downloads' => $totalDownloads,
+                'current_month_downloads' => $currentMonthDownloads,
+                'success_rate' => $successRate,
+                'daily_requests_remaining' => $dailyRequestsRemaining,
+                'total_requests_remaining' => $totalRequestsRemaining,
+            ];
+
             $userData = new UserResource($user);
 
             $userData->additional([
-                'download_statistics' => [
-                    'total_downloads' => $totalDownloads,
-                    'current_month_downloads' => $currentMonthDownloads,
-                    'success_rate' => $successRate,
-                ],
+                'download_statistics' => $downloadStatistics,
             ]);
 
             Log::info('User profile retrieved', [
@@ -72,16 +107,14 @@ class UserController extends Controller
                 'total_downloads' => $totalDownloads,
                 'current_month_downloads' => $currentMonthDownloads,
                 'success_rate' => $successRate,
+                'daily_requests_remaining' => $dailyRequestsRemaining,
+                'total_requests_remaining' => $totalRequestsRemaining,
                 'ip_address' => $request->ip(),
             ]);
 
             $result = [
                 ...$userData->toArray($request),
-                'download_statistics' => [
-                    'total_downloads' => $totalDownloads,
-                    'current_month_downloads' => $currentMonthDownloads,
-                    'success_rate' => $successRate,
-                ],
+                'download_statistics' => $downloadStatistics,
             ];
 
             return $this->apiSuccessResponse(

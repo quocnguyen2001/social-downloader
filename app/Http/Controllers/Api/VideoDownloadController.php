@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Enums\DownloadOptionStatus;
+use App\Enums\HttpMethod;
+use App\Enums\VideoQuality;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CheckDownloadStatusRequest;
 use App\Http\Requests\Api\TriggerVideoDownloadRequest;
 use App\Jobs\ProcessVideoDownload;
+use App\Models\ApiKey;
+use App\Models\ApiRequest;
 use App\Models\DownloadOption;
+use App\Services\AuthenticatedApiKey;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +31,8 @@ class VideoDownloadController extends Controller
      */
     public function triggerDownload(TriggerVideoDownloadRequest $request): JsonResponse
     {
+        $apiKey = AuthenticatedApiKey::get();
+
         try {
             $downloadOptionId = $request->validated('download_option_id');
 
@@ -33,7 +40,7 @@ class VideoDownloadController extends Controller
             $downloadOption = DownloadOption::with('downloadSession')->find($downloadOptionId);
 
             if (! $downloadOption) {
-                return response()->json([
+                return $this->respondWithDownloadLog($request, $apiKey, [
                     'success' => false,
                     'message' => __('messages.error.not_found', [
                         'resource' => __('models.download_option.singular'),
@@ -43,42 +50,42 @@ class VideoDownloadController extends Controller
 
             // Check if download option is in a valid state for processing
             if ($downloadOption->status === DownloadOptionStatus::PROCESSING) {
-                return response()->json([
+                return $this->respondWithDownloadLog($request, $apiKey, [
                     'success' => false,
                     'message' => __('messages.error.already_processing'),
-                ], 409);
+                ], 409, $downloadOption);
             }
 
             if ($downloadOption->status === DownloadOptionStatus::DOWNLOADED) {
-                return response()->json([
+                return $this->respondWithDownloadLog($request, $apiKey, [
                     'success' => false,
                     'message' => __('messages.error.already_downloaded'),
                     'data' => [
                         'download_url' => $downloadOption->getDownloadUrl(),
                     ],
-                ], 409);
+                ], 409, $downloadOption);
             }
 
             // Validate that the download option has required data
             if (! $downloadOption->cdn_id) {
-                return response()->json([
+                return $this->respondWithDownloadLog($request, $apiKey, [
                     'success' => false,
                     'message' => __('messages.error.missing_cdn_id'),
-                ], 400);
+                ], 400, $downloadOption);
             }
 
             if (! $downloadOption->downloadSession) {
-                return response()->json([
+                return $this->respondWithDownloadLog($request, $apiKey, [
                     'success' => false,
                     'message' => __('messages.error.missing_download_session'),
-                ], 400);
+                ], 400, $downloadOption);
             }
 
             if (! $downloadOption->downloadSession->original_url) {
-                return response()->json([
+                return $this->respondWithDownloadLog($request, $apiKey, [
                     'success' => false,
                     'message' => __('messages.error.missing_origin_url'),
-                ], 400);
+                ], 400, $downloadOption);
             }
 
             Log::info('Triggering video download', [
@@ -90,14 +97,14 @@ class VideoDownloadController extends Controller
             // Dispatch the background job
             ProcessVideoDownload::dispatch($downloadOptionId);
 
-            return response()->json([
+            return $this->respondWithDownloadLog($request, $apiKey, [
                 'success' => true,
                 'message' => __('messages.success.download_triggered'),
                 'data' => [
                     'download_option_id' => $downloadOptionId,
                     'status' => DownloadOptionStatus::PROCESSING->value,
                 ],
-            ]);
+            ], 200, $downloadOption);
 
         } catch (\Exception $e) {
             Log::error('Failed to trigger video download', [
@@ -106,7 +113,7 @@ class VideoDownloadController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
+            return $this->respondWithDownloadLog($request, $apiKey, [
                 'success' => false,
                 'message' => __('messages.error.internal_server_error'),
             ], 500);
@@ -235,9 +242,9 @@ class VideoDownloadController extends Controller
                 ! $downloadOption->storage_file_path ||
                 $downloadOption->status !== DownloadOptionStatus::DOWNLOADED) {
 
-                return response()->json([
-                    'success' => false,
-                    'message' => __('errors.download_not_available'),
+            return response()->json([
+                'success' => false,
+                'message' => __('errors.download_not_available'),
                 ], 422);
             }
 
@@ -264,5 +271,66 @@ class VideoDownloadController extends Controller
                 'message' => __('messages.error.internal_server_error'),
             ], 500);
         }
+    }
+
+    private function respondWithDownloadLog(
+        TriggerVideoDownloadRequest $request,
+        ?ApiKey $apiKey,
+        array $payload,
+        int $statusCode,
+        ?DownloadOption $downloadOption = null
+    ): JsonResponse {
+        $this->logDownloadTriggerRequest($request, $apiKey, $statusCode, $downloadOption);
+
+        return response()->json($payload, $statusCode);
+    }
+
+    private function logDownloadTriggerRequest(
+        TriggerVideoDownloadRequest $request,
+        ?ApiKey $apiKey,
+        int $statusCode,
+        ?DownloadOption $downloadOption = null
+    ): void {
+        if (! $apiKey) {
+            return;
+        }
+
+        $downloadSession = $downloadOption?->downloadSession;
+        $requestedQuality = $this->resolveQualityValue($downloadOption?->quality);
+
+        ApiRequest::create([
+            'api_key_id' => $apiKey->id,
+            'user_id' => $apiKey->user_id,
+            'endpoint' => '/api/v1/download/trigger',
+            'method' => HttpMethod::POST,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'original_url' => $downloadSession?->original_url,
+            'platform' => $downloadSession?->platform,
+            'video_title' => $downloadSession?->title,
+            'requested_quality' => $requestedQuality,
+            'requested_format' => null,
+            'status_code' => $statusCode,
+            'response_time' => null,
+            'file_size' => $downloadOption?->file_size,
+            'download_url' => $downloadOption?->getDownloadUrl(),
+            'cost' => $apiKey->price_per_request ?? 0.0,
+            'billed' => false,
+        ]);
+    }
+
+    private function resolveQualityValue(?string $quality): ?string
+    {
+        if (! $quality) {
+            return null;
+        }
+
+        foreach (VideoQuality::cases() as $case) {
+            if ($case->value === $quality) {
+                return $case->value;
+            }
+        }
+
+        return null;
     }
 }

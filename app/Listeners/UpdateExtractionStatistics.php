@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 use App\Events\ExtractionCompleted;
 use App\Events\ExtractionFailed;
-use App\Models\ApiKey;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Cache;
@@ -37,7 +36,6 @@ class UpdateExtractionStatistics implements ShouldQueue
         ]);
 
         try {
-            $this->updateApiKeyUsage($event->getDownloadSession()->apiKey);
             $this->updatePlatformStatistics($event->getPlatform()->value, 'completed');
             $this->updatePerformanceMetrics($event);
             $this->updateDailyStatistics('completed');
@@ -62,7 +60,6 @@ class UpdateExtractionStatistics implements ShouldQueue
         ]);
 
         try {
-            $this->updateApiKeyUsage($event->getDownloadSession()->apiKey, false);
             $this->updatePlatformStatistics($event->getPlatform()->value, 'failed');
             $this->updateFailureStatistics($event);
             $this->updateDailyStatistics('failed');
@@ -71,43 +68,6 @@ class UpdateExtractionStatistics implements ShouldQueue
             Log::error('Failed to update statistics for failed extraction', [
                 'download_session_id' => $event->getDownloadSessionId(),
                 'exception' => $exception->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Update API key usage statistics.
-     */
-    private function updateApiKeyUsage(?ApiKey $apiKey, bool $successful = true): void
-    {
-        if (! $apiKey) {
-            return; // No API key to update
-        }
-
-        try {
-            // Update daily usage
-            $apiKey->increment('daily_usage');
-
-            // Update monthly usage
-            $apiKey->increment('monthly_usage');
-
-            // Update total usage
-            $apiKey->increment('total_usage');
-
-            // Reset counters if needed
-            $this->resetUsageCountersIfNeeded($apiKey);
-
-            Log::debug('API key usage updated', [
-                'api_key_id' => $apiKey->id,
-                'daily_usage' => $apiKey->daily_usage,
-                'monthly_usage' => $apiKey->monthly_usage,
-                'successful' => $successful,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::warning('Failed to update API key usage', [
-                'api_key_id' => $apiKey->id,
-                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -219,30 +179,6 @@ class UpdateExtractionStatistics implements ShouldQueue
             'status' => $status,
             'stats' => $stats,
         ]);
-    }
-
-    /**
-     * Reset usage counters if needed.
-     */
-    private function resetUsageCountersIfNeeded(ApiKey $apiKey): void
-    {
-        $now = now();
-
-        // Reset daily usage if it's a new day
-        if ($apiKey->last_reset_daily->format('Y-m-d') !== $now->format('Y-m-d')) {
-            $apiKey->update([
-                'daily_usage' => 1, // Set to 1 since we just incremented
-                'last_reset_daily' => $now->toDateString(),
-            ]);
-        }
-
-        // Reset monthly usage if it's a new month
-        if ($apiKey->last_reset_monthly->format('Y-m') !== $now->format('Y-m')) {
-            $apiKey->update([
-                'monthly_usage' => 1, // Set to 1 since we just incremented
-                'last_reset_monthly' => $now->toDateString(),
-            ]);
-        }
     }
 
     /**
