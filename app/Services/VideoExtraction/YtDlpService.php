@@ -182,8 +182,7 @@ class YtDlpService
         $command = array_merge($command, $additionalOptions);
 
         // Add platform-specific options (includes user-agent for Instagram)
-//        $platformOptions = $this->getPlatformSpecificOptions($url);
-        $platformOptions = [];
+        $platformOptions = $this->getPlatformSpecificOptions($url);
         if (! empty($platformOptions)) {
             $command = array_merge($command, $platformOptions);
         }
@@ -199,10 +198,10 @@ class YtDlpService
             }
         }
 
-//        if ($this->isYouTubeUrl($url)) {
-//            $command[] = '--extractor-args';
-//            $command[] = 'youtube:player-client=tv_embedded';
-//        }
+        if ($this->isYouTubeUrl($url)) {
+            $command[] = '--extractor-args';
+            $command[] = 'youtube:player-client=tv_embedded';
+        }
 
         // Add URL last
         $command[] = $url;
