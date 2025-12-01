@@ -6,6 +6,7 @@ set -e
 # --- CONFIGURATION ---
 PROJECT_PATH="/var/www/social-downloader"
 GIT_BRANCH="develop"
+PHP_VERSION="8.4"
 # --- END CONFIGURATION ---
 
 # Helper function for logging
@@ -32,14 +33,14 @@ git stash pop
 print_info "Updating Composer dependencies..."
 composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-# --- NEW STEPS ADDED HERE ---
-# Install NPM dependencies
-print_info "Installing NPM dependencies..."
-npm install
-
-# Build front-end assets
-print_info "Building front-end assets..."
-npm run build
+## --- NEW STEPS ADDED HERE ---
+## Install NPM dependencies
+#print_info "Installing NPM dependencies..."
+#npm install
+#
+## Build front-end assets
+#print_info "Building front-end assets..."
+#npm run build
 # --- END OF NEW STEPS ---
 
 # Run database migrations
@@ -53,6 +54,10 @@ php artisan optimize:clear
 # Restart queue workers
 print_info "Restarting Queue Workers (Supervisor)..."
 sudo supervisorctl restart all
+
+# Restart php-fpm
+print_info "Restarting PHP-FPM..."
+sudo service php${PHP_VERSION}-fpm restart
 
 # Disable maintenance mode
 print_info "Disabling maintenance mode. Application is back online!"

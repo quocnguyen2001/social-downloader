@@ -199,7 +199,7 @@ class YtDlpService
         }
 
         if ($this->isYouTubeUrl($url)) {
-            $command[] = '--extractor-args';
+//            $command[] = '--extractor-args';
             $command[] = 'youtube:player-client=tv_embedded';
         }
 
