@@ -198,10 +198,10 @@ class YtDlpService
             }
         }
 
-        if ($this->isYouTubeUrl($url)) {
+//        if ($this->isYouTubeUrl($url)) {
 //            $command[] = '--extractor-args';
-            $command[] = 'youtube:player-client=tv_embedded';
-        }
+//            $command[] = 'youtube:player-client=tv_embedded';
+//        }
 
         // Add URL last
         $command[] = $url;
