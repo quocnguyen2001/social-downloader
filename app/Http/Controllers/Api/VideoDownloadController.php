@@ -15,8 +15,8 @@ use App\Models\ApiKey;
 use App\Models\ApiRequest;
 use App\Models\DownloadOption;
 use App\Services\AuthenticatedApiKey;
+use App\Services\DownloadUrlService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -26,6 +26,13 @@ use Illuminate\Support\Str;
  */
 class VideoDownloadController extends Controller
 {
+    /**
+     * Constructor
+     */
+    public function __construct(
+        private readonly DownloadUrlService $downloadUrlService
+    ) {}
+
     /**
      * Trigger video download for a specific download option.
      */
@@ -242,9 +249,9 @@ class VideoDownloadController extends Controller
                 ! $downloadOption->storage_file_path ||
                 $downloadOption->status !== DownloadOptionStatus::DOWNLOADED) {
 
-            return response()->json([
-                'success' => false,
-                'message' => __('errors.download_not_available'),
+                return response()->json([
+                    'success' => false,
+                    'message' => __('errors.download_not_available'),
                 ], 422);
             }
 
@@ -256,8 +263,8 @@ class VideoDownloadController extends Controller
                 ], 404);
             }
 
-            // Return file download using Laravel's response()->download() method
-            return Storage::disk($downloadOption->storage_disk)->download($downloadOption->storage_file_path);
+            // Return file download using DownloadUrlService
+            return $this->downloadUrlService->getDownloadResponse($downloadOption);
 
         } catch (\Exception $e) {
             Log::error('File download failed', [

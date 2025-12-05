@@ -28,6 +28,19 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | R2 Worker Download URL
+    |--------------------------------------------------------------------------
+    |
+    | Optional URL for R2 Worker that handles file downloads.
+    | When configured, downloads from R2 storage will use this worker URL
+    | instead of direct storage URLs.
+    |
+    */
+
+    'r2_worker_download_url' => env('R2_WORKER_DOWNLOAD_URL'),
+
     'disks' => [
 
         'local' => [

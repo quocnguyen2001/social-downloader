@@ -50,15 +50,9 @@ class DownloadOption extends Model
      */
     public function getDownloadUrl(): ?string
     {
-        if ($this->status === DownloadOptionStatus::DOWNLOADED && $this->storage_disk && $this->storage_file_path) {
-            return Storage::disk($this->storage_disk)->url($this->storage_file_path);
-        }
+        $downloadUrlService = app(\App\Services\DownloadUrlService::class);
 
-        if ($this->status === DownloadOptionStatus::CDN && $this->download_cdn_url) {
-            return $this->download_cdn_url;
-        }
-
-        return null;
+        return $downloadUrlService->getDownloadUrl($this);
     }
 
     /**
