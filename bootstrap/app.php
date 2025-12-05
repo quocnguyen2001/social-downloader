@@ -55,7 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Schedule the bank transfer checker to run every 5 seconds
         $schedule->command('bank-transfer:check --force')
-            ->cron('*/5 * * * * *') // Every 5 seconds using cron expression
+            ->everyFiveSeconds()
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/bank-transfer-check.log'));
