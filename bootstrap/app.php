@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
-        health: '/up',
+        health: '/healthcheck',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
@@ -39,21 +39,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Schedule the file deletion processor to run every hour
         $schedule->command('scheduled-deletions:process')
             ->hourly()
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/scheduled-deletions.log'));
 
-        // Schedule the expired downloads cleanup to run every hour
         $schedule->command('downloads:cleanup-expired')
             ->hourly()
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/cleanup-expired-downloads.log'));
 
-        // Schedule the bank transfer checker to run every 5 seconds
         $schedule->command('bank-transfer:check --force')
             ->everyFiveSeconds()
             ->withoutOverlapping()

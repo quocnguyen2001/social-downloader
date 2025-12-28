@@ -7,12 +7,12 @@ namespace App\Services;
 use App\Settings\PaymentGatewaySettings;
 use Illuminate\Support\Facades\Log;
 use PayPalServerSDK\Environment;
-use PayPalServerSDK\PayPalServerSDKClient;
-use PayPalServerSDK\PayPalServerSDKClientBuilder;
-use PayPalServerSDK\Models\OrderRequest;
-use PayPalServerSDK\Models\PurchaseUnitRequest;
 use PayPalServerSDK\Models\AmountWithBreakdown;
 use PayPalServerSDK\Models\ApplicationContext;
+use PayPalServerSDK\Models\OrderRequest;
+use PayPalServerSDK\Models\PurchaseUnitRequest;
+use PayPalServerSDK\PayPalServerSDKClient;
+use PayPalServerSDK\PayPalServerSDKClientBuilder;
 
 /**
  * PayPal Service Wrapper.
@@ -96,7 +96,7 @@ class PayPalService
             $response = $ordersController->ordersCreate($orderRequest);
 
             if ($response->getStatusCode() !== 201) {
-                throw new \Exception('PayPal order creation failed with status: ' . $response->getStatusCode());
+                throw new \Exception('PayPal order creation failed with status: '.$response->getStatusCode());
             }
 
             $order = $response->getResult();
@@ -110,7 +110,7 @@ class PayPalService
                 }
             }
 
-            if (!$approvalUrl) {
+            if (! $approvalUrl) {
                 throw new \Exception('PayPal approval URL not found in response');
             }
 
@@ -183,7 +183,7 @@ class PayPalService
         // Create amount object
         $amount = AmountWithBreakdown::builder()
             ->currencyCode($orderData['currency'] ?? $this->settings->paypal_currency)
-            ->value(number_format((float)$orderData['amount'], 2, '.', ''))
+            ->value(number_format((float) $orderData['amount'], 2, '.', ''))
             ->build();
 
         // Create purchase unit

@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Job that recalculates API key usage counters from ApiRequest records.
  */
-class UpdateApiKeyUsageFromRequests implements ShouldQueue, ShouldBeUnique
+class UpdateApiKeyUsageFromRequests implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

@@ -256,13 +256,12 @@ class VietQRService
     /**
      * Generate VietQR code image URL.
      *
-     * @param string $bankId Bank identifier code
-     * @param string $accountNo Bank account number
-     * @param string $template QR template type
-     * @param float|null $amount Transaction amount (optional)
-     * @param string|null $description Additional information (optional)
-     * @param string|null $accountName Account holder name (optional)
-     *
+     * @param  string  $bankId  Bank identifier code
+     * @param  string  $accountNo  Bank account number
+     * @param  string  $template  QR template type
+     * @param  float|null  $amount  Transaction amount (optional)
+     * @param  string|null  $description  Additional information (optional)
+     * @param  string|null  $accountName  Account holder name (optional)
      * @return string Generated QR code image URL
      *
      * @throws \InvalidArgumentException When required parameters are invalid
@@ -303,17 +302,17 @@ class VietQRService
             $queryParams['amount'] = number_format($amount, 0, '', '');
         }
 
-        if (!empty($description)) {
+        if (! empty($description)) {
             $queryParams['addInfo'] = urlencode(trim($description));
         }
 
-        if (!empty($accountName)) {
+        if (! empty($accountName)) {
             $queryParams['accountName'] = urlencode(trim($accountName));
         }
 
         // Append query parameters if any exist
-        if (!empty($queryParams)) {
-            $baseUrl .= '?' . http_build_query($queryParams);
+        if (! empty($queryParams)) {
+            $baseUrl .= '?'.http_build_query($queryParams);
         }
 
         return $baseUrl;
@@ -322,8 +321,7 @@ class VietQRService
     /**
      * Generate bank logo image URL.
      *
-     * @param string $bankCode Three-letter bank code (e.g., "ABB")
-     *
+     * @param  string  $bankCode  Three-letter bank code (e.g., "ABB")
      * @return string Generated bank logo image URL
      *
      * @throws \InvalidArgumentException When bank code is invalid
@@ -339,7 +337,7 @@ class VietQRService
         $bankCode = strtoupper(trim($bankCode));
 
         // Validate bank code format (should be 2-4 characters)
-        if (!preg_match('/^[A-Z]{2,4}$/', $bankCode)) {
+        if (! preg_match('/^[A-Z]{2,4}$/', $bankCode)) {
             throw new \InvalidArgumentException('Bank code must be 2-4 uppercase letters');
         }
 

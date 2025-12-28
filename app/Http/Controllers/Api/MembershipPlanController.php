@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MembershipPlanResource;
 use App\Http\Traits\ApiResponseTrait;
 use App\Models\MembershipPlan;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Http\Resources\MembershipPlanResource;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class MembershipPlanController extends Controller
 {
@@ -71,7 +71,7 @@ class MembershipPlanController extends Controller
             $plan = MembershipPlan::findOrFail($id);
 
             // Check if the plan is active (optional - you can remove this if you want to show inactive plans too)
-            if (!$plan->is_active) {
+            if (! $plan->is_active) {
                 return $this->apiErrorResponse(
                     __('Membership plan not found or not available.'),
                     null,

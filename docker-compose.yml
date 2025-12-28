@@ -1,0 +1,49 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "9001:8080"
+        volumes:
+            - ./:/var/www/html
+        depends_on:
+            - mysql
+            - redis
+    mysql:
+        image: mysql
+        ports:
+            - '${FORWARD_DB_PORT:-3307}:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - db_data:/var/lib/mysql
+    redis:
+        image: redis:alpine
+        volumes:
+            - redis_data:/data
+
+    worker:
+        image: social-downloader-app:latest
+        command: [ "php", "/var/www/html/artisan", "horizon" ]
+        env_file:
+            - .env
+        healthcheck:
+            test: [ "CMD", "healthcheck-horizon" ]
+            start_period: 10s
+
+    scheduler:
+        image: social-downloader-app:latest
+        command: [ "php", "/var/www/html/artisan", "schedule:work" ]
+        env_file:
+            - .env
+        healthcheck:
+            test: [ "CMD", "ealthcheck-schedule" ]
+            start_period: 10s
+
+volumes:
+    db_data:
+    redis_data:

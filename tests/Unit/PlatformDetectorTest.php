@@ -15,7 +15,7 @@ class PlatformDetectorTest extends TestCase
      */
     public function test_detect_platform(string $url, ?Platform $expectedPlatform): void
     {
-        $detector = new PlatformDetector();
+        $detector = new PlatformDetector;
 
         $this->assertSame($expectedPlatform, $detector->detectPlatform($url));
     }
@@ -42,7 +42,7 @@ class PlatformDetectorTest extends TestCase
 
     public function test_is_supported(): void
     {
-        $detector = new PlatformDetector();
+        $detector = new PlatformDetector;
 
         $this->assertTrue($detector->isSupported('https://www.facebook.com/reel/824073223812116'));
         $this->assertFalse($detector->isSupported('https://example.org/watch?v=1'));
